@@ -12,8 +12,6 @@ Clad is a formally modeled governance framework that provides hierarchical const
 
 ## The Three-Layer Pipeline
 
-(ASCII pipeline diagram — same as in docs/architecture.md:)
-
 ```
 User Input
     │
