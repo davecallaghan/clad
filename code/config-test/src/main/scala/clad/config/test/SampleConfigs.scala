@@ -1,0 +1,75 @@
+package clad.config.test
+
+object SampleConfigs:
+  val sampleJson: String = """{
+  "name": "Healthcare Governance",
+  "version": "1.0",
+  "agents": [
+    {
+      "id": "medical_writer",
+      "name": "Medical Writer",
+      "authorizedDomains": ["healthcare", "clinical"],
+      "authorizedLevels": ["enterprise", "department"]
+    },
+    {
+      "id": "research_analyst",
+      "name": "Research Analyst",
+      "authorizedDomains": ["research"],
+      "authorizedLevels": ["project"]
+    }
+  ],
+  "constraints": {
+    "enterprise": [
+      {
+        "property": "contains_pii",
+        "constraintType": "prohibition",
+        "level": "enterprise",
+        "domain": "healthcare",
+        "version": "1.0",
+        "evaluability": "mechanical"
+      },
+      {
+        "property": "audit_logging",
+        "constraintType": "obligation",
+        "level": "enterprise",
+        "domain": "healthcare",
+        "version": "1.0",
+        "evaluability": "mechanical"
+      }
+    ],
+    "department": [],
+    "project": []
+  },
+  "checkers": [
+    {
+      "property": "contains_pii",
+      "checkerType": "regex",
+      "config": {
+        "patterns": "\\\\d{3}-\\\\d{2}-\\\\d{4}",
+        "mode": "any"
+      }
+    },
+    {
+      "property": "audit_logging",
+      "checkerType": "structural",
+      "config": {
+        "key": "logging",
+        "value": "enabled"
+      }
+    }
+  ],
+  "outputConstraints": [],
+  "thresholds": [],
+  "failurePosture": {
+    "epg": "fail-closed",
+    "roc": "fail-closed",
+    "gil": "fail-closed"
+  }
+}"""
+
+  val minimalJson: String = """{
+  "name": "Minimal Config",
+  "version": "1.0"
+}"""
+
+  val invalidJson: String = "not valid json"
