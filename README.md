@@ -42,6 +42,32 @@ User Input
 
 Each layer produces tamper-evident, version-stamped audit records that compose into a complete chain.
 
+## Formal Verification
+
+**Clad's governance logic is mathematically proven correct and independently verified against the production code.**
+
+The framework includes 76 machine-checked theorems in [Lean 4](https://lean-lang.org/) with zero `sorry` (no unfinished proofs). The proofs cover every master theorem from the formal specifications:
+
+- **Composition algebra** -- components form a commutative monoid (Theorem 6)
+- **Surface completeness** -- EPG + ROC + MDR covers all five control surfaces (Theorem 1)
+- **Tamper-evident audit chains** -- hash-chain integrity with tamper detection (Theorem 3a)
+- **Ghost detection** -- every interaction is classified as governed, degraded, or ghost (Theorem 3b)
+- **Deontic logic** -- obligation/prohibition satisfaction semantics with 4 inversion rules
+- **Constraint hierarchy monotonicity** -- enterprise constraints propagate to all lower levels
+- **Residual risk reduction** -- adding components monotonically reduces risk (Theorem 4)
+- **Contract composability** -- independently deployed components preserve guarantees (Theorem 2)
+- **Output evaluation** -- deterministic threshold decisions with exhaustive coverage
+- **Audit completeness** -- every governed interaction produces an audit record (Theorem 5)
+- **Failure semantics** -- fail-closed/fail-open posture is a bijection over actions
+
+**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) that is tested against the Scala production engine on 1,000+ randomly generated constraint hierarchies, detection states, and evaluation contexts. Zero mismatches. This is the same methodology Cedar uses to verify its Rust authorization engine against a Lean specification -- applied here to AI governance for the first time.
+
+**Release gate.** No version of Clad ships unless the Lean proofs compile and all differential tests pass.
+
+*Proven correct. Tested against production. Every release.*
+
+See [`lean/`](lean/) for the full proof library and build instructions.
+
 ## What Makes This Different
 
 - **Formal rigor with honest limitations.** Deontic logic, algebraic composition, and formal proofs — with explicit statements of what it guarantees and what it doesn't. Every theorem has preconditions. Every component has a limitations section.
