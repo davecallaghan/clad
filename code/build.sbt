@@ -226,9 +226,23 @@ lazy val `mcp-test` = project
     )
   )
 
+lazy val difftest = project
+  .in(file("difftest"))
+  .dependsOn(core, `core-test`)
+  .settings(
+    commonSettings,
+    name := "clad-difftest",
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "upickle" % "4.1.0",
+      "org.scalatest"  %% "scalatest"       % "3.2.19",
+      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0",
+      "org.scalacheck" %% "scalacheck"      % "1.18.1"
+    )
+  )
+
 lazy val root = project
   .in(file("."))
-  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`)
+  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest)
   .settings(
     commonSettings,
     name := "clad",
