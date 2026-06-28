@@ -1,7 +1,11 @@
 # Clad — Meta-Framework Formal Model
 
 ## Introduction
-This document defines the formal meta-framework for Clad. It establishes the ontology, control surface model, component architecture, interface contracts, and audit chain composition that all component white papers and solution architectures must conform to.
+This document formalizes a governance boundary that makes risk, responsibility, and evidentiary state explicit for regulated AI use. Rather than promising perfect prevention, Clad focuses on provability: it guarantees that every governed interaction produces auditable evidence of which rules were in effect, which evaluations occurred (or failed), and what artifacts and versions participated in the interaction. That provability is the core compliance deliverable for regulators and internal auditors.
+
+Clad’s architecture combines enforcement points, a Global Interaction Log to prevent undetectable bypasses, and tamper‑evident audit chains with independent signing and Supervisor‑mediated degraded records. Together these elements ensure that failures and deviations are visible and investigable, enabling traceability, root‑cause analysis, and remediation. The framework formalizes the residual‑risk reality: governance reduces but does not eliminate risk from stochastic model behavior and external unknowns, which must be documented, monitored, and mitigated with companion controls.
+
+This meta‑framework is the normative baseline for component papers and solution design: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. Because the framework is unimplemented, pilot validation and empirical assurance testing are required to confirm operational assumptions and to harden implementation risk prior to enterprise rollout.
 
 Component documents (WP1: Prompt Governance, WP2: Runtime Output Controls, SA: Monitoring & Response) are independently rigorous but derive their scope, interfaces, and composability properties from this meta-framework.
 
