@@ -1,7 +1,6 @@
 # Clad — Meta-Framework Formal Model
 
-## Status: v5 — Post Three Rounds of Multi-Model Adversarial Review
-
+## Introduction
 This document defines the formal meta-framework for Clad. It establishes the ontology, control surface model, component architecture, interface contracts, and audit chain composition that all component white papers and solution architectures must conform to.
 
 Component documents (WP1: Prompt Governance, WP2: Runtime Output Controls, SA: Monitoring & Response) are independently rigorous but derive their scope, interfaces, and composability properties from this meta-framework.
