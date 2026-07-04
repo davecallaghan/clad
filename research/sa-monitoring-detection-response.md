@@ -211,15 +211,23 @@ This evidence store is write-once, tamper-evident (WORM storage, per meta-framew
 
 ### 6.1 Data Flows
 
-```
-EPG ──audit records──→ MDR
-ROC ──audit records──→ MDR
-ROC ──violation flags─→ MDR
-GIL ──interaction log─→ MDR (for ghost detection)
-MDR ──alerts─────────→ SOC / SIEM
-MDR ──containment────→ EPG (break-glass trigger)
-MDR ──containment────→ ROC (threshold override)
-MDR ──containment────→ Infrastructure (model endpoint control)
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Georgia, serif", "fontSize": "16px", "lineColor": "#8a94a6", "edgeLabelBackground": "#f5f7fa", "tertiaryColor": "#f5f7fa"}}}%%
+flowchart LR
+    EPG -- "audit records" --> MDR
+    ROC -- "audit records" --> MDR
+    ROC -- "violation flags" --> MDR
+    GIL -- "interaction log" --> MDR
+    MDR -- "alerts" --> SOC["SOC / SIEM"]
+    MDR -- "break-glass" --> EPG
+    MDR -- "threshold override" --> ROC
+    MDR -- "endpoint control" --> INFRA["Infrastructure"]
+
+    MDR["<b>MDR</b><br/><i>monitor · detect · respond</i>"]
+    classDef hub fill:#e4e9f2,stroke:#7f8ca6,color:#232f45,rx:6,ry:6;
+    classDef node fill:#eef2f7,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
+    class MDR hub;
+    class EPG,ROC,GIL,SOC,INFRA node;
 ```
 
 ### 6.2 SIEM/SOAR Integration
