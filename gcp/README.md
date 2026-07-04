@@ -113,10 +113,36 @@ Tear the load balancer down (leaves the bucket intact) with:
 > Cost note: an HTTPS load balancer has a small always-on hourly charge (unlike
 > the bucket, which is pay-per-use). `disable-https.sh` removes it.
 
-## Optional: deploy from CI
+## Deploy from CI (keyless, Workload Identity Federation)
 
 [`.github/workflows/deploy-landing.yml`](../.github/workflows/deploy-landing.yml)
-is a ready GitHub Actions workflow that runs the same deploy. It is
-**manual-trigger only** (`workflow_dispatch`) and does nothing until you add
-auth. Recommended: [Workload Identity Federation](https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation)
-(keyless). Fill in the repo variables/secrets noted at the top of that file.
+runs the same deploy on pushes to `master` that touch `landing/` (and on manual
+trigger). It authenticates to GCP with **Workload Identity Federation** — no
+service-account keys stored in GitHub. The job stays dormant until configured.
+
+One-time setup:
+
+```bash
+export GCP_PROJECT_ID=your-project-id
+export GITHUB_REPO=owner/repo          # e.g. davecallaghan/clad
+./gcp/setup-wif.sh
+```
+
+`setup-wif.sh` creates a Workload Identity pool + GitHub OIDC provider **locked
+to your repo** (via an `assertion.repository` condition, so no other repo can
+impersonate it), a dedicated `clad-landing-deployer` service account with
+`roles/storage.admin`, and the impersonation binding. It prints the values to add
+as **repository variables** (Settings → Secrets and variables → Actions →
+Variables):
+
+| Variable | Value |
+|---|---|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | printed by the script |
+| `GCP_SERVICE_ACCOUNT` | `clad-landing-deployer@<project>.iam.gserviceaccount.com` |
+| `GCP_PROJECT_ID` | your project id |
+| `GCS_BUCKET_NAME` | your bucket |
+| `GCP_REGION` | your region |
+
+Or set them with the `gh variable set …` commands the script prints. After that,
+every push to `master` under `landing/` deploys automatically; you can also run
+the **Deploy landing page** workflow manually from the Actions tab.

@@ -1,44 +1,44 @@
-# Deploy landing/ to the GCS static-website bucket.
-#
-# Manual-trigger only, so it never runs unexpectedly. It is INERT until you
-# provide auth. To enable:
-#   1. Set up Workload Identity Federation (keyless, recommended):
-#        https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation
-#   2. Add these repository variables (Settings > Secrets and variables > Actions > Variables):
-#        GCP_PROJECT_ID, GCS_BUCKET_NAME, GCP_REGION,
-#        GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT
-#   3. Uncomment the auth + setup + deploy steps below.
+# Deploy landing/ to the GCS static-website bucket via keyless Workload Identity
+# Federation. One-time setup: run gcp/setup-wif.sh, then add the repository
+# variables it prints (Settings > Secrets and variables > Actions > Variables):
+#   GCP_PROJECT_ID, GCS_BUCKET_NAME, GCP_REGION,
+#   GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT
+# Until GCP_WORKLOAD_IDENTITY_PROVIDER is set, the job is skipped (not failed).
 name: Deploy landing page
 
 on:
+  push:
+    branches: [master]
+    paths:
+      - "landing/**"
+      - "gcp/deploy-landing.sh"
+      - ".github/workflows/deploy-landing.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write   # required for Workload Identity Federation
+  id-token: write # required to mint the WIF OIDC token
 
 jobs:
   deploy:
+    # Stay dormant until WIF is configured, so unconfigured repos don't fail.
+    if: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # - id: auth
-      #   uses: google-github-actions/auth@v2
-      #   with:
-      #     workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      #     service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
-      # - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v2
 
-      # - name: Deploy
-      #   env:
-      #     GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-      #     GCS_BUCKET_NAME: ${{ vars.GCS_BUCKET_NAME }}
-      #     GCP_REGION: ${{ vars.GCP_REGION }}
-      #   run: ./gcp/deploy-landing.sh
-
-      - name: Not configured
-        run: |
-          echo "Auth not configured yet — see the comments at the top of this workflow."
-          echo "Uncomment the auth/setup/deploy steps once WIF and repo variables are set."
+      - name: Deploy landing page
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCS_BUCKET_NAME: ${{ vars.GCS_BUCKET_NAME }}
+          GCP_REGION: ${{ vars.GCP_REGION }}
+        run: ./gcp/deploy-landing.sh
