@@ -15,20 +15,21 @@ Clad is a formally modeled governance framework that provides hierarchical const
 ## The Three-Layer Pipeline
 
 ```mermaid
-flowchart TD
-    U([User Input]) --> EPG
-    EPG -- "Governed prompt" --> M[AI Model]
-    M -- "Stochastic output" --> ROC
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Georgia, serif", "fontSize": "18px", "lineColor": "#8a94a6", "edgeLabelBackground": "#f5f7fa", "tertiaryColor": "#f5f7fa"}}}%%
+flowchart LR
+    U([User<br/>Input]) --> EPG
+    EPG -- "governed<br/>prompt" --> M[AI<br/>Model]
+    M -- "stochastic<br/>output" --> ROC
     ROC --> MDR
-    MDR --> O([Delivered Output])
+    MDR --> O([Delivered<br/>Output])
 
-    EPG["<b>EPG — Enterprise Prompt Governance</b><br/>Are the instructions compliant?<br/>Hierarchical constraints, RBAC, audit"]
-    ROC["<b>ROC — Runtime Output Controls</b><br/>Is the output safe to deliver?<br/>Deterministic rules + ML classifiers"]
-    MDR["<b>MDR — Monitoring, Detection &amp; Response</b><br/>Are patterns healthy across interactions?"]
+    EPG["<b>EPG</b><br/>Enterprise Prompt<br/>Governance<br/><i>compliant instructions?</i>"]
+    ROC["<b>ROC</b><br/>Runtime Output<br/>Controls<br/><i>output safe to deliver?</i>"]
+    MDR["<b>MDR</b><br/>Monitoring, Detection<br/>&amp; Response<br/><i>patterns healthy?</i>"]
 
-    classDef gov fill:#1f2937,stroke:#4b5563,color:#f9fafb;
-    classDef model fill:#374151,stroke:#6b7280,color:#f9fafb,stroke-dasharray:4 3;
-    classDef io fill:#111827,stroke:#374151,color:#e5e7eb;
+    classDef gov fill:#eef2f7,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
+    classDef model fill:#f4f1fa,stroke:#b3a6d4,color:#3a3350,stroke-dasharray:4 3;
+    classDef io fill:#e7ecf2,stroke:#9aa6b8,color:#2a3547;
     class EPG,ROC,MDR gov;
     class M model;
     class U,O io;

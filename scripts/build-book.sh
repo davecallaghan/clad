@@ -4,7 +4,11 @@
 # Requirements:
 #   - pandoc        (brew install pandoc)
 #   - mmdc          (brew install mermaid-cli)
-#   - a Chromium-based browser for mmdc (Google Chrome, Chromium, or Edge)
+#   - npx           (bundled with Node) — used to provision a headless browser
+#
+# The build provisions its own project-local chrome-headless-shell (into
+# build/.chromium) so it is self-contained and CI-ready — it does not depend on
+# a system browser install.
 #
 # Diagrams are authored as inline ```mermaid``` fenced blocks in the markdown
 # (which GitHub renders natively). scripts/mermaid-filter.lua renders them to
@@ -28,20 +32,21 @@ FILES=(
 
 mkdir -p build
 
-# Locate a browser for mermaid-cli and generate its puppeteer config.
-BROWSER=""
-for candidate in \
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  "/Applications/Chromium.app/Contents/MacOS/Chromium" \
-  "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge" \
-  "$(command -v google-chrome || true)" \
-  "$(command -v chromium || true)"; do
-  if [[ -n "$candidate" && -x "$candidate" ]]; then BROWSER="$candidate"; break; fi
-done
-
+# Provision a project-local headless browser for mermaid-cli (idempotent).
+export PUPPETEER_CACHE_DIR="$PWD/build/.chromium"
+find_browser() {
+  find "$PUPPETEER_CACHE_DIR/chrome-headless-shell" \
+    -type f -name chrome-headless-shell 2>/dev/null | head -1
+}
+BROWSER="$(find_browser)"
 if [[ -z "$BROWSER" ]]; then
-  echo "ERROR: no Chromium-based browser found for mermaid-cli." >&2
-  echo "Install Google Chrome, or run: npx puppeteer browsers install chrome-headless-shell" >&2
+  echo "Provisioning chrome-headless-shell into $PUPPETEER_CACHE_DIR ..."
+  npx --yes puppeteer browsers install chrome-headless-shell >/dev/null
+  BROWSER="$(find_browser)"
+fi
+
+if [[ -z "$BROWSER" || ! -x "$BROWSER" ]]; then
+  echo "ERROR: could not provision a headless browser for mermaid-cli." >&2
   exit 1
 fi
 
