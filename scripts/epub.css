@@ -1,0 +1,40 @@
+/* Book build overrides — fix blank pages from oversized images and wide tables. */
+
+/* Fit any diagram to a single page: constrain BOTH dimensions so a tall image
+   (e.g. the vertical pipeline) shrinks to page height instead of spanning
+   several pages with blank space. max-width + max-height together preserve
+   aspect ratio automatically. */
+img {
+  max-width: 100%;
+  max-height: 92vh;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+/* Keep an image and any following caption from being split awkwardly. */
+figure, p > img {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+/* Wide reference tables (regulatory crosswalk) must wrap to page width rather
+   than overflow off the page, which otherwise leaves runs of blank pages. */
+table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.72em;
+  page-break-inside: auto;
+}
+th, td {
+  padding: 3px 5px;
+  vertical-align: top;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+tr {
+  page-break-inside: avoid;
+}
