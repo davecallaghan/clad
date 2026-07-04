@@ -1,4 +1,4 @@
-# Section 4 — Seeing the Whole Picture: MDR — Monitoring, Detection, Response
+# Section 4 — Seeing the Whole Picture — MDR: Monitoring, Detection, Response
 
 **Trust by Design — Section 4 — Solution Architecture for Clad**
 

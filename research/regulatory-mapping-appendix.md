@@ -1,6 +1,6 @@
 # Section 5 — Meeting Regulators: Practical Mapping to Key Standards
 
-**Trust by Design — Section 5 — Clad Compliance Crosswalk**
+**Trust by Design : Section 5 — Clad Compliance Crosswalk**
 
 **Version:** 1.0
 **Date:** April 2026

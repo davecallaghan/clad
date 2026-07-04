@@ -4,6 +4,8 @@
 
 *The governance layer for regulated AI.*
 
+Trust by Design collects the Clad framework — meta-framework, prompt governance, runtime output controls, monitoring, and regulatory crosswalks — into a single ordered book. See [SUMMARY.md](SUMMARY.md) for the full table of contents and reading order.
+
 ---
 
 Enterprises are deploying AI with no governance that survives regulatory scrutiny. Prompts are ad-hoc, outputs are unfiltered, and audit trails are incomplete. When a regulator asks *"show me exactly which rules governed this AI interaction"* — most organizations have no answer.
