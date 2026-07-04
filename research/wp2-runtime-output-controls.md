@@ -1,6 +1,6 @@
-# Section 3 — Stopping Bad Outputs — Runtime Controls and Fallbacks (ROC)
+# Section 3 — Stopping Bad Outputs: Runtime Controls and Fallbacks (ROC)
 
-**White Paper 2 of Clad**
+**Trust by Design — Section 3 (formerly White Paper 2) of Clad**
 
 **Version:** 1.0
 **Date:** April 2026

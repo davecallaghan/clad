@@ -149,11 +149,11 @@ The formal specifications that the code implements:
 
 | Document | Description |
 |----------|-------------|
-| [Meta-Framework](research/meta-framework.md) | 5 axioms, 6 theorems, control surface model, threat model (T1-T11), enforcement architecture, failure semantics, audit integrity, composition algebra |
-| [WP1: Enterprise Prompt Governance](research/wp1-enterprise-prompt-governance.md) | Hierarchical constraints (enterprise ≻ department ≻ project), RBAC, evaluability decomposition, conflict resolution, domain isolation |
-| [WP2: Runtime Output Controls](research/wp2-runtime-output-controls.md) | Two-tier hybrid evaluation (deterministic + classifier), risk-tiered pipeline, threat-specific controls |
-| [Monitoring & Response](research/sa-monitoring-detection-response.md) | Cross-component monitoring, incident response, forensic evidence preservation |
-| [Regulatory Mapping](research/regulatory-mapping-appendix.md) | Crosswalk to NIST AI RMF, EU AI Act, ISO 42001, HIPAA, SOX, GLBA, NERC CIP |
+| [Section 1 — The Architecture of Assurance: Clad's Meta-Framework](research/meta-framework.md) | 5 axioms, 6 theorems, control surface model, threat model (T1-T11), enforcement architecture, failure semantics, audit integrity, composition algebra |
+| [Section 2 — Responsible Prompting: Policies That Let Teams Move Fast, Safely (EPG)](research/wp1-enterprise-prompt-governance.md) | Hierarchical constraints (enterprise ≻ department ≻ project), RBAC, evaluability decomposition, conflict resolution, domain isolation |
+| [Section 3 — Stopping Bad Outputs: Runtime Controls and Fallbacks (ROC)](research/wp2-runtime-output-controls.md) | Two-tier hybrid evaluation (deterministic + classifier), risk-tiered pipeline, threat-specific controls |
+| [Section 4 — Seeing the Whole Picture: MDR — Monitoring, Detection, Response](research/sa-monitoring-detection-response.md) | Cross-component monitoring, incident response, forensic evidence preservation |
+| [Section 5 — Meeting Regulators: Practical Mapping to Key Standards](research/regulatory-mapping-appendix.md) | Crosswalk to NIST AI RMF, EU AI Act, ISO 42001, HIPAA, SOX, GLBA, NERC CIP |
 
 ## Validation Status
 

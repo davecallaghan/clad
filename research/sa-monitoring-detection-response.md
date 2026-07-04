@@ -1,6 +1,6 @@
 # Section 4 — Seeing the Whole Picture — MDR: Monitoring, Detection, Response
 
-**Solution Architecture Document for Clad**
+**Trust by Design — Section 4 — Solution Architecture for Clad**
 
 **Version:** 1.0
 **Date:** April 2026
