@@ -72,20 +72,46 @@ source gcp/config.env
 ./gcp/destroy-landing.sh        # asks you to type the bucket name to confirm
 ```
 
-## Optional: HTTPS + custom domain + CDN
+## HTTPS + custom domain + CDN
 
-The `*.storage.googleapis.com` URL works but is not HTTPS on your own domain.
-For a production custom domain (`https://trustbydesign.example.com`):
+The `*.storage.googleapis.com` URL works but isn't HTTPS on your own domain. To
+serve `https://your-domain/` with a Google-managed cert and Cloud CDN, front the
+bucket with an external HTTPS load balancer. This is scripted:
 
-1. Reserve a global static IP.
-2. Create an external HTTPS load balancer with a **backend bucket** pointing at
-   this bucket, and enable **Cloud CDN** on it.
-3. Attach a Google-managed SSL certificate for your domain.
-4. Point your domain's DNS `A` record at the load balancer IP.
+```bash
+source gcp/config.env            # must also set DOMAIN=your-domain
+./gcp/deploy-landing.sh          # bucket must exist & be public first
+./gcp/enable-https.sh
+```
 
-This is a few extra `gcloud compute` resources (or ~30 lines of Terraform) and
-is intentionally left out of the first version to keep it simple. Ask and it can
-be scripted next.
+`enable-https.sh` is idempotent and creates: a global static IP, a **backend
+bucket with Cloud CDN**, a URL map, a **Google-managed TLS certificate**, the
+HTTPS target proxy + `:443` forwarding rule, and an **HTTP→HTTPS redirect** on
+`:80`. It then prints the static IP.
+
+**Then, at your DNS provider**, create an `A` record pointing your domain at that
+IP:
+
+```
+your-domain.   A   <printed-ip>
+```
+
+The managed certificate provisions **only after** DNS resolves to the IP — this
+can take up to ~60 minutes. Re-run `./gcp/enable-https.sh` (safe) to re-check, or:
+
+```bash
+gcloud compute ssl-certificates describe clad-landing-cert --global \
+  --format='value(managed.status)'   # want: ACTIVE
+```
+
+Tear the load balancer down (leaves the bucket intact) with:
+
+```bash
+./gcp/disable-https.sh
+```
+
+> Cost note: an HTTPS load balancer has a small always-on hourly charge (unlike
+> the bucket, which is pay-per-use). `disable-https.sh` removes it.
 
 ## Optional: deploy from CI
 
