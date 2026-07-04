@@ -25,6 +25,10 @@ FILES=(
   research/wp2-runtime-output-controls.md
   research/sa-monitoring-detection-response.md
   research/regulatory-mapping-appendix.md
+  research/appendix-a-formal-model.md
+  research/appendix-b-worked-examples.md
+  research/appendix-c-templates.md
+  research/glossary.md
 )
 
 mkdir -p build

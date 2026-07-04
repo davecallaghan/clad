@@ -1,14 +1,15 @@
-# Section 4 — Seeing the Whole Picture — MDR: Monitoring, Detection, Response
+# Chapter 4 — Seeing the Whole Picture (MDR)
 
-**Trust by Design — Section 4 — Solution Architecture for Clad**
+**Part II · The Three Control Layers**
 
-**Version:** 1.0
-**Date:** April 2026
-**Audience:** Security architects, SOC teams, AI operations teams
-**Relationship:** Implements component g_MDR from the Meta-Framework (v5). Consumes audit data from WP1 (EPG) and WP2 (ROC).
-**Scope:** Governs control surfaces S_input (user input) and S_config (model selection and inference configuration). Provides cross-component monitoring, incident detection, and response orchestration.
+Chapters 2 and 3 governed the two sides of a single interaction: the prompt going in, the output coming out. But some risks are invisible at the level of any one interaction — a slow drift in constraint quality, an adversary probing across many sessions, a governance component silently degrading, an interaction that bypassed governance entirely. This chapter watches the whole system over time through Monitoring, Detection & Response (MDR), the component `g_MDR`, which governs the remaining surfaces — S_input and S_config — and correlates the evidence the other two components produce.
 
----
+By the end of the chapter you will be able to:
+
+- position MDR as a detective, cross-cutting layer rather than a fourth preventative control, and state what it can and cannot promise;
+- monitor the input and configuration surfaces and the health of the audit chain, including detection of governance bypass ("ghost" interactions);
+- classify incidents and drive the response workflow — contain, investigate, remediate, report — that MDR orchestrates;
+- describe the audit and integration contracts through which MDR consumes EPG's and ROC's records.
 
 ## 1. Purpose and Scope
 
@@ -162,7 +163,7 @@ When a compliance or adversarial alert fires, MDR's first action is containment.
 
 **Secondary: Governance-level containment.** Used when EPG and ROC are trusted (the incident is in the AI output or user behavior, not in the governance system):
 
-- **Constraint-level containment:** MDR triggers EPG break-glass to add emergency constraints (tightening only, TTL-bound per WP1 §4.5).
+- **Constraint-level containment:** MDR triggers EPG break-glass to add emergency constraints (tightening only, TTL-bound per Chapter 2, §4.5).
 - **Threshold override:** MDR triggers ROC to lower classifier thresholds temporarily (tightening, increasing sensitivity).
 
 **MDR privilege model.** MDR's service account requires least-privilege access scoped to containment actions: API gateway route modification, IAM credential revocation for model endpoints, EPG break-glass trigger, ROC threshold override trigger. MDR does NOT have write access to constraints, classifier models, or audit records. This limits the blast radius if MDR itself is compromised. All MDR containment actions are logged in an independent audit trail (not MDR's own audit trail — a separate infra-level log).
@@ -179,7 +180,7 @@ MDR provides the data for root cause analysis:
 
 Based on root cause analysis:
 
-- **Prompt deficiency:** EPG constraint gap identified → add or modify constraints through standard authorship (§4 of WP1)
+- **Prompt deficiency:** EPG constraint gap identified → add or modify constraints through standard authorship (Chapter 2, §4)
 - **Classifier gap:** ROC classifier failed to detect the violation → retrain classifier, adjust threshold, add test case to regression suite
 - **Configuration error:** wrong model or parameters for the workload → correct configuration, add configuration policy to prevent recurrence
 - **Adversarial technique:** new attack pattern identified → add detection pattern to MDR, add mechanical check to ROC, update red-team corpus
@@ -298,4 +299,11 @@ MDR is the "nervous system" of the governance solution — it senses, alerts, an
 
 ---
 
-*End of Solution Architecture: Monitoring, Detection, and Response*
+## Key takeaways
+
+- MDR is a detective, cross-cutting layer, not a fourth preventative control. It cannot stop a first occurrence — that is EPG's and ROC's role — but it detects, contains, investigates, and reports what the other layers cannot see in isolation (§1).
+- It governs the remaining surfaces, S_input and S_config, and monitors the health of the audit chain itself — including ghost detection, which surfaces interactions that bypassed governance entirely (§2–§3).
+- Its value is cross-interaction: drift, adversarial probing across sessions, and component degradation are visible only in aggregate (§3–§4). Response is an orchestrated workflow — contain, investigate, remediate, report (§5).
+- MDR consumes EPG's and ROC's audit records through defined contracts; without those feeds it degrades to generic monitoring (§6).
+
+This completes Part II: the three components now govern every control surface of an interaction, and the system that runs them. Part III turns outward — mapping these controls to the regulatory frameworks an enterprise must answer to.

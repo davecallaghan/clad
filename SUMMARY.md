@@ -14,12 +14,8 @@
 **Part III — Assurance in Practice**
 - [Chapter 5 — Meeting Regulators](research/regulatory-mapping-appendix.md)
 
-<!--
-Back matter — added in later phases of the textbook conversion
-(see docs/textbook-conversion-plan.md):
-
-- Appendix A — Formal Model & Theorems
-- Appendix B — Worked Examples
-- Appendix C — Templates & Classifier Specs
-- Glossary
--->
+**Back Matter**
+- [Appendix A — Formal Model & Theorems](research/appendix-a-formal-model.md)
+- [Appendix B — Worked Examples](research/appendix-b-worked-examples.md)
+- [Appendix C — Templates & Classifier Specifications](research/appendix-c-templates.md)
+- [Glossary](research/glossary.md)

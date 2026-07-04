@@ -1,16 +1,17 @@
-# Section 2 — Responsible Prompting: Policies That Let Teams Move Fast, Safely (EPG)
+# Chapter 2 — Responsible Prompting (EPG)
 
-**Trust by Design — Section 2 (formerly White Paper 1) — Clad**
+**Part II · The Three Control Layers**
 
-**Version:** 1.0  
-**Date:** April 2026  
-**Audience:** CIO/CISO, Senior AI Architects, Compliance Officers  
-**Relationship:** Builds on the Clad Meta-Framework (v5)  
-**Scope:** Governs control surface S_prompt — the instructions sent to AI models
+Chapter 1 built the model: five control surfaces, a governance component as the tuple `g = (S, C, E, A, R)`, and an algebra for composing components. Part II instantiates that model one surface at a time. We begin where an enterprise has the most control — the prompt, the instructions sent to a model before it ever runs. This is the surface governed by Enterprise Prompt Governance (EPG), the component `g_EPG`.
 
----
+By the end of the chapter you will be able to:
 
-## 1. Executive Summary
+- explain why ungoverned prompting is a compliance and operational risk, not just a quality problem;
+- build a hierarchical constraint model (enterprise ≻ department ≻ project) and reason about how constraints inherit and tighten;
+- decompose a semantic constraint into mechanically evaluable checks plus procedural attestation, and resolve conflicts between constraints;
+- map EPG onto the component model of Chapter 1 and state the enforcement conditions its guarantees depend on.
+
+## 1. The Problem and the Approach
 
 ### 1.1 The Problem: Unstructured AI Prompting in Regulated Industries
 
@@ -46,29 +47,15 @@ This distinction is foundational. EPG is not a prompt dictation system. It does 
 
 EPG is one component of the Clad framework, a multi-layered framework for governing AI systems across their full operational lifecycle. EPG specifically governs S_prompt, the control surface representing instructions sent to AI models. This is one of three primary control surfaces:
 
-**S_prompt (governed by EPG, this white paper):** The instructions, context, and guidance provided to AI models that shape their behavior. Prompt governance establishes what an AI system should do before it acts.
+**S_prompt (EPG, this chapter):** The instructions, context, and guidance provided to AI models that shape their behavior. Prompt governance establishes what an AI system should do before it acts.
 
-**S_output (governed by Runtime Output Controls, WP2):** The content produced by AI models before delivery to end users or downstream systems. Output governance ensures what an AI system produces meets quality, safety, and compliance requirements.
+**S_output (ROC, Chapter 3):** The content produced by AI models before delivery to end users or downstream systems. Output governance ensures what an AI system produces meets quality, safety, and compliance requirements.
 
-**S_input and S_config (governed by Monitoring & Response, SA):** User input validation and model selection/configuration governance, plus cross-component monitoring that detects when AI systems deviate from expected behavior patterns. (The meta-framework decomposes this into two formal surfaces — S_input for user input and S_config for model selection and inference parameters — but operationally they are managed by a single component.)
+**S_input and S_config (MDR, Chapter 4):** User input validation and model selection/configuration governance, plus cross-component monitoring that detects when AI systems deviate from expected behavior patterns. (Chapter 1 decomposes this into two formal surfaces — S_input for user input and S_config for model selection and inference parameters — but operationally they are managed by a single component.)
 
 These components interact but remain independently valuable. An enterprise may deploy EPG to govern prompt development while output controls remain under construction. A financial services firm might implement runtime output controls immediately to prevent unauthorized trading recommendations while building out comprehensive prompt governance over subsequent quarters. This independence-with-integration property is formally proven in the meta-framework: each component provides local guarantees that compose into system-wide guarantees when multiple components are deployed together.
 
 The integration points are deliberate. When EPG marks a prompt as compliant with constraint C_healthcare_phi, runtime output controls can reference that evaluation to inform their own risk assessment. When monitoring systems detect anomalous model behavior, they can trigger EPG re-evaluation of the active prompts. The components form a coherent governance pipeline while remaining independently deployable.
-
-### 1.4 Who This Is For
-
-This white paper addresses four distinct audiences within regulated enterprises:
-
-**Enterprise governance teams** define AI policy at the organizational level. These teams—typically reporting to the CIO, CISO, or Chief Compliance Officer—establish the top-level constraints that all AI systems must satisfy. EPG provides these teams with a formal language for expressing policy requirements and a mechanism for ensuring those requirements propagate to every AI deployment.
-
-**Department leads** translate enterprise policy into domain-specific constraints. A Chief Medical Information Officer inherits enterprise-wide data protection constraints and adds HIPAA-specific requirements for clinical AI systems. A Chief Investment Officer inherits enterprise risk management constraints and adds FINRA suitability requirements for advisory tools. EPG enables this translation process through hierarchical constraint composition while maintaining audit trail visibility back to enterprise policy.
-
-**Project teams** build AI applications within governed boundaries. Software engineers, data scientists, and product managers craft prompts that accomplish specific business objectives while satisfying all applicable constraints. EPG provides these teams with rapid feedback on whether their prompts comply with governance requirements, removing the friction that typically makes governance feel like obstruction rather than enablement.
-
-**Security and compliance teams** audit AI usage across the enterprise. These teams must answer regulator questions, investigate incidents, and verify that governance policies are actually enforced rather than merely documented. EPG provides verifiable audit trails that demonstrate governance enforcement with cryptographic certainty, transforming compliance from a documentation exercise into a verification process.
-
-The remainder of this white paper provides the technical depth required to implement EPG in production environments while maintaining the business context required to justify the investment to executive leadership.
 
 ---
 
@@ -771,16 +758,16 @@ The Scope Isolation theorem in Appendix A.13 holds relative to fixed domain defi
 
 ---
 
-## 8. Connection to the Meta-Framework
+## 8. EPG as a Governance Component
 
-EPG does not exist in isolation. It is one component of the Clad framework, formally defined in the meta-framework (v5). This section maps EPG's concepts to the meta-framework's component model, establishing how EPG participates in the broader governance architecture.
+EPG does not exist in isolation. It is one component of the Clad framework, formalized in Chapter 1. This section maps EPG's concepts onto that component model, establishing how EPG participates in the broader governance architecture.
 
 ### 8.1 EPG as Component g_EPG
 
 EPG instantiates the governance component g_EPG defined in the meta-framework:
 
 - **Surfaces:** S = {S_prompt} — EPG governs the prompt surface only
-- **Constraints:** C = the hierarchical constraint set C*(project) defined in this white paper
+- **Constraints:** C = the hierarchical constraint set C*(project) defined in this chapter
 - **Evaluation:** E = mechanical evaluation (⊨_m) combined with procedural attestation (⊨_p)
 - **Audit:** A = prompt audit records (evaluation records per meta-framework §9)
 - **Hard requirements:** R_hard = ∅ — EPG is independently deployable. It provides its full guarantees without any other governance component present.
@@ -898,7 +885,7 @@ EPG provides governance of the prompt surface. This section states explicitly wh
 
 **What EPG does not guarantee:**
 
-- Output correctness: EPG governs prompts, not model outputs. A governed prompt can still produce non-compliant output due to model behavior, user input, or inference configuration. Output governance requires WP2 (Runtime Output Controls).
+- Output correctness: EPG governs prompts, not model outputs. A governed prompt can still produce non-compliant output due to model behavior, user input, or inference configuration. Output governance requires ROC (Chapter 3).
 - Content accuracy: EPG ensures prompts include required elements and exclude prohibited elements. It does not ensure the model's response is factually correct.
 - Model behavior: EPG cannot prevent hallucination, jailbreaking, or emergent model behavior. These require model-level and output-level controls.
 
@@ -911,486 +898,15 @@ EPG provides governance of the prompt surface. This section states explicitly wh
 
 The formal model uses a restricted deontic fragment — atomic properties with two operators (O and F) — that does not capture all real-world governance complexity. This is a deliberate design choice for tractability, not an oversight. The restricted fragment enables complete contradiction detection, a property that would be undecidable in a richer logic.
 
-EPG is one component of a complete governance solution. It must be complemented by runtime output controls (WP2), monitoring and response (SA), and organizational controls (training, role-based access management, change management processes) to achieve comprehensive AI governance.
+EPG is one component of a complete governance solution. It must be complemented by runtime output controls (ROC, Chapter 3), monitoring and response (MDR, Chapter 4), and organizational controls (training, role-based access management, change management processes) to achieve comprehensive AI governance.
 
 ---
 
-## Appendix A: Formal Model
+## Key takeaways
 
-This appendix contains the complete, authoritative EPG formal model. It extends and supersedes the standalone formal model document (`formal-model.md`). The formal model uses symbolic logic throughout; refer to §3 for business-language explanations of these concepts.
+- EPG governs S_prompt by defining the *boundaries* teams build within, not the prompts themselves. Constraints flow enterprise ≻ department ≻ project, each level tightening but never loosening what upstream established (§3).
+- Semantic constraints become auditable by mandatory decomposition into mechanical checks plus procedural attestation (§5); conflicts resolve by a defined precedence (§6); authority is bounded laterally so no domain can weaken another's protections (§7).
+- As a component, EPG is `g_EPG` with hard requirements `R_hard = ∅` — it is independently deployable and delivers its full guarantees alone, while composing cleanly with ROC and MDR (§8).
+- EPG governs the prompt, not the output. A compliant prompt can still yield a non-compliant output, because models are stochastic. That gap is exactly what Chapter 3 addresses.
 
-### Conservative Extension Argument
-
-The formal constructs introduced beyond the base model (RBAC, domain isolation, conflict detection, decomposition mapping) extend the existing formal model without altering the truth of existing theorems. New symbols (`author`, `approver`, `scope`, `decomp`, `CONTRADICTION`, `shared_scope`, `precedence`) operate on the governance meta-layer — who can create constraints and how they are checked. They do not change the satisfaction relation for a given C*(level) and prompt p. They do not change the inheritance rules. They do not change the evaluability classification or evaluation functions. Existing theorems (Audit Completeness, No Evaluability Gap) hold over the unchanged logical core. New theorems operate over the governance meta-layer and are independent of the logical core.
-
-The logical core uses a two-operator deontic fragment {O, F} over atomic properties (§3.2a). P_meta is a governance annotation outside this fragment. The standard axiom O(φ) → P(φ) does not apply because P_meta is not a deontic operator.
-
-### A.1 Primitive Sets and Domains
-
-```
-L = {enterprise, department, project}     — governance levels
-C = C_m ⊎ C_p                            — operational constraints (disjoint union)
-C_s                                       — semantic constraints (intent records,
-                                            NOT part of C, documentation only)
-P = set of all prompts                    — the governed artifacts
-A = set of all agents                     — authors/owners of constraints
-D = set of all domains                    — legal, security, data_privacy, etc.
-T = totally ordered set of time points    — for versioning and audit
-V = set of audit records                  — evaluation evidence
-Φ = controlled vocabulary of atomic       — enterprise-governed property identifiers
-    property identifiers
-```
-
-### A.2 Ordering on Governance Levels
-
-```
-enterprise ≻ department ≻ project
-(≻ denotes "governs over")
-(L, ≻) is a strict total order.
-```
-
-### A.3 Core Functions
-
-Base functions (unchanged):
-```
-level   : C → L           — assigns constraint to governance level
-owner   : C → A           — who authored the constraint
-domain  : C → D           — which domain the constraint belongs to
-ver     : C × T → C_t     — version of constraint c active at time t
-```
-
-RBAC and governance meta-layer (new):
-```
-scope    : A → 𝒫(D)       — domains agent may author constraints for
-approve  : C → A           — who approved the constraint
-emergency: C → {true, false}  — break-glass flag
-
-Dual control invariant:
-  ∀ c ∈ C : ¬emergency(c) → author(c) ≠ approver(c)
-
-Orthogonal approval (Critical tier):
-  ∀ c ∈ C : risk_tier(c) = critical ∧ ¬emergency(c)
-    → org_unit(author(c)) ≠ org_unit(approver(c))
-    ∧ ∃ a ∈ approvers(c) : org_unit(a) ∈ {CISO, central_risk, compliance}
-
-Break-glass bounds:
-  ∀ c ∈ C : emergency(c)
-    → tightening_only(c) ∧ ttl(c) ≤ max_ttl(industry(c))
-
-Cross-domain review:
-  cross_domain_reviewed : C → {true, false}
-
-Enterprise Precedence Table:
-  precedence : C × C → {c₁_wins, c₂_wins, unresolved}
-```
-
-### A.4 Constraint Taxonomy
-
-Evaluability classes (unchanged in structure):
-```
-C_m = mechanically evaluable constraints
-C_p = procedurally evidenced constraints
-C = C_m ⊎ C_p              (operational constraints, disjoint)
-```
-
-Semantic constraints and decomposition mapping (new):
-```
-C_s = semantic constraints (intent records, NOT part of C)
-
-decomp : C_s → (𝒫(C_m) × 𝒫(C_p))
-  Maps each intent record to its operational decomposition.
-
-⊨_s : conceptual satisfaction relation for semantic constraints
-  Used in soundness claims only, NOT in evaluation machinery.
-```
-
-### A.5 Hierarchical Inheritance
-
-```
-C*(enterprise) = C(enterprise)
-C*(department) = C(enterprise) ∪ C(department)
-C*(project)    = C(enterprise) ∪ C(department) ∪ C(project)
-
-Generally: C*(l) = ⋃{C(l') | l' ≽ l}
-
-Monotonicity (inviolability):
-  ∀ l₁, l₂ ∈ L : l₁ ≻ l₂ → C*(l₁) ⊆ C*(l₂)
-
-Strengthening rules:
-  ∀ l₁ ≻ l₂ :
-    O(φ) ∈ C*(l₁)  →  O(φ) ∈ C*(l₂)     — obligations propagate
-    F(φ) ∈ C*(l₁)  →  F(φ) ∈ C*(l₂)     — prohibitions propagate
-    ¬∃ c ∈ C(l₂) that negates any c' ∈ C*(l₁)
-
-Only O and F constraints participate in inheritance.
-P_meta annotations are NOT part of C*(level).
-```
-
-### A.6 Permission Semantics
-
-```
-P_meta(φ) is a governance annotation, NOT a deontic operator.
-
-Properties:
-  - NO inheritance effect
-  - NO evaluation effect
-  - NO role in CONTRADICTION detection
-  - For satisfaction and inheritance: equivalent to absence
-  - For meta-governance (audit, review triggers): NOT equivalent
-    to absence — signals "considered"
-
-The system is NOT permissive-by-default:
-  ¬F(φ) does NOT entail P_meta(φ) or any form of permission.
-```
-
-### A.7 Lateral Authority Scoping
-
-```
-Authorship constraint:
-  ∀ c ∈ C : domain(c) ∈ scope(owner(c))
-
-Direct overlap:
-  shared_scope(D₁, D₂) = scope(D₁) ∩ scope(D₂)
-
-Joint authorship for shared scope:
-  ∀ c : property(c) ∈ shared_scope(D₁, D₂)
-    → approved_by(c, D₁) ∧ approved_by(c, D₂)
-
-Indirect interaction (advisory, not formal):
-  affects(D₁, D₂) — captures known systemic couplings
-  Detected via impact analysis (§7.3), NOT by scope intersection
-```
-
-### A.8 Conflict Detection and Resolution
-
-```
-CONTRADICTION predicate (formal, complete for atomic fragment):
-  CONTRADICTION(c₁, c₂) ≡ c₁ = O(φ) ∧ c₂ = F(φ)
-    for some atomic φ ∈ Φ
-
-  Completeness: pairwise check is sufficient for independent
-  atomic properties. Joint satisfiability of the full set follows
-  from pairwise satisfiability in this fragment.
-
-TENSION classification (advisory, NOT formal):
-  Heuristic, not sound or complete.
-  No theorem depends on TENSION.
-
-Enterprise Precedence Table:
-  precedence : C × C → {c₁_wins, c₂_wins, unresolved}
-  default_priority : D → ℕ  (domain priority ordering)
-
-Resolution protocol:
-  Phase 1: authoring-time prevention (CONTRADICTION blocks,
-           TENSION triggers review)
-  Phase 2: automated precedence → default priority → arbiter
-  Anti-circularity: arbiter resolutions must produce permanent
-           structural fixes
-```
-
-### A.9 Decomposition Soundness
-
-```
-Soundness relationship (goal, not guarantee):
-  Soundness(c_s) ⇔ ∀p, evidence :
-    (∀c_m ∈ decomp_m(c_s) : p ⊨_m c_m) ∧
-    (∀c_p ∈ decomp_p(c_s) : evidence ⊨_p c_p)
-    → p ⊨_s c_s
-
-Operational approximation:
-  No_counterexample_found(c_s) — from tests and reviews.
-  NOT equated with logical soundness.
-
-Completeness NOT claimed:
-  Over-tight decomposition may reject compliant prompts
-  (conservative failure mode).
-
-Residual gap controls:
-  Coverage requirements, maximum gap thresholds,
-  compensating control mandates, HITL trigger (§5.6).
-
-Decomposition change triggers:
-  Any change to decomp(c_s) reruns CONTRADICTION detection
-  on affected levels.
-```
-
-### A.10 Satisfaction Relations
-
-```
-⊨_m : P × C_m → {⊤, ⊥}           — automated, deterministic
-⊨_p : Evidence × C_p → {⊤, ⊥}    — human-attested, deterministic
-                                      given evidence
-
-Deontic satisfaction:
-  p ⊨ O(φ)  iff  φ holds in p
-  p ⊨ F(φ)  iff  φ does not hold in p
-```
-
-### A.11 Core Principles (Formal)
-
-```
-Principle 1 (Constraint, not prescription):
-  ∀ c ∈ C : c ∈ (P → {⊤, ⊥})
-
-Principle 2 (Execution is local):
-  ∀ p ∈ P_executed : level(p) = project
-
-Principle 3 (Risk management):
-  System guarantees: ∀ p ∈ P_executed : audit(p,t) is COMPLETE ∧ IMMUTABLE
-  System does NOT guarantee: ∀ p ∈ P_executed : ∀ c ∈ C*(project) : p ⊨ c
-
-Principle 4 (Audit the artifact):
-  ∀ p ∈ P_executed, ∀ t ∈ T :
-    ∃ audit(p,t) = {(c, ver(c,t), eval(c,p)) | c ∈ C*(project)}
-
-Principle 5 (Downward inheritance, lateral scoping):
-  Inheritance: C*(l) = ⋃{C(l') | l' ≽ l}
-  Scoping: ∀ c ∈ C : domain(c) ∈ scope(owner(c))
-```
-
-### A.12 Audit Record
-
-```
-audit(p, t) =
-  { (c, ver(c,t), ⊨_m(p,c))                       | c ∈ C*_m(project) }
-∪ { (c, ver(c,t), ⊨_p(evidence(p,c),c), attestor) | c ∈ C*_p(project) }
-
-Extended fields:
-  - conflict_detection_results : CONTRADICTION scan outcome
-  - precedence_rule_applied : reference to precedence table entry (if any)
-  - decomposition_version : ver(decomp(c_s), t) for each c derived from C_s
-  - emergency_flag : emergency(c) for any break-glass constraints
-```
-
-### A.13 Theorems
-
-Existing theorems (unchanged):
-
-```
-THEOREM (Audit Completeness):
-  ∀ p ∈ P_executed : audit(p,t) is total over C*(project)
-  ∧ audit(p,t) is deterministic
-  ∧ audit(p,t) is immutable
-
-THEOREM (No Evaluability Gap):
-  ∀ c ∈ C*(project) : c ∈ C_m ∨ c ∈ C_p
-```
-
-New theorems (with explicit preconditions and scope):
-
-```
-THEOREM (Contradiction Freedom — Pairwise, Atomic Fragment):
-  After Phase 1 authoring review, no pair of constraints in
-  C*(level) is contradictory per the CONTRADICTION predicate
-  over atomic properties φ ∈ Φ.
-
-  Scope: complete for the atomic fragment. Multi-constraint
-  and semantic interactions are handled by governance process
-  (tension detection, cross-domain review), not formal guarantee.
-
-THEOREM (Scope Isolation — Direct, Under Fixed Definitions):
-  No agent can create, modify, or delete constraints outside
-  their authorized domain scope, given fixed domain definitions.
-
-  Scope: does NOT cover indirect effects (addressed by impact
-  analysis §7.3), scope redefinition by the cross-domain
-  governance body, or constraints authored via break-glass.
-
-THEOREM (Decomposition Coverage — Existence, Not Quality):
-  Every semantic intent in C_s has a registered decomposition
-  in decomp(c_s).
-
-  Scope: guarantees existence, not soundness or adequacy.
-  Soundness is approximated empirically (§5.7). Coverage
-  quality for Critical-tier constraints is governed by
-  residual gap controls (§5.6).
-```
-
-### A.14 Limitations of the Formal Model
-
-The formal model guarantees properties of the governance process: who can author what, contradictions are detected, audit is complete, scope is isolated. It does not guarantee properties of the governed artifacts beyond what the constraints specify — content correctness, semantic completeness, or model behavior are outside scope.
-
-Mechanisms that are governance-process tools — tension detection, impact analysis, residual gap review, collusion detection — are operationally valuable but not mathematically proven. They are best-effort controls, not formal guarantees.
-
-This distinction is critical for the target audience: formal guarantees are hard commitments that can be verified and audited. Governance-process tools are organizational controls that improve outcomes but cannot be reduced to logical proofs.
-
----
-
-## Appendix B: Worked Examples
-
-### B.1 Healthcare: Patient-Facing Chatbot
-
-**Enterprise constraints:**
-- `O(hipaa_disclaimer)` — every prompt must include HIPAA-compliant disclaimer language
-- `F(pii_in_logs)` — prompts must never include instructions that would cause PII to appear in system logs
-- `F(medical_diagnosis)` — prompts must not instruct the model to diagnose conditions
-- `P_meta(clinical_terminology)` — enterprise has considered clinical terminology and imposes no restriction
-
-**Department constraints (Patient Services):**
-- Inherits `O(hipaa_disclaimer)` and `F(pii_in_logs)` — cannot change
-- Adds `F(clinical_terminology)` — patients are not clinicians; layman terms required. This is a valid tightening of P_meta (which imposes no restriction). Flagged for tension review because P_meta existed at enterprise level; review confirms department rationale is sound.
-- Adds `O(empathetic_tone)` — patient-facing communications require empathetic framing
-- Adds `O(redirect_to_provider)` — prompts must instruct the model to redirect medical questions to qualified providers
-
-**Project constraints (Patient FAQ Chatbot):**
-- Inherits all enterprise and department constraints (5 total)
-- Adds `O(scope_to_faq_topics)` — prompt must limit the model to answering questions within the FAQ knowledge base
-- Adds `O(cite_sources)` — prompt must instruct the model to cite specific FAQ entries
-
-**Effective constraint set at project level:**
-C*(project) = {O(hipaa_disclaimer), F(pii_in_logs), F(medical_diagnosis), F(clinical_terminology), O(empathetic_tone), O(redirect_to_provider), O(scope_to_faq_topics), O(cite_sources)}
-
-**Decomposition example: F(medical_diagnosis)**
-
-Semantic intent: "The AI system must not produce output that could be construed as diagnosing a medical condition."
-
-Mechanical components (C_m):
-- Pattern scan for diagnostic language: regex and NER-based detection of diagnostic phrases ("you have," "this indicates," "the symptoms suggest," "diagnosis:")
-- Required disclaimer presence: prompt must include explicit instruction "Do not diagnose conditions or suggest specific diagnoses"
-- Scope limitation: prompt must include instruction to refuse requests for diagnosis
-
-Procedural components (C_p):
-- Medical affairs review: a qualified medical affairs officer reviews the prompt and attests that its framing adequately prevents diagnostic behavior
-- Adversarial testing: red-team testing with prompts designed to elicit diagnostic language; results reviewed and attested by medical affairs
-
-Residual gap: mechanical checks cover an estimated 85% of diagnostic language patterns based on regression testing against a corpus of known diagnostic phrases. The remaining 15% includes novel or indirect diagnostic formulations. Compensating control: 15% HITL review rate on chatbot outputs, managed by medical affairs, with monthly reporting.
-
-**Conflict example: O(empathetic_tone) vs F(promissory_language)**
-
-The department's obligation for empathetic tone (authored by Patient Experience domain) creates tension with Legal's prohibition on promissory language. Empathetic language like "we will make sure you get the care you need" could be construed as a promissory commitment.
-
-Phase 1 resolution: cross-domain review between Patient Experience and Legal. Resolution: add a precedence rule to the Enterprise Precedence Table — F(promissory_language) takes precedence over O(empathetic_tone). The project team must find empathetic language that does not make promissory commitments. Documented rationale: legal liability outweighs tone preference.
-
-### B.2 Financial Services: Investment Research Assistant
-
-**Enterprise constraints:**
-- `O(sox_audit_trail)` — all AI-generated content used in financial reporting must have complete audit trail
-- `F(investment_advice_to_retail)` — prompts must not instruct the model to provide personalized investment advice to retail investors
-- `O(data_source_citation)` — prompts must instruct the model to cite data sources for all quantitative claims
-
-**Department constraints (Institutional Research):**
-- Inherits all enterprise constraints
-- `P_meta(investment_thesis_language)` — the department has considered investment thesis language and does not restrict it for professional audiences
-- `O(model_uncertainty_disclosure)` — prompts must instruct the model to disclose uncertainty and confidence levels
-
-**Project constraints (Analyst Tool):**
-- Inherits all enterprise and department constraints
-- `F(forward_looking_statements_without_disclaimer)` — prompts must prohibit forward-looking statements unless accompanied by required regulatory disclaimers
-
-**Decomposition example: F(investment_advice_to_retail)**
-
-Semantic intent: "The AI system must not provide personalized investment recommendations to retail investors."
-
-Mechanical components: audience detection (prompt must include explicit audience scoping: "this tool is for institutional investors only"), keyword patterns for personalized advice language ("you should buy," "I recommend," "based on your portfolio"), required disclaimer presence.
-
-Procedural components: compliance officer review, quarterly re-attestation, FINRA suitability framework review.
-
-Residual gap: mechanical checks cannot distinguish between general market commentary (permitted) and implicit investment guidance that sophisticated readers would recognize as advice but retail investors might act on differently. Compensating control: 25% HITL review by compliance, with escalation protocol for borderline cases.
-
-### B.3 Energy: Grid Operations Decision Support
-
-**Enterprise constraints:**
-- `O(nerc_cip_compliance_notice)` — all AI interactions involving grid operations must include NERC CIP compliance framing
-- `F(operational_commands_without_human_confirmation)` — prompts must never instruct the model to issue operational commands; all recommendations require human confirmation
-- `O(audit_all_recommendations)` — every AI recommendation must be fully auditable with complete constraint evaluation
-
-**Department constraints (Grid Operations):**
-- `O(cite_sensor_data_source)` — prompts must instruct the model to cite specific sensor data sources for all recommendations
-- `F(recommendations_outside_trained_scenarios)` — prompts must restrict the model to scenarios covered by validated training data
-
-**Conflict example: efficiency vs safety**
-
-An efficiency optimization constraint `O(minimize_response_time)` from the Operations Efficiency domain creates tension with `F(operational_commands_without_human_confirmation)` from the Safety domain. Faster response times could pressure the system toward fewer confirmation steps.
-
-Resolution: Enterprise Precedence Table specifies Safety > Efficiency as the default domain priority. The safety prohibition takes absolute precedence. The efficiency constraint is modified to: `O(minimize_response_time_within_safety_constraints)` — a new atomic property that explicitly acknowledges the safety boundary.
-
-**Break-glass scenario:** During an active grid stability event, an enterprise-level actor invokes break-glass to add `F(non_essential_ai_queries)` — temporarily prohibiting all non-essential AI interactions to preserve computational resources for critical grid operations. TTL: 24 hours (energy sector default). The constraint is tightening-only (adds a prohibition). Immediate CONTRADICTION scan confirms no conflicts with existing constraints. Post-hoc review within 24 hours formalizes the constraint through standard dual-control if the operational condition persists, or allows automatic reversion if the event resolves.
-
----
-
-## Appendix C: Constraint Library Template
-
-### C.1 Library Structure
-
-A constraint library package contains:
-
-**Library metadata:**
-- Name and version (semantic versioning: major.minor.patch)
-- Target industry and regulatory basis (e.g., "HIPAA Privacy Rule §164.502-§164.514")
-- Maintainer organization and contact
-- Last review date and next scheduled review
-- Applicable governance levels (recommended)
-
-**Constraint entries:** each containing:
-- Deontic modality (O or F)
-- Atomic property identifier from the controlled vocabulary
-- Recommended governance level (enterprise, department, or project)
-- Domain assignment
-- Evaluability class (C_m or C_p)
-- Rationale and regulatory reference
-
-**Pre-attested decompositions:** for each semantic intent underlying the constraints:
-- The intent record (C_s) with full semantic description
-- The mechanical components (C_m) with implementation specifications
-- The procedural components (C_p) with attestation requirements
-- The decomposition attestation record (who attested, when, qualifications)
-
-**Known residual gaps:** documented per constraint where soundness cannot be fully demonstrated, including compensating control recommendations.
-
-**Regression test suite:** known-bad inputs that mechanical checks must catch, plus expected evaluation outcomes. This suite is the minimum test set that must pass during local verification (§9.4).
-
-### C.2 Library Lifecycle
-
-Libraries follow semantic versioning:
-
-- **Major version** (e.g., 1.0 → 2.0): new constraints added, constraints removed, or constraint semantics materially changed. Requires full re-attestation by adopting organizations.
-- **Minor version** (e.g., 1.0 → 1.1): modified decompositions, updated mechanical checks, expanded test suites. Requires regression test re-execution by adopting organizations.
-- **Patch version** (e.g., 1.0.0 → 1.0.1): documentation updates, test case additions, editorial corrections. No action required by adopting organizations beyond acknowledgment.
-
-Each version requires domain expert attestation from the library maintainer. Organizations that have adopted a library version receive update notifications when new versions are released, including a changelog and impact assessment.
-
-### C.3 Example: HIPAA Prompt Constraints v1.0 (Skeleton)
-
-**Library metadata:**
-- Name: HIPAA Prompt Constraints
-- Version: 1.0.0
-- Industry: Healthcare / Life Sciences
-- Regulatory basis: HIPAA Privacy Rule (45 CFR §164.502-§164.514), HIPAA Security Rule (45 CFR §164.302-§164.318)
-- Recommended level: Enterprise
-
-**Constraint entries (8 constraints):**
-
-| # | Modality | Property | Class | Regulatory Reference |
-|---|----------|----------|-------|---------------------|
-| 1 | F | phi_disclosure_in_output | C_m | §164.502(a) — Minimum Necessary |
-| 2 | O | hipaa_disclaimer_present | C_m | §164.520 — Notice of Privacy Practices |
-| 3 | F | pii_in_system_logs | C_m | §164.312(a) — Access Control |
-| 4 | O | data_minimization_instruction | C_m | §164.502(b) — Minimum Necessary Standard |
-| 5 | F | medical_diagnosis_instruction | C_m + C_p | §164.502 — Uses and Disclosures |
-| 6 | O | patient_redirect_to_provider | C_m | §164.502 — Treatment Exception |
-| 7 | F | phi_in_test_environments | C_m | §164.308(a)(4) — Information Access Management |
-| 8 | O | breach_notification_instruction | C_p | §164.404 — Notification to Individuals |
-
-**Decomposition example (Constraint #1: F(phi_disclosure_in_output)):**
-
-Intent record: "The AI system must not include protected health information in its outputs unless the disclosure is explicitly authorized under a HIPAA-permitted use or disclosure."
-
-Mechanical components:
-- NER-based PHI detection in prompt instructions (names, dates, MRNs, SSNs, addresses, phone numbers)
-- Pattern-based detection of prompt instructions that request PHI inclusion
-- Required presence of explicit "Do not include patient-identifying information" instruction
-
-Procedural components:
-- Privacy officer review and attestation that the prompt's PHI protections are adequate for the intended use case
-- Annual re-attestation aligned with HIPAA risk assessment cycle
-
-Residual gap: mechanical NER detection covers approximately 90% of standard PHI patterns. Novel identifiers, contextual PHI (e.g., "the patient in room 3"), and inference-based re-identification are not fully captured. Compensating control: 10% HITL review of outputs by trained privacy staff.
-
-**Regression test suite (partial):**
-- 50 known-PHI test prompts containing explicit patient identifiers → mechanical checks must flag all 50
-- 20 boundary-case prompts with contextual identifiers → mechanical checks should flag at least 15
-- 30 clean prompts with no PHI → mechanical checks must pass all 30 (false positive baseline)
-
----
-
-*End of White Paper 1: Enterprise Prompt Governance*
+The formal model, worked examples, and constraint-library template for EPG are collected in Appendix A, Appendix B, and Appendix C.

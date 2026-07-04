@@ -1,20 +1,21 @@
-# Section 3 — Stopping Bad Outputs: Runtime Controls and Fallbacks (ROC)
+# Chapter 3 — Stopping Bad Outputs (ROC)
 
-**Trust by Design — Section 3 (formerly White Paper 2) of Clad**
+**Part II · The Three Control Layers**
 
-**Version:** 1.0
-**Date:** April 2026
-**Audience:** CIO/CISO, Senior AI Architects, Compliance Officers
-**Relationship:** Builds on the Clad Meta-Framework (v5). Companion to WP1: Enterprise Prompt Governance.
-**Scope:** Governs control surfaces S_output (raw model output) and S_delivery (delivered output after post-processing)
+Chapter 2 governed the prompt — the surface an enterprise fully controls before the model runs. But a governed prompt does not guarantee a governed output: models are stochastic, and the same instructions can produce different results. This chapter governs the other side of the model — the output, before it reaches a user — through Runtime Output Controls (ROC), the component `g_ROC`.
 
----
+By the end of the chapter you will be able to:
 
-## 1. Executive Summary
+- explain why prompt governance alone leaves irreducible residual risk on the output surface;
+- distinguish deterministic (hard) from classifier-based (soft) output evaluation, and reason about their different evidentiary properties;
+- design a risk-tiered pass / flag / block pipeline that trades evaluation depth against delivery latency;
+- select controls for the output-side threats EPG defers — prompt injection, jailbreaking, PII/PHI leakage, and cross-tenant isolation.
+
+## 1. The Problem and the Approach
 
 ### 1.1 The Problem: Ungoverned Model Outputs
 
-Enterprise Prompt Governance (WP1) ensures that the instructions sent to AI models are compliant, consistent, and auditable. But a governed prompt does not guarantee a governed output. AI models are stochastic — the same prompt can produce different outputs across invocations. A perfectly governed prompt can still yield an output that discloses protected health information, provides unauthorized financial advice, reproduces copyrighted training data, or responds to a jailbreak attempt with content the prompt explicitly prohibited.
+Enterprise Prompt Governance (EPG, Chapter 2) ensures that the instructions sent to AI models are compliant, consistent, and auditable. But a governed prompt does not guarantee a governed output. AI models are stochastic — the same prompt can produce different outputs across invocations. A perfectly governed prompt can still yield an output that discloses protected health information, provides unauthorized financial advice, reproduces copyrighted training data, or responds to a jailbreak attempt with content the prompt explicitly prohibited.
 
 This is not a theoretical concern. It is a mathematical certainty, formalized in the meta-framework as the Irreducible Residual Risk theorem: even with all governance components deployed, residual compliance risk is non-zero. The question is not whether non-compliant outputs will occur, but whether the enterprise can detect them before they reach end users, contain them when they do, and trace them back to root cause.
 
@@ -38,7 +39,7 @@ ROC instantiates component g_ROC from the meta-framework, governing S_output (ra
 
 The three-component governance pipeline is: EPG governs the prompt (before inference) → the model produces output → ROC evaluates and filters the output (before delivery) → MDR monitors patterns across interactions (continuous). Each component provides independent guarantees that compose into system-wide coverage.
 
-**Relationship to WP1's formal model.** EPG uses a deontic constraint framework (obligations O and prohibitions F over atomic properties from a controlled vocabulary Φ). ROC uses a different evaluation model — deterministic rules, classifier-based scoring, and composite logic — because output evaluation is fundamentally different from prompt constraint evaluation. Outputs are dynamic, stochastic artifacts that require probabilistic detection, not static artifacts that can be evaluated against binary predicates. The two components share the property vocabulary Φ and compose at the audit chain level (shared interaction_id, hash-chained records), but they do not share a constraint evaluation logic. This is by design, not an inconsistency.
+**Relationship to EPG's formal model.** EPG uses a deontic constraint framework (obligations O and prohibitions F over atomic properties from a controlled vocabulary Φ). ROC uses a different evaluation model — deterministic rules, classifier-based scoring, and composite logic — because output evaluation is fundamentally different from prompt constraint evaluation. Outputs are dynamic, stochastic artifacts that require probabilistic detection, not static artifacts that can be evaluated against binary predicates. The two components share the property vocabulary Φ and compose at the audit chain level (shared interaction_id, hash-chained records), but they do not share a constraint evaluation logic. This is by design, not an inconsistency.
 
 ---
 
@@ -96,7 +97,7 @@ Risk-tiered threshold defaults:
 - Standard workloads: balanced thresholds
 - Low-risk workloads: permissive thresholds (higher τ, fewer flags, more throughput)
 
-**Threshold monotonicity invariant.** Consistent with WP1's constraint inheritance principle (lower levels can only tighten, never loosen), classifier thresholds must satisfy: `∀ l₂ ≺ l₁ : τ(k, l₂) ≤ τ(k, l₁)`. A department may lower a threshold (tighten, more flags) but may never raise it above the enterprise default. A project may lower it further but never above the department's level. This prevents governance weakening through threshold manipulation.
+**Threshold monotonicity invariant.** Consistent with EPG's constraint inheritance principle (Chapter 2; lower levels can only tighten, never loosen), classifier thresholds must satisfy: `∀ l₂ ≺ l₁ : τ(k, l₂) ≤ τ(k, l₁)`. A department may lower a threshold (tighten, more flags) but may never raise it above the enterprise default. A project may lower it further but never above the department's level. This prevents governance weakening through threshold manipulation.
 
 **Threshold policy bounds for Critical tier.** For Critical-tier constraints, each classifier has a policy-defined maximum threshold (τ_max) that cannot be exceeded without an exceptional process (board-level risk exception, documented and time-limited). This prevents insiders from gradually raising thresholds until classifiers are effectively disabled. Threshold changes and their empirical flag rates must be monitored centrally and reported to MDR. A sustained decrease in flag rates without corresponding improvement in classifier precision is an anomaly that triggers governance review.
 
@@ -232,7 +233,7 @@ Every fallback action is recorded in the audit trail: what was blocked, why, whi
 
 ## 6. Threat-Specific Controls
 
-The meta-framework identified five threats (T7-T11) that EPG deferred to ROC and SA. This section defines ROC's controls for each.
+Chapter 1 identified five threats (T7-T11) that EPG deferred to ROC and MDR. This section defines ROC's controls for each.
 
 ### 6.1 T7: Prompt Injection Detection
 
@@ -280,7 +281,7 @@ The meta-framework identified five threats (T7-T11) that EPG deferred to ROC and
 
 **PHI-first policy for HIPAA-scope Critical workloads.** For any HIPAA-covered workload classified as Critical, the following mandatory controls apply:
 - Any classifier PHI score above a conservative alert threshold (τ_alert, lower than the standard flag threshold) must trigger either block/redact or human review routing. "Flag only" without blocking or human review is not acceptable for PHI in Critical tier.
-- Documented PHI residual risk must be paired with compensating controls, including a minimum percentage of human-in-the-loop review on outputs — analogous to WP1's residual gap controls (§5.6 of WP1).
+- Documented PHI residual risk must be paired with compensating controls, including a minimum percentage of human-in-the-loop review on outputs — analogous to EPG's residual gap controls (Chapter 2, §5.6).
 - The "flag and continue" path available for Standard/Low tiers does not apply to PHI in Critical tier. Every PHI suspicion above τ_alert is either blocked, redacted (with post-redaction re-evaluation), or routed to human review.
 
 **Audit specificity:** PII detection audit records include the type of PII detected (SSN, name, MRN, etc.), the detection method (regex, classifier, composite), and the action taken (block, redact, human-review, flag). This granularity enables HIPAA breach assessment — regulators need to know not just that a violation occurred, but what type of data was exposed and to whom.
@@ -301,7 +302,7 @@ ROC does NOT claim T11 as a control it enforces. It provides detection signals t
 
 ---
 
-## 7. Connection to EPG and Meta-Framework
+## 7. ROC as a Governance Component
 
 ### 7.1 ROC as Component g_ROC
 
@@ -432,260 +433,11 @@ The formal model (Appendix A) uses the same two-tier structure throughout: forma
 
 ---
 
-## Appendix A: Formal Model
+## Key takeaways
 
-### A.1 Primitive Sets
+- A governed prompt does not guarantee a governed output. Because models are stochastic, residual risk on the output surface is irreducible (Chapter 1, Theorem 4); ROC exists to detect, contain, and trace it.
+- ROC evaluates outputs in two tiers with honestly different evidence: deterministic checks are hard evidence, classifier scores are scored evidence. Neither is promoted to the other's standard (§2, §3).
+- Timing is a safety property. Critical workloads get real-time blocking; standard and low-risk workloads get asynchronous evaluation, trading depth for latency so governance does not push teams toward ungoverned tools (§5).
+- ROC picks up the output-side threats EPG defers — injection, jailbreaking, PII/PHI leakage, cross-tenant isolation (§6) — and, as `g_ROC` with `R_hard = ∅`, is independently deployable while composing with EPG and MDR (§7).
 
-```
-O_raw = set of all raw model outputs        — generated by model, before filtering
-O_del = set of all delivered outputs         — after ROC processing
-K     = set of all classifiers              — versioned ML models for output scoring
-R     = set of all deterministic rules      — pattern, blocklist, structural checks
-τ     = K → [0, 1]                          — threshold function mapping classifiers
-                                               to their governance thresholds
-```
-
-ROC also uses the shared sets from the meta-framework: I (interactions), T (time), V (audit records), Φ (property vocabulary).
-
-### A.2 Output Constraint Taxonomy
-
-```
-C_ROC = O_d ⊎ O_c ⊎ O_x     (disjoint union)
-
-O_d = deterministic output constraints
-  eval_d : O_raw × R → {pass, fail}
-  Properties: total, deterministic, repeatable
-
-O_c = classifier-based output constraints
-  eval_c : O_raw × K → [0, 1]
-  Governance decision: eval_c(o, k) ≥ τ(k) → flag ; else → below_threshold
-  Quantized satisfaction: o ⊨_τ c  (weaker than deterministic o ⊨ c)
-  Properties: total, probabilistic, threshold-dependent
-
-Threshold monotonicity invariant:
-  ∀ l₂ ≺ l₁ : τ(k, l₂) ≤ τ(k, l₁)
-  Lower levels can only tighten (lower) thresholds, never loosen.
-
-Threshold policy bounds (Critical tier):
-  ∀ k, risk_tier = critical : τ(k) ≤ τ_max(k)
-  where τ_max is policy-defined and cannot be exceeded without
-  exceptional process.
-
-O_x = composite output constraints
-  eval_x : O_raw × (𝒫(O_d) × 𝒫(O_c)) × logic → {pass, flag, block}
-  where logic ∈ {any_flag, all_flag, weighted}
-  Properties: deterministic given component evaluations
-```
-
-### A.3 Pipeline Stages
-
-```
-DEFINITION (ROC Pipeline):
-
-For interaction i with raw output o ∈ O_raw:
-
-  Stage 1: D_results = { (r, eval_d(o, r)) | r ∈ applicable(O_d, i) }
-  Stage 2: C_results = { (k, eval_c(o, k), τ(k)) | k ∈ applicable(O_c, i) }
-  Stage 3: X_results = { (x, eval_x(o, x, D_results, C_results)) |
-                          x ∈ applicable(O_x, i) }
-
-  Short-circuit (Critical tier):
-    if ∃ r ∈ D_results : eval_d = fail → Decision = BLOCK immediately
-    (do not await Stage 2/3)
-
-  Decision(o) =
-    BLOCK  if ∃ r ∈ D_results : eval_d = fail ∧ risk_tier = critical
-           ∨ ∃ x ∈ X_results : eval_x = block
-           ∨ risk_tier = critical ∧ classifier_timeout
-    FLAG   if ∃ k ∈ C_results : eval_c ≥ τ(k)
-           ∨ ∃ x ∈ X_results : eval_x = flag
-    BELOW_THRESHOLD  otherwise
-    (Note: BELOW_THRESHOLD, not PASS — for classifier-evaluated outputs)
-
-  Delivery(o) =
-    Critical: atomic buffered — o' emitted only after Decision is terminal
-    Standard: o' = o delivered immediately; evaluation async
-    Low: o' = o delivered; evaluation sampled async
-
-    if BLOCK: o' = fallback(o, decision_reason)
-    if FLAG (Critical): o' = fallback or human review
-    if FLAG (Standard/Low): o' = o (delivered, flag in audit)
-```
-
-### A.4 Audit Record
-
-```
-A_ROC(i, t) = {
-  interaction_id    : identifier(i)
-  timestamp         : t
-  raw_output_hash   : hash(o)
-  delivered_hash    : hash(o')        — differs from raw if redaction occurred
-  d_evaluations     : D_results       — deterministic: (rule, pass/fail)
-  c_evaluations     : C_results       — classifier: (classifier_ver, score, τ, decision)
-  x_evaluations     : X_results       — composite: (constraint, decision, logic_applied)
-  pipeline_decision : {PASS, FLAG, BLOCK}
-  fallback_action   : action taken if BLOCK (substitution, redaction, retry, escalation)
-  timing_mode       : {synchronous, asynchronous, sampled}
-  epg_context       : pointer(A_EPG(i, t)) | ⊥
-  predecessor       : pointer(A_EPG(i, t)) | ⊥
-}
-```
-
-### A.5 Formal Properties
-
-```
-THEOREM (Output Evaluation Completeness — Critical and Standard Tiers):
-  ∀ i ∈ I_governed where timing_mode ∈ {synchronous, asynchronous} :
-    A_ROC(i, t) is total over applicable(C_ROC, i)
-    ∧ A_ROC(i, t) is immutable
-    ∧ A_ROC(i, t) contains interaction_id
-
-  Scope: applies to Critical and Standard tier interactions within
-  ROC's enforcement boundary. Low-tier sampled interactions have
-  evaluation records only when sampled. Outputs that bypass ROC
-  entirely are detected via GIL.
-
-THEOREM (Deterministic Evaluation Reliability):
-  ∀ o, r : eval_d(o, r, t₁) = eval_d(o, r, t₂)
-    given ver(r, t₁) = ver(r, t₂)
-
-  Deterministic evaluations produce identical results for
-  identical inputs and rule versions. This is the same
-  evidentiary standard as EPG's mechanical evaluation.
-
-PROPERTY (Classifier-Based Evaluation — Scored, Not Guaranteed):
-  eval_c is probabilistic. The following are NOT theorems:
-    - eval_c is deterministic (it is not — classifier non-determinism)
-    - eval_c has zero false negatives (it does not at any threshold)
-    - eval_c captures all violations (novel patterns evade classifiers)
-
-  Classifier evaluations are SCORED EVIDENCE, not formal guarantees.
-  The audit record captures the score, threshold, and classifier
-  version, enabling post-hoc assessment of evaluation quality.
-```
-
-### A.6 Threshold Governance
-
-```
-Thresholds are governed artifacts:
-  ∀ k ∈ K : τ(k) is subject to:
-    - Dual-control modification (author ≠ approver)
-    - Version tracking: ver(τ(k), t) recorded in audit
-    - Risk-tier defaults: τ_critical < τ_standard < τ_low
-      (lower threshold = more conservative = more flags)
-```
-
-### A.7 Limitations
-
-The formal model provides guarantees for the deterministic tier and scored evidence for the classifier tier. It does not provide:
-
-- Soundness or completeness guarantees for classifiers
-- Coverage guarantees for novel threat patterns
-- Guarantees about model behavior (only about output evaluation)
-
-This two-tier evidentiary structure is intentional. Merging probabilistic evaluations with deterministic ones would either overstate classifier reliability or understate deterministic reliability. Keeping them separate enables honest, tier-appropriate audit.
-
----
-
-## Appendix B: Worked Examples
-
-### B.1 Healthcare: Patient-Facing Chatbot (Continued from WP1)
-
-WP1's example established EPG constraints for a Patient FAQ Chatbot. ROC extends governance to the output:
-
-**Output constraints applied:**
-
-| Constraint | Type | Tier | Action on Violation |
-|------------|------|------|-------------------|
-| SSN/MRN pattern detection | O_d | Deterministic | Block + redact |
-| PHI NER classifier (τ = 0.75) | O_c | Classifier | Block (Critical) |
-| Medical advice classifier (τ = 0.80) | O_c | Classifier | Block (Critical) |
-| Disclaimer presence check | O_d | Deterministic | Block + retry with reinforced prompt |
-| Composite PHI check (regex + NER) | O_x | Composite (any_flag) | Block + redact |
-
-**Scenario: Normal operation.** Patient asks "What are your visiting hours?" Model responds with visiting hours and a HIPAA disclaimer. ROC pipeline: deterministic checks pass (no PII patterns, disclaimer present), classifiers score below thresholds (no medical advice, no PHI). Decision: PASS. Output delivered. Full audit record produced.
-
-**Scenario: Jailbreak attempt.** Patient crafts input designed to elicit medical diagnosis. Model partially complies despite EPG's F(medical_diagnosis) prompt constraint. ROC pipeline: medical advice classifier scores 0.91 (above 0.80 threshold). Decision: BLOCK. Fallback: safe response substitution ("I'm not able to provide medical advice. Please contact your healthcare provider."). Audit record documents: classifier score, threshold, block decision, fallback delivered.
-
-**Scenario: Incidental PII.** Model response references "your appointment with Dr. Smith on March 15" — incidental PHI from conversation context. ROC pipeline: PHI NER classifier scores 0.82 (above 0.75). Composite PHI check (O_x, any_flag) triggers. Decision: BLOCK with redaction. Delivered output: "your appointment with [PROVIDER] on [DATE]." Audit record documents redaction with specific PII types detected.
-
-### B.2 Financial Services: Investment Research Assistant
-
-**Output constraints applied:**
-
-| Constraint | Type | Tier | Action on Violation |
-|------------|------|------|-------------------|
-| Account number pattern detection | O_d | Deterministic | Block + redact |
-| Financial advice classifier (τ = 0.70) | O_c | Classifier | Flag (Standard) |
-| Forward-looking statement detector (τ = 0.75) | O_c | Classifier | Flag + append disclaimer |
-| Data source citation check | O_d | Deterministic | Block + retry |
-
-**Scenario: Borderline advice.** Analyst asks for sector analysis. Model produces market commentary that edges toward a buy recommendation. Financial advice classifier scores 0.68 (below 0.70 threshold). Decision: BELOW_THRESHOLD (⊨_τ). This is a tuning decision — the threshold represents the organization's risk appetite. The audit record captures the score, threshold version, and classifier version for post-hoc review if the output is later challenged.
-
-**Important scope note:** This example assumes the tool is for internal expert use only with explicit policy walls preventing retail exposure. If the tool's outputs could reach retail investors, the workload must be reclassified as Critical with synchronous blocking on high financial-advice scores. FINRA/SEC scrutiny applies regardless of the intended audience if the tool is accessible beyond qualified institutional users.
-
-**Scenario: Missing citation.** Model produces quantitative claims without citing data sources. Citation check (O_d) fails. Decision: BLOCK + retry with modified prompt reinforcing O(data_source_citation). Retry succeeds — model produces the same analysis with source citations. Second evaluation: PASS. Audit record documents both attempts.
-
-### B.3 Energy: Grid Operations Decision Support
-
-**Output constraints applied:**
-
-| Constraint | Type | Tier | Action on Violation |
-|------------|------|------|-------------------|
-| Operational command detection | O_d | Deterministic | Block + escalate |
-| Recommendation confidence scorer (τ = 0.60) | O_c | Classifier | Flag if low confidence |
-| NERC CIP compliance notice check | O_d | Deterministic | Block + retry |
-
-**Scenario: Model generates operational command.** Despite EPG's F(operational_commands_without_human_confirmation), model outputs "Execute load shedding on circuit 7." Deterministic command detection catches the imperative structure. Decision: BLOCK + escalation to human operator. Output is NOT delivered. Audit record documents the attempted command, the block, and the escalation. This is a safety-critical catch — ROC prevents a potential grid operations violation that EPG's prompt constraint failed to prevent at the model behavior level.
-
----
-
-## Appendix C: Output Classifier Specifications
-
-### C.1 Classifier Governance Profile Template
-
-Every classifier deployed in ROC must have a documented governance profile:
-
-| Field | Description |
-|-------|-------------|
-| Classifier ID | Unique identifier |
-| Version | Semantic version (major.minor.patch) |
-| Purpose | What threat/constraint it evaluates |
-| Output constraint class | O_c or component of O_x |
-| Training data summary | Source, size, composition (no PII in the profile) |
-| Benchmark metrics | Precision, recall, F1 at configured threshold |
-| Known limitations | Classes of inputs where performance degrades |
-| Expected Calibration Error (ECE) | Calibration metric for the current version — required for threshold governance. A threshold is meaningless without knowing the classifier's calibration curve. |
-| Reliability diagram | Visual calibration curve for the current version |
-| Threshold (τ) | Current governance threshold, with risk-tier variants. Only governable when ECE is known. |
-| Threshold owner | Which governance domain owns the threshold |
-| Validation cadence | How often retested against updated benchmarks |
-| Last validation date | When last validated |
-| Red-team results | Summary of last adversarial testing |
-| Retraining trigger | Conditions that mandate classifier retraining |
-
-### C.2 Minimum Classifier Requirements by Threat
-
-| Threat | Minimum Classifier Type | Recommended Benchmark |
-|--------|------------------------|----------------------|
-| T7: Prompt injection | Sequence classifier on output patterns | Injection benchmark dataset (updated quarterly) |
-| T8: Jailbreak | Safety boundary classifier | Red-team jailbreak corpus (updated quarterly) |
-| T10: PII/PHI | NER + regex composite | HIPAA PHI pattern corpus, PCI test data |
-| T10: Memorization | Similarity scorer against training corpus | Memorization benchmark (model-specific) |
-| T11: Cross-tenant | Tenant-specific terminology detector | Tenant vocabulary cross-reference |
-
-### C.3 Threshold Calibration Guidance
-
-Threshold selection involves a precision-recall tradeoff with regulatory implications:
-
-**Conservative (low τ, ~0.5-0.7):** More flags, fewer misses. Higher false-positive rate increases review burden. Appropriate for Critical-tier PHI/safety constraints where a missed violation has severe regulatory or safety consequences.
-
-**Balanced (medium τ, ~0.7-0.85):** Moderate flags and misses. Appropriate for Standard-tier constraints where the cost of false positives and false negatives is roughly symmetric.
-
-**Permissive (high τ, ~0.85-0.95):** Fewer flags, more misses. Lower review burden but higher miss rate. Appropriate for Low-tier or informational constraints where violations are not safety-critical.
-
-Threshold calibration is not a one-time event. As models change, user populations shift, and adversarial techniques evolve, the operating point on the precision-recall curve shifts. Periodic recalibration (aligned with classifier validation cadence) ensures thresholds remain appropriate.
-
----
-
-*End of White Paper 2: Runtime Output Controls*
+Chapters 2 and 3 govern the two sides of a single interaction. Chapter 4 steps back to watch the whole system over time. ROC's formal model, worked examples, and classifier specifications are collected in Appendix A, Appendix B, and Appendix C.
