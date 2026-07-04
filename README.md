@@ -148,6 +148,13 @@ The formal specifications that the code implements:
 | [Section 4 — Seeing the Whole Picture: MDR — Monitoring, Detection, Response](research/sa-monitoring-detection-response.md) | Cross-component monitoring, incident response, forensic evidence preservation |
 | [Section 5 — Meeting Regulators: Practical Mapping to Key Standards](research/regulatory-mapping-appendix.md) | Crosswalk to NIST AI RMF, EU AI Act, ISO 42001, HIPAA, SOX, GLBA, NERC CIP |
 
+## Read the book
+
+The research documents are also published as the ebook **_Trust by Design: Governing Enterprise AI with Clad_**:
+
+- **EPUB / PDF** — <!-- TODO: replace with your GitHub Pages or Releases URL --> _(publish link TBD)_
+- **Landing page** — a single-page site lives in [`landing/`](landing/) and deploys to Google Cloud Storage; see [`gcp/README.md`](gcp/README.md). _(public URL TBD after first deploy)_
+
 ## Validation Status
 
 This framework has been developed through formal design and multi-model adversarial review. It has **not** been validated through production deployment or empirical testing. The formal properties are architecturally sound but operationally unverified. Pilot deployment with representative workloads is recommended before enterprise rollout.
