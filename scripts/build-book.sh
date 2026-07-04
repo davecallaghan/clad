@@ -14,8 +14,12 @@ cd "$(dirname "$0")/.."
 
 OUT="build/trust-by-design.epub"
 
+# Book order (see SUMMARY.md). The repo README is intentionally NOT part of the
+# book — the EPUB opens on the Preface. Back-matter appendices are appended as
+# the textbook conversion progresses (see docs/textbook-conversion-plan.md).
 FILES=(
-  README.md
+  research/00-preface.md
+  research/01-notation.md
   research/meta-framework.md
   research/wp1-enterprise-prompt-governance.md
   research/wp2-runtime-output-controls.md

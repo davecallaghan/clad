@@ -1,17 +1,28 @@
-# Section 1 — The Architecture of Assurance: Clad's Meta-Framework
+# Chapter 1 — The Architecture of Assurance
 
-## Introduction
-This document formalizes a governance boundary that makes risk, responsibility, and evidentiary state explicit for regulated AI use. Rather than promising perfect prevention, Clad focuses on provability: it guarantees that every governed interaction produces auditable evidence of which rules were in effect, which evaluations occurred (or failed), and what artifacts and versions participated in the interaction. That provability is the core compliance deliverable for regulators and internal auditors.
+**Part I · Foundations**
+
+Every later chapter of this book is an instance of one idea developed here: that
+AI governance can be made *provable*. This chapter builds the foundation — the
+axioms Clad rests on, the surfaces at which an interaction can be governed, the
+model of a governance component, and the algebra by which components compose.
+
+By the end of the chapter you will be able to:
+
+- state the axioms Clad's guarantees depend on, and recognize when a deployment
+  violates them;
+- decompose an AI interaction into its five control surfaces and classify each
+  surface's governability;
+- describe a governance component as the tuple `g = (S, C, E, A, R)` and read the
+  interface contract between two components;
+- explain what the composition algebra guarantees when components are deployed
+  together.
+
+Clad formalizes a governance boundary that makes risk, responsibility, and evidentiary state explicit for regulated AI use. Rather than promising perfect prevention, it focuses on provability: it guarantees that every governed interaction produces auditable evidence of which rules were in effect, which evaluations occurred (or failed), and what artifacts and versions participated in the interaction. That provability is the core compliance deliverable for regulators and internal auditors.
 
 Clad’s architecture combines enforcement points, a Global Interaction Log to prevent undetectable bypasses, and tamper‑evident audit chains with independent signing and Supervisor‑mediated degraded records. Together these elements ensure that failures and deviations are visible and investigable, enabling traceability, root‑cause analysis, and remediation. The framework formalizes the residual‑risk reality: governance reduces but does not eliminate risk from stochastic model behavior and external unknowns, which must be documented, monitored, and mitigated with companion controls.
 
-This meta‑framework is the normative baseline for component papers and solution design: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. Because the framework is unimplemented, pilot validation and empirical assurance testing are required to confirm operational assumptions and to harden implementation risk prior to enterprise rollout.
-
-Component documents (WP1: Prompt Governance, WP2: Runtime Output Controls, SA: Monitoring & Response) are independently rigorous but derive their scope, interfaces, and composability properties from this meta-framework.
-
-For design rationale and decision history, see `research-log.md`.
-
-**Validation status:** This framework has been developed through formal design and multi-model adversarial review (3 rounds, multiple independent models). It has not been validated through implementation or empirical testing. The formal properties and guarantees are architecturally sound but operationally unverified. Pilot deployment is recommended before enterprise rollout.
+This meta‑framework is the normative baseline for the component chapters that follow: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. The three components developed in Part II — prompt governance (Chapter 2), runtime output controls (Chapter 3), and monitoring, detection, and response (Chapter 4) — are each independently rigorous but derive their scope, interfaces, and composability properties from the model built here.
 
 ---
 
@@ -211,9 +222,9 @@ Specifically for models:
 
 ---
 
-## DESIGN REQUIREMENT: Audit Linkability
+### Design Requirement: Audit Linkability
 
-*Previously Axiom 4. Demoted because this is an engineering requirement on the implementation, not a property of the world.*
+This is an engineering requirement on the implementation rather than a property of the world, so it is stated here as a design requirement rather than an axiom.
 
 ```
 REQUIREMENT (Audit Linkability):
@@ -237,9 +248,9 @@ The meta-framework does not prescribe an implementation — it requires
 the property.
 ```
 
-## DESIGN REQUIREMENT: Global Interaction Log
+### Design Requirement: Global Interaction Log
 
-*Added after Round 2 adversarial review identified the "Ghost Chain" problem: Theorem 3a proves existing records can't be tampered with, but does not prove that every interaction HAS a record. A bypassed or failed enforcement point could leave an interaction completely unrecorded — indistinguishable from "no interaction occurred."*
+This requirement addresses the "Ghost Chain" problem: Theorem 3a proves that existing records cannot be tampered with, but it does not prove that every interaction *has* a record. A bypassed or failed enforcement point could leave an interaction completely unrecorded — indistinguishable from "no interaction occurred."
 
 ```
 REQUIREMENT (Global Interaction Log — GIL):
@@ -366,9 +377,9 @@ T3 — Constraint Authoring Abuse (Insider — A2):
   creating trivially satisfiable constraints, disabling constraints
   for specific projects, or decomposing semantic constraints in
   bad faith.
-  Addressed by: WP1 (RBAC, separation of duties, dual control for
-  constraint authorship, decomposition attestation). Meta-framework
-  defines the requirement; WP1 specifies controls.
+  Addressed by: EPG (RBAC, separation of duties, dual control for
+  constraint authorship, decomposition attestation). This chapter
+  defines the requirement; EPG (Chapter 2) specifies controls.
 
   ADDITIONAL REQUIREMENT (Decomposition Verification):
     Semantic constraint decompositions (mechanical + procedural)
@@ -381,7 +392,7 @@ T3 — Constraint Authoring Abuse (Insider — A2):
       - Automated regression testing with known-bad inputs that
         mechanical checks must catch
     Without this, a formally "passing" decomposition can functionally
-    fail — the "auditing a lie" problem. WP1 must specify the
+    fail — the "auditing a lie" problem. EPG must specify the
     verification protocol and minimum testing cadence.
 
 T4 — Governance Bypass:
@@ -411,7 +422,7 @@ These threats are real but addressed by companion documents or external discipli
 T7 — Prompt Injection (Direct and Indirect):
   Untrusted content (user input, retrieved documents, tool outputs)
   embedded in the prompt overrides governance instructions.
-  Scope: WP2 (runtime output controls) and SA (input sanitization,
+  Scope: ROC (runtime output controls) and MDR (input sanitization,
   output classification). The meta-framework acknowledges this as
   R_input risk. EPG can require "prompt must include injection
   defenses" as a constraint, but cannot prevent injection at the
@@ -419,7 +430,7 @@ T7 — Prompt Injection (Direct and Indirect):
 
 T8 — Model Jailbreaking:
   Adversarial inputs that cause the model to ignore its instructions.
-  Scope: WP2 (output filtering), SA (red-team testing, monitoring).
+  Scope: ROC (output filtering), MDR (red-team testing, monitoring).
   The meta-framework models this as part of Axiom 2 (non-determinism)
   and Theorem 4 (irreducible residual risk). It cannot be solved at
   the governance level — it requires model-level and output-level
@@ -434,7 +445,7 @@ T9 — Model Poisoning / Supply Chain Compromise (A3):
 
 T10 — Training Data Leakage / Memorization:
   Models reproduce training data (PII, copyrighted content) in outputs.
-  Scope: WP2 (output filtering for PII/sensitive content), SA
+  Scope: ROC (output filtering for PII/sensitive content), MDR
   (monitoring for data leakage patterns). The meta-framework classifies
   model internals as γ = external.
 
@@ -452,7 +463,7 @@ DEFINITION (Threat Model Scope):
 
 This framework's guarantees are valid against threats T1-T6.
 They are NOT valid against threats T7-T11 without deployment of
-the companion controls specified in WP2 and SA.
+the companion controls specified for ROC (Chapter 3) and MDR (Chapter 4).
 
 Any claim of "complete governance" must be qualified:
   "Complete within the meta-framework's threat model (T1-T6),
@@ -679,8 +690,8 @@ that subset. No guarantee is weakened by the absence of other components.
 
   ∀ G' ⊆ G : ∀ g ∈ G' : Φ(g) holds in deployment(G')
 
-This enables phased adoption: an organization can deploy WP1 (prompt
-governance) alone and receive its full guarantees, then add WP2 (output
+This enables phased adoption: an organization can deploy EPG (prompt
+governance) alone and receive its full guarantees, then add ROC (output
 controls) later for additional coverage.
 
 CAVEAT (Soft Dependency Effectiveness):
@@ -1383,8 +1394,8 @@ The Clad instantiates the following:
 
   g_EPG = (
     S      = {S_prompt},
-    C      = constraint hierarchy (deontic, see WP1),
-    E      = mechanical evaluation ∪ procedural attestation (see WP1),
+    C      = constraint hierarchy (deontic, see Chapter 2),
+    E      = mechanical evaluation ∪ procedural attestation (see Chapter 2),
     A      = prompt audit records,
     R_hard = ∅                          — independently deployable
     R_soft = {constraint_ctx from organizational governance}
@@ -1392,8 +1403,8 @@ The Clad instantiates the following:
 
   g_ROC = (
     S      = {S_output, S_delivery},
-    C      = output constraint set (to be defined in WP2),
-    E      = output evaluation function (to be defined in WP2),
+    C      = output constraint set (defined in Chapter 3),
+    E      = output evaluation function (defined in Chapter 3),
     A      = output audit records,
     R_hard = ∅                          — independently deployable
     R_soft = {handoff from g_EPG}       — enhanced by prompt context
@@ -1650,7 +1661,7 @@ Scope of "auditable compliance posture" — what this DOES mean:
 What this does NOT mean:
   - Every output is compliant (Theorem 4: residual risk > 0)
   - Ungoverned interactions are covered (EA3 detects, doesn't prevent)
-  - Threats T7-T11 are addressed (requires WP2, SA)
+  - Threats T7-T11 are addressed (requires ROC, MDR)
   - Tier 2 and Tier 3 elements are governed (Axiom 1)
   - Implementation defects are absent (Lemma 2 caveat)
 ```
@@ -1714,43 +1725,13 @@ Model internals (weights, training data, fine-tuning provenance) are classified 
 
 ---
 
-## 15. Formal Glossary
+## Key takeaways
 
-| Symbol | Meaning |
-|--------|---------|
-| I | Set of all AI interactions |
-| P, U, M, Θ, O, O' | Prompts, User inputs, Models, Inference configs, Outputs, Delivered outputs |
-| T | Time domain |
-| Σ | Set of all control surfaces |
-| S_x | Control surface for element x |
-| γ(S) | Governability class of surface S |
-| G | Set of governance components |
-| g = (S, C, E, A, R) | A governance component |
-| Φ(g) | The guarantee provided by component g |
-| K(g₁, g₂) | Interface contract between components |
-| A_g(i, t) | Audit record from component g for interaction i at time t |
-| chain(i) | Composed audit chain for interaction i |
-| R(i) | Compliance risk for interaction i |
-| R_Sₖ | Risk attributable to surface Sₖ |
-| ⊕ | Component composition operator |
-| O(φ), F(φ), P(φ) | Deontic modalities (from WP1): obligatory, forbidden, permitted |
-| ⊨ | Satisfaction relation |
-| ver(x, t) | Version of element x at time t |
-| observe(e) | Observation function for element e (Axiom 4) |
-| identity(x, t) | Versioned identity of element x at time t (Axiom 5) |
+- Clad's guarantees rest on the axioms of §1 and the two design requirements derived from them — audit linkability and the Global Interaction Log. Where a deployment cannot satisfy an axiom, the theorems that depend on it must be re-evaluated.
+- An AI interaction is governed at five control surfaces (§4); each surface carries a governability class that bounds what any component can promise.
+- A governance component is the tuple `g = (S, C, E, A, R)` (§5), and components compose under a well-defined algebra (§12) that preserves each component's guarantees when they are deployed together.
+- Governance reduces but does not eliminate residual risk (§10, Theorem 4); what it guarantees is provable evidence, not perfect prevention.
 
----
+The three chapters of Part II instantiate this model, one control surface at a time. Chapter 2 begins with the prompt — the surface an enterprise fully controls before the model ever runs.
 
-## Open Issues
-
-### Issue M1: S_config Governance Depth
-S_config has mixed governability: model selection and θ are fully governable; model internals are external. The boundary between "configuration" and "internals" needs precise enumeration per model provider. This is an implementation concern for g_MDR.
-
-### Issue M2: Interaction Identifier Implementation
-The Design Requirement (Audit Linkability) specifies the property but not the implementation. W3C Trace Context and OpenTelemetry are candidate standards. Selection criteria: propagation reliability, tamper resistance, cross-vendor compatibility.
-
-### Issue M3: Temporal Consistency
-If a constraint is updated between prompt assembly (t₁) and output delivery (t₂) for the same interaction, Axiom 5 requires version stamps at both points. The audit record must capture ver(c, t₁) for prompt evaluation and ver(c, t₂) for output evaluation, and flag the discrepancy if t₁ ≠ t₂.
-
-### Issue M4: Agentic Extension
-§11.1 identifies the gap in cross-interaction governance for multi-turn, tool-use, and multi-model patterns. This is the most significant extension needed for the framework to address modern enterprise AI architectures.
+*(The symbols introduced in this chapter are collected in Notation & Conventions. Open engineering questions tracked during development are recorded in [`docs/meta-framework-open-issues.md`](../docs/meta-framework-open-issues.md), outside the book.)*
