@@ -726,7 +726,7 @@ For non-overlapping domains — where `scope(D₁) ∩ scope(D₂) = ∅` — co
 
 **Indirect interaction** is an acknowledged limitation. Actions in one domain's scope may materially affect risk in another domain's scope without sharing any property identifiers. A marketing constraint `O(use_layman_terms_exclusively)` could suppress a legal constraint `O(standard_legal_disclaimer)` if layman reformulation removes required legal language. These interactions are not detected by set-intersection scope analysis because the properties are formally separate.
 
-Indirect interactions are partially detected through tension heuristics (§6.4) and impact analysis (§7.3). The formal Scope Isolation theorem (Appendix A.13) covers direct overlap only and explicitly states this limitation.
+Indirect interactions are partially detected through tension heuristics (§6.4) and impact analysis (§7.3). The formal Scope Isolation theorem (Appendix A.1.13) covers direct overlap only and explicitly states this limitation.
 
 ### 7.3 Domain Isolation Guarantee and Global Impact Analysis
 
@@ -754,7 +754,7 @@ Responsibilities:
 
 **Governance risk.** The cross-domain governance body can centrally override domain isolation by redefining domain scopes. This concentration of authority is itself a governance risk. Compensating controls include: scope redefinition requires notification to all affected domains plus a minimum 5-business-day review period; scope changes are subject to audit integrity properties (AI1-AI4); the body's composition must include diversity across reporting lines with no single business unit holding a majority.
 
-The Scope Isolation theorem in Appendix A.13 holds relative to fixed domain definitions and explicitly does not limit the governance body's scope-redefinition authority.
+The Scope Isolation theorem in Appendix A.1.13 holds relative to fixed domain definitions and explicitly does not limit the governance body's scope-redefinition authority.
 
 ---
 

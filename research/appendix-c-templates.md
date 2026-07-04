@@ -4,7 +4,7 @@ Reusable artifacts for putting the framework into practice.
 
 ## C.1 EPG Constraint Library Template
 
-### C.1 Library Structure
+### C.1.1 Library Structure
 
 A constraint library package contains:
 
@@ -33,7 +33,7 @@ A constraint library package contains:
 
 **Regression test suite:** known-bad inputs that mechanical checks must catch, plus expected evaluation outcomes. This suite is the minimum test set that must pass during local verification (§9.4).
 
-### C.2 Library Lifecycle
+### C.1.2 Library Lifecycle
 
 Libraries follow semantic versioning:
 
@@ -43,7 +43,7 @@ Libraries follow semantic versioning:
 
 Each version requires domain expert attestation from the library maintainer. Organizations that have adopted a library version receive update notifications when new versions are released, including a changelog and impact assessment.
 
-### C.3 Example: HIPAA Prompt Constraints v1.0 (Skeleton)
+### C.1.3 Example: HIPAA Prompt Constraints v1.0 (Skeleton)
 
 **Library metadata:**
 - Name: HIPAA Prompt Constraints
@@ -91,7 +91,7 @@ Residual gap: mechanical NER detection covers approximately 90% of standard PHI 
 
 ## C.2 ROC Output Classifier Specifications
 
-### C.1 Classifier Governance Profile Template
+### C.2.1 Classifier Governance Profile Template
 
 Every classifier deployed in ROC must have a documented governance profile:
 
@@ -113,7 +113,7 @@ Every classifier deployed in ROC must have a documented governance profile:
 | Red-team results | Summary of last adversarial testing |
 | Retraining trigger | Conditions that mandate classifier retraining |
 
-### C.2 Minimum Classifier Requirements by Threat
+### C.2.2 Minimum Classifier Requirements by Threat
 
 | Threat | Minimum Classifier Type | Recommended Benchmark |
 |--------|------------------------|----------------------|
@@ -123,7 +123,7 @@ Every classifier deployed in ROC must have a documented governance profile:
 | T10: Memorization | Similarity scorer against training corpus | Memorization benchmark (model-specific) |
 | T11: Cross-tenant | Tenant-specific terminology detector | Tenant vocabulary cross-reference |
 
-### C.3 Threshold Calibration Guidance
+### C.2.3 Threshold Calibration Guidance
 
 Threshold selection involves a precision-recall tradeoff with regulatory implications:
 

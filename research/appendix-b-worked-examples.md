@@ -4,7 +4,7 @@ End-to-end examples for the control layers of Part II.
 
 ## B.1 Prompt Governance (EPG)
 
-### B.1 Healthcare: Patient-Facing Chatbot
+### B.1.1 Healthcare: Patient-Facing Chatbot
 
 **Enterprise constraints:**
 - `O(hipaa_disclaimer)` — every prompt must include HIPAA-compliant disclaimer language
@@ -47,7 +47,7 @@ The department's obligation for empathetic tone (authored by Patient Experience 
 
 Phase 1 resolution: cross-domain review between Patient Experience and Legal. Resolution: add a precedence rule to the Enterprise Precedence Table — F(promissory_language) takes precedence over O(empathetic_tone). The project team must find empathetic language that does not make promissory commitments. Documented rationale: legal liability outweighs tone preference.
 
-### B.2 Financial Services: Investment Research Assistant
+### B.1.2 Financial Services: Investment Research Assistant
 
 **Enterprise constraints:**
 - `O(sox_audit_trail)` — all AI-generated content used in financial reporting must have complete audit trail
@@ -73,7 +73,7 @@ Procedural components: compliance officer review, quarterly re-attestation, FINR
 
 Residual gap: mechanical checks cannot distinguish between general market commentary (permitted) and implicit investment guidance that sophisticated readers would recognize as advice but retail investors might act on differently. Compensating control: 25% HITL review by compliance, with escalation protocol for borderline cases.
 
-### B.3 Energy: Grid Operations Decision Support
+### B.1.3 Energy: Grid Operations Decision Support
 
 **Enterprise constraints:**
 - `O(nerc_cip_compliance_notice)` — all AI interactions involving grid operations must include NERC CIP compliance framing
@@ -117,7 +117,7 @@ The EPG example in Appendix B.1 established constraints for a Patient FAQ Chatbo
 
 **Scenario: Incidental PII.** Model response references "your appointment with Dr. Smith on March 15" — incidental PHI from conversation context. ROC pipeline: PHI NER classifier scores 0.82 (above 0.75). Composite PHI check (O_x, any_flag) triggers. Decision: BLOCK with redaction. Delivered output: "your appointment with [PROVIDER] on [DATE]." Audit record documents redaction with specific PII types detected.
 
-### B.2 Financial Services: Investment Research Assistant
+### B.2.2 Financial Services: Investment Research Assistant
 
 **Output constraints applied:**
 
@@ -134,7 +134,7 @@ The EPG example in Appendix B.1 established constraints for a Patient FAQ Chatbo
 
 **Scenario: Missing citation.** Model produces quantitative claims without citing data sources. Citation check (O_d) fails. Decision: BLOCK + retry with modified prompt reinforcing O(data_source_citation). Retry succeeds — model produces the same analysis with source citations. Second evaluation: PASS. Audit record documents both attempts.
 
-### B.3 Energy: Grid Operations Decision Support
+### B.2.3 Energy: Grid Operations Decision Support
 
 **Output constraints applied:**
 
