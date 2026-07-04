@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trust by Design: Governing Enterprise AI with Clad</title>
+  <meta name="description" content="A free, formally-modeled governance framework for regulated AI systems. Prove which rules governed any AI output and map controls to HIPAA, SOX, NERC CIP, and the EU AI Act." />
+
+  <!-- Open Graph / social preview -->
+  <meta property="og:title" content="Trust by Design: Governing Enterprise AI with Clad" />
+  <meta property="og:description" content="A free, formally-modeled governance framework for regulated AI systems." />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts: Fraunces (display), IBM Plex Sans (body), IBM Plex Mono (labels).
+       External request is fine on GCS hosting; system fallbacks in styles.css. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============================================================
+       TODO(you): replace the two download URLs below AND the copies
+       in the final CTA section. Search this file for "REPLACE_ME".
+       - EPUB: your GitHub Pages or Releases URL
+       - PDF:  your PDF URL, or delete the PDF button if none exists yet
+       ============================================================ -->
+
+  <header class="topbar">
+    <a class="wordmark" href="#top">
+      <span class="wordmark__mark">◇</span>
+      Trust&nbsp;by&nbsp;Design
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a href="#inside">Contents</a>
+      <a href="#proof">Verification</a>
+      <a href="#author">Author</a>
+      <a class="topnav__cta" href="REPLACE_ME_EPUB_URL">Get the book</a>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- ===================== HERO ===================== -->
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="eyebrow">A formally-verified governance framework</p>
+      <h1 id="hero-title" class="hero__title">Trust by Design</h1>
+      <p class="hero__sub">Governing Enterprise&nbsp;AI with Clad — a free, formally-modeled
+        governance framework for regulated AI systems.</p>
+
+      <ul class="outcomes" role="list">
+        <li>
+          <span class="outcomes__tag">Provable</span>
+          Show exactly which rules were in effect for any AI output.
+        </li>
+        <li>
+          <span class="outcomes__tag">Mapped</span>
+          Trace AI controls to HIPAA, SOX, GLBA, NERC&nbsp;CIP, and the EU&nbsp;AI&nbsp;Act.
+        </li>
+        <li>
+          <span class="outcomes__tag">Composable</span>
+          Adopt prompt, output, and monitoring controls independently.
+        </li>
+      </ul>
+
+      <div class="cta-row">
+        <a class="btn btn--primary" href="REPLACE_ME_EPUB_URL">
+          Download EPUB
+          <span class="btn__meta">free</span>
+        </a>
+        <a class="btn btn--ghost" href="REPLACE_ME_PDF_URL">
+          Download PDF
+        </a>
+      </div>
+      <p class="cta-note">No signup. Creative Commons BY&nbsp;4.0.</p>
+    </section>
+
+    <!-- ============ SIGNATURE: THE GOVERNED PIPELINE ============ -->
+    <section class="pipeline" aria-labelledby="pipeline-title">
+      <div class="section-head">
+        <p class="eyebrow eyebrow--accent">How Clad works</p>
+        <h2 id="pipeline-title">Three governed stages between a user and an answer</h2>
+      </div>
+
+      <div class="flow" role="img"
+           aria-label="Pipeline: user input passes through EPG prompt governance, the AI model, ROC runtime output controls, and MDR monitoring before delivery.">
+        <div class="flow__end">User input</div>
+        <span class="flow__arrow" aria-hidden="true">→</span>
+
+        <article class="stage">
+          <span class="stage__surface">S_prompt</span>
+          <h3><b>EPG</b> Enterprise Prompt Governance</h3>
+          <p>Are the instructions compliant?</p>
+        </article>
+        <span class="flow__arrow" aria-hidden="true">→</span>
+
+        <div class="flow__model">AI model</div>
+        <span class="flow__arrow" aria-hidden="true">→</span>
+
+        <article class="stage">
+          <span class="stage__surface">S_output</span>
+          <h3><b>ROC</b> Runtime Output Controls</h3>
+          <p>Is the output safe to deliver?</p>
+        </article>
+        <span class="flow__arrow" aria-hidden="true">→</span>
+
+        <article class="stage">
+          <span class="stage__surface">S_input · S_config</span>
+          <h3><b>MDR</b> Monitoring, Detection &amp; Response</h3>
+          <p>Are patterns healthy across interactions?</p>
+        </article>
+        <span class="flow__arrow" aria-hidden="true">→</span>
+
+        <div class="flow__end">Delivered output</div>
+      </div>
+      <p class="flow__caption">Each stage emits tamper-evident, version-stamped audit records that
+        compose into one verifiable chain.</p>
+    </section>
+
+    <!-- ===================== WHO IT'S FOR ===================== -->
+    <section class="audience" aria-labelledby="audience-title">
+      <div class="section-head">
+        <p class="eyebrow">Who it's for</p>
+        <h2 id="audience-title">Written for the people who sign off on AI</h2>
+      </div>
+      <ul class="who" role="list">
+        <li><span class="who__role">CIO</span>Move AI from pilot to production without governance gaps.</li>
+        <li><span class="who__role">CISO</span>Contain and trace non-compliant outputs before they ship.</li>
+        <li><span class="who__role">Data / AI Architect</span>Compose controls with proven independence.</li>
+        <li><span class="who__role">Governance &amp; Compliance</span>Answer the regulator's "show me" with evidence.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== WHAT'S INSIDE ===================== -->
+    <section class="inside" id="inside" aria-labelledby="inside-title">
+      <div class="section-head">
+        <p class="eyebrow eyebrow--accent">What's inside</p>
+        <h2 id="inside-title">Five sections, one framework</h2>
+      </div>
+      <ol class="chapters" role="list">
+        <li class="chapter">
+          <span class="chapter__no">01</span>
+          <div class="chapter__body">
+            <h3>The Meta-Framework</h3>
+            <p>Axioms, theorems, control surfaces, threat model, and the composition algebra that ties it together.</p>
+          </div>
+        </li>
+        <li class="chapter">
+          <span class="chapter__no">02</span>
+          <div class="chapter__body">
+            <h3>Prompt Governance <span class="chapter__abbr">EPG</span></h3>
+            <p>Hierarchical constraints, RBAC, and conflict resolution for the instructions sent to models.</p>
+          </div>
+        </li>
+        <li class="chapter">
+          <span class="chapter__no">03</span>
+          <div class="chapter__body">
+            <h3>Runtime Output Controls <span class="chapter__abbr">ROC</span></h3>
+            <p>Deterministic rules plus classifier scoring, on a risk-tiered pass / flag / block pipeline.</p>
+          </div>
+        </li>
+        <li class="chapter">
+          <span class="chapter__no">04</span>
+          <div class="chapter__body">
+            <h3>Monitoring, Detection &amp; Response <span class="chapter__abbr">MDR</span></h3>
+            <p>Cross-component monitoring, incident response, and forensic evidence preservation.</p>
+          </div>
+        </li>
+        <li class="chapter">
+          <span class="chapter__no">05</span>
+          <div class="chapter__body">
+            <h3>Regulatory Crosswalk</h3>
+            <p>Mapping to NIST AI&nbsp;RMF, EU&nbsp;AI&nbsp;Act, ISO&nbsp;42001, HIPAA, SOX, GLBA, and NERC&nbsp;CIP.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ PROOF LEDGER (the ink moment) ============ -->
+    <section class="proof" id="proof" aria-labelledby="proof-title">
+      <p class="eyebrow eyebrow--invert">Proven correct. Tested against production.</p>
+      <h2 id="proof-title" class="proof__title">The governance logic is machine-checked,
+        not just asserted.</h2>
+      <div class="ledger" aria-hidden="false">
+        <code class="ledger__line">
+          <span class="ledger__prompt">clad&nbsp;$</span>
+          lake build &amp;&amp; clad-difftest
+        </code>
+        <ul class="ledger__stats" role="list">
+          <li><b>76</b><span>theorems checked (Lean&nbsp;4)</span></li>
+          <li><b>0</b><span><code>sorry</code> — no unfinished proofs</span></li>
+          <li><b>1,000+</b><span>differential test cases</span></li>
+          <li><b>0</b><span>model / engine mismatches</span></li>
+        </ul>
+        <code class="ledger__line ledger__line--ok">
+          <span class="ledger__check">✓</span> release gate passed
+        </code>
+      </div>
+      <p class="proof__foot">Following the AWS&nbsp;Cedar pattern: an executable Lean model is checked
+        against the production Scala engine on every release. No version ships unless the proofs
+        compile and the differential tests pass.</p>
+    </section>
+
+    <!-- ===================== AUTHOR ===================== -->
+    <section class="author" id="author" aria-labelledby="author-title">
+      <div class="section-head">
+        <p class="eyebrow">About the author</p>
+        <h2 id="author-title">David Callaghan</h2>
+      </div>
+      <p class="author__bio">Senior Solutions Architect &amp; Databricks Champion at a global
+        technology consultancy. 10+ years building data &amp; AI platforms in regulated
+        industries. <span class="author__editable">(Edit this bio in
+        <code>landing/index.html</code>.)</span></p>
+      <div class="author__links">
+        <a href="https://www.linkedin.com/in/davecallaghan" rel="me noopener">LinkedIn ↗</a>
+        <a href="https://github.com/davecallaghan/clad" rel="noopener">Clad on GitHub ↗</a>
+      </div>
+    </section>
+
+    <!-- ===================== FINAL CTA ===================== -->
+    <section class="closing" aria-labelledby="closing-title">
+      <h2 id="closing-title">Get <em>Trust by Design</em></h2>
+      <p>The complete framework — meta-framework, EPG, ROC, MDR, and the regulatory crosswalk — in one book.</p>
+      <div class="cta-row cta-row--center">
+        <a class="btn btn--primary" href="REPLACE_ME_EPUB_URL">Download EPUB</a>
+        <a class="btn btn--ghost" href="REPLACE_ME_PDF_URL">Download PDF</a>
+      </div>
+      <p class="cta-note">
+        Questions or a pilot in mind?
+        <a href="mailto:REPLACE_ME_EMAIL@example.com?subject=Trust%20by%20Design">Get in touch ↗</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p class="footer__title">Trust by Design: Governing Enterprise AI with Clad</p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="REPLACE_ME_EPUB_URL">EPUB</a>
+      <a href="REPLACE_ME_PDF_URL">PDF</a>
+      <a href="https://github.com/davecallaghan/clad">GitHub</a>
+      <a href="https://www.linkedin.com/in/davecallaghan">LinkedIn</a>
+    </nav>
+    <p class="footer__fine">
+      Research &amp; docs licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>.
+      Built by <span id="year"></span> David Callaghan · 2CData.
+    </p>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

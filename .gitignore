@@ -27,3 +27,6 @@ build/.chromium/
 
 # local Claude Code settings
 .claude/
+
+# local GCP deploy config (contains project id)
+gcp/config.env
