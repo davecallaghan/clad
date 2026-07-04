@@ -24,3 +24,6 @@ metals.sbt
 build/puppeteer.json
 build/diagrams/
 build/.chromium/
+
+# local Claude Code settings
+.claude/
