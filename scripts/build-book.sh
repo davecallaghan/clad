@@ -41,6 +41,7 @@ pandoc "${FILES[@]}" \
   --lua-filter scripts/mermaid-filter.lua \
   --css scripts/epub.css \
   --epub-metadata scripts/epub-metadata.xml \
+  --epub-cover-image cover/cover.png \
   -o "$OUT" \
   --toc --toc-depth=2
 
