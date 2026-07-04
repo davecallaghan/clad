@@ -12,8 +12,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-TITLE="Trust by Design: Governing Enterprise AI with Clad"
-AUTHOR="David Callaghan"
 OUT="build/trust-by-design.epub"
 
 FILES=(
@@ -27,13 +25,15 @@ FILES=(
 
 mkdir -p build
 
+# Title/author/rights come from scripts/epub-metadata.xml (via --epub-metadata)
+# rather than --metadata title=..., which avoids pandoc emitting a standalone
+# title page that Apple Books renders as a blank leading page. The book opens
+# directly on the README title instead.
 pandoc "${FILES[@]}" \
   --lua-filter scripts/mermaid-filter.lua \
   --css scripts/epub.css \
+  --epub-metadata scripts/epub-metadata.xml \
   -o "$OUT" \
-  --metadata title="$TITLE" \
-  --metadata author="$AUTHOR" \
-  --metadata rights="Code: MIT; Research & Docs: CC BY 4.0" \
   --toc --toc-depth=2
 
 echo "Built $OUT"
