@@ -14,32 +14,24 @@ Clad is a formally modeled governance framework that provides hierarchical const
 
 ## The Three-Layer Pipeline
 
-```
-User Input
-    │
-    ▼
-┌─────────────────────────────────┐
-│  EPG — Enterprise Prompt        │  Are the instructions compliant?
-│  Governance                     │  Hierarchical constraints, RBAC, audit
-└────────────┬────────────────────┘
-             │
-             ▼
-       [ AI Model ]                  Governed prompt → stochastic output
-             │
-             ▼
-┌─────────────────────────────────┐
-│  ROC — Runtime Output Controls  │  Is the output safe to deliver?
-│                                 │  Deterministic rules + ML classifiers
-└────────────┬────────────────────┘
-             │
-             ▼
-┌─────────────────────────────────┐
-│  MDR — Monitoring, Detection    │  Are patterns healthy across
-│  & Response                     │  interactions?
-└────────────┬────────────────────┘
-             │
-             ▼
-      Delivered Output
+```mermaid
+flowchart TD
+    U([User Input]) --> EPG
+    EPG -- "Governed prompt" --> M[AI Model]
+    M -- "Stochastic output" --> ROC
+    ROC --> MDR
+    MDR --> O([Delivered Output])
+
+    EPG["<b>EPG — Enterprise Prompt Governance</b><br/>Are the instructions compliant?<br/>Hierarchical constraints, RBAC, audit"]
+    ROC["<b>ROC — Runtime Output Controls</b><br/>Is the output safe to deliver?<br/>Deterministic rules + ML classifiers"]
+    MDR["<b>MDR — Monitoring, Detection &amp; Response</b><br/>Are patterns healthy across interactions?"]
+
+    classDef gov fill:#1f2937,stroke:#4b5563,color:#f9fafb;
+    classDef model fill:#374151,stroke:#6b7280,color:#f9fafb,stroke-dasharray:4 3;
+    classDef io fill:#111827,stroke:#374151,color:#e5e7eb;
+    class EPG,ROC,MDR gov;
+    class M model;
+    class U,O io;
 ```
 
 Each layer produces tamper-evident, version-stamped audit records that compose into a complete chain.

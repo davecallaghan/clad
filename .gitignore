@@ -19,3 +19,7 @@ metals.sbt
 
 # OS
 .DS_Store
+
+# book build intermediates
+build/puppeteer.json
+build/diagrams/
