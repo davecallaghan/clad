@@ -17,8 +17,15 @@ function CodeBlock(el)
   local src = "build/diagrams/mermaid-" .. counter .. ".mmd"
   local png = "build/diagrams/mermaid-" .. counter .. ".png"
 
+  -- Force a top-down layout for print/EPUB: horizontal diagrams (authored LR so
+  -- they read well on GitHub) become very wide and shrink to illegibility on a
+  -- portrait page. Rewrite the direction to TB for the rendered image only.
+  local text = el.text
+    :gsub("(flowchart%s+)[LR][LR]", "%1TB")
+    :gsub("(graph%s+)[LR][LR]", "%1TB")
+
   local f = io.open(src, "w")
-  f:write(el.text)
+  f:write(text)
   f:close()
 
   local cmd = string.format(
