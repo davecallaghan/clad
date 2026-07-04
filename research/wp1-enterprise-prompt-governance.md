@@ -1,6 +1,6 @@
-# Enterprise Prompt Governance: A Constraint-Based Framework for Regulated AI
+# Section 2 — Responsible Prompting: Policies That Let Teams Move Fast, Safely (EPG)
 
-**White Paper 1 — Clad**
+**Trust by Design — Section 2 (formerly White Paper 1) — Clad**
 
 **Version:** 1.0  
 **Date:** April 2026  

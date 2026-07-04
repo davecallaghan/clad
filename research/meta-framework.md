@@ -1,4 +1,4 @@
-# Clad — Meta-Framework Formal Model
+# Section 1 — The Architecture of Assurance: Clad's Meta-Framework
 
 ## Introduction
 This document formalizes a governance boundary that makes risk, responsibility, and evidentiary state explicit for regulated AI use. Rather than promising perfect prevention, Clad focuses on provability: it guarantees that every governed interaction produces auditable evidence of which rules were in effect, which evaluations occurred (or failed), and what artifacts and versions participated in the interaction. That provability is the core compliance deliverable for regulators and internal auditors.
