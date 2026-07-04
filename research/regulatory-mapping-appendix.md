@@ -1,4 +1,4 @@
-# Regulatory and Standards Mapping Appendix
+# Section 5 — Meeting Regulators — Practical Mapping to Key Standards
 
 **Clad — Compliance Crosswalk**
 

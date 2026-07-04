@@ -1,8 +1,10 @@
-# Clad
+# Trust by Design: Governing Enterprise AI with Clad
 
 **Hard boundaries. Formal proof.**
 
 *The governance layer for regulated AI.*
+
+Trust by Design collects the Clad framework — meta-framework, prompt governance, runtime output controls, monitoring, and regulatory crosswalks — into a single ordered book. See [SUMMARY.md](SUMMARY.md) for the full table of contents and reading order.
 
 ---
 

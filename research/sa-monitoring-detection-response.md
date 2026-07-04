@@ -1,4 +1,4 @@
-# Monitoring, Detection, and Response: Solution Architecture
+# Section 4 — Seeing the Whole Picture — MDR: Monitoring, Detection, Response
 
 **Solution Architecture Document for Clad**
 
