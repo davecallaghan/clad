@@ -1,3 +1,8 @@
+> **Superseded 2026-09-02.** The pandoc pipeline this plan describes
+> (`scripts/build-book.sh`, `SUMMARY.md`) has been retired: it read `research/*.md`
+> directly and could not see the 14 authored `.tex` chapters. Assets salvaged to
+> `tools/epub/`. See `docs/superpowers/specs/2026-09-01-repo-structure-and-publishing-design.md`.
+
 # Textbook Conversion Plan — _Trust by Design_
 
 Turn the book from a stitched-together set of white papers into a single

@@ -10,5 +10,5 @@ export PATH="$HOME/.elan/bin:$PATH"
 lake build clad-difftest
 
 echo "=== Running differential test ==="
-cd "$REPO_ROOT/code"
+cd "$REPO_ROOT/app"
 LEAN_DIFFTEST_EXE="$REPO_ROOT/lean/.lake/build/bin/clad-difftest" sbt 'difftest/test'
