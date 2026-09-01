@@ -9,11 +9,13 @@ on:
   push:
     paths:
       - "app/**"
+      - "lean/**"
       - ".github/workflows/app.yml"
       - "tools/ci/assert-no-cancelled-tests.sh"
   pull_request:
     paths:
       - "app/**"
+      - "lean/**"
   workflow_dispatch:
 
 permissions:
@@ -31,8 +33,20 @@ jobs:
           java-version: "11"
           cache: sbt
 
+      # The differential tests cancel without this binary, and a cancelled test is
+      # now a failed build. lean-action restores the mathlib cache; a cold build of
+      # mathlib from source would take hours.
+      - name: Build the Lean differential-test executable
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: lean
+          build-args: clad-difftest
+          use-mathlib-cache: true
+
       - name: Compile and test
         working-directory: app
+        env:
+          LEAN_DIFFTEST_EXE: ${{ github.workspace }}/lean/.lake/build/bin/clad-difftest
         run: sbt -batch test 2>&1 | tee ../sbt-test.log
 
       - name: Assert no cancelled tests

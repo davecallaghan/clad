@@ -54,7 +54,7 @@ The model in [`lean/`](lean/) contains 69 theorems and lemmas with zero `sorry` 
 - **Audit completeness** -- every governed interaction produces an audit record (Theorem 5)
 - **Failure semantics** -- fail-closed/fail-open posture is a bijection over actions
 
-**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) compared against the Scala engine on 1,000 generated constraint hierarchies, detection states and evaluation contexts. Cedar uses this methodology to check its Rust authorization engine against a Lean specification. The comparison's current status is reported by the `app` workflow, which fails if the test is cancelled rather than run.
+**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) compared against the Scala engine on 1,000 generated constraint hierarchies, detection states and evaluation contexts. Cedar uses this methodology to check its Rust authorization engine against a Lean specification. The `app` workflow builds the Lean executable and runs the comparison on every change to either side, and fails if the test is cancelled rather than run — which is how it stayed inert between April and September 2026.
 
 **Release gate.** No version of Clad ships unless the Lean proofs compile and all differential tests pass.
 

@@ -9,18 +9,23 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../../lean"
 
+# Search this model's own sources only. `.` would descend into .lake/packages,
+# where mathlib's ~8,000 files both swamp the theorem count and make the grep take
+# minutes. The model is Clad.lean plus Clad/.
+SRC=(Clad.lean Clad)
+
 # `|| true` on both: grep exits 1 when it finds nothing, and for the sorry count
 # finding nothing is the outcome we want. Without it, `set -e -o pipefail` fails
 # the script precisely when the model is clean.
 theorems=$( { grep -rhoE '^[[:space:]]*(theorem|lemma) [A-Za-z_][A-Za-z0-9_'"'"']*' \
-               --include='*.lean' . || true; } | awk '{print $2}' | sort -u | wc -l | tr -d ' ')
-sorries=$( { grep -rhow 'sorry' --include='*.lean' . || true; } | wc -l | tr -d ' ')
+               --include='*.lean' "${SRC[@]}" || true; } | awk '{print $2}' | sort -u | wc -l | tr -d ' ')
+sorries=$( { grep -rhow 'sorry' --include='*.lean' "${SRC[@]}" || true; } | wc -l | tr -d ' ')
 
 echo "theorems=$theorems"
 echo "sorry=$sorries"
 
 if [ "$sorries" -gt 0 ]; then
   echo "FAIL: $sorries occurrence(s) of sorry — the model has unfinished proofs." >&2
-  grep -rnw 'sorry' --include='*.lean' . >&2
+  grep -rnw 'sorry' --include='*.lean' "${SRC[@]}" >&2
   exit 1
 fi
