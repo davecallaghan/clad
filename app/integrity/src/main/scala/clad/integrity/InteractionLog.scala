@@ -2,11 +2,12 @@ package clad.integrity
 
 import java.time.Instant
 
-opaque type InteractionId = String
-object InteractionId:
-  def apply(value: String): InteractionId = value
-  def generate(): InteractionId = java.util.UUID.randomUUID().toString
-  extension (id: InteractionId) def value: String = id
+// InteractionId moved to clad.core so that clad.runtime.AuditRecord can carry it:
+// integrity depends on runtime, so the identifier could not live here and also be a
+// field of an audit record. Aliased rather than re-declared so the 80-odd references
+// in this package and in monitoring are unaffected.
+type InteractionId = clad.core.InteractionId
+val InteractionId: clad.core.InteractionId.type = clad.core.InteractionId
 
 case class GilEntry(
   interactionId: InteractionId,

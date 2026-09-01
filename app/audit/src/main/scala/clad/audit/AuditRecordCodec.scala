@@ -42,10 +42,17 @@ object AuditRecordCodec:
   private given ReadWriter[AuditRecord] = readwriter[ujson.Value].bimap(
     ar => ujson.Obj("artifactDigest" -> ar.artifactDigest, "entries" -> writeJs(ar.entries),
       "configDigest" -> ar.configDigest, "timestamp" -> writeJs(ar.timestamp),
-      "previousDigest" -> (ar.previousDigest match { case Some(d) => ujson.Str(d); case None => ujson.Null })),
+      "previousDigest" -> (ar.previousDigest match { case Some(d) => ujson.Str(d); case None => ujson.Null }),
+      "interactionId" -> (ar.interactionId match { case Some(i) => ujson.Str(i.value); case None => ujson.Null })),
+    // json.obj.get for interactionId, as for recordedDigest below: a record written
+    // before the field existed must decode to None rather than throw.
     json => AuditRecord(json("artifactDigest").str, read[Vector[AuditEntry]](json("entries")),
       json("configDigest").str, read[Instant](json("timestamp")),
-      json("previousDigest") match { case ujson.Null => None; case v => Some(v.str) })
+      json("previousDigest") match { case ujson.Null => None; case v => Some(v.str) },
+      json.obj.get("interactionId").flatMap {
+        case ujson.Null => None
+        case v => Some(InteractionId(v.str))
+      })
   )
 
   private given ReadWriter[Signature] = readwriter[ujson.Value].bimap(

@@ -41,9 +41,16 @@ class GovernanceEngine private (config: EngineConfig):
     val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.getBytes("UTF-8"))
     "sha256:" + bytes.map("%02x".format(_)).mkString
 
+  /** @param interactionId
+    *   the interaction this evaluation belongs to, stamped onto the audit record so
+    *   that the record can be matched to its GIL entry (`A_g(i, t)`). Optional because
+    *   an engine can be driven directly, outside a supervised interaction; ghost
+    *   detection then reports the resulting record as unlinkable.
+    */
   def evaluate(
     prompt: String,
-    promptMeta: Map[String, String] = Map.empty
+    promptMeta: Map[String, String] = Map.empty,
+    interactionId: Option[InteractionId] = None
   ): Either[EvaluationFailure, GovernanceReport] =
     val artifact = PromptArtifact(prompt, promptMeta)
     val now = Instant.now()
@@ -57,7 +64,8 @@ class GovernanceEngine private (config: EngineConfig):
             EvaluabilityClass.Mechanical else EvaluabilityClass.Procedural
           AuditEntry(cr.constraint, cr.version, evalClass, cr.satisfied, cr.detail, now)
         }
-        val audit = AuditRecord(artifactDigest, auditEntries, configDigest, now, None)
+        val audit =
+          AuditRecord(artifactDigest, auditEntries, configDigest, now, None, interactionId)
         Right(GovernanceReport(evalReport, artifact, audit, EngineVersion, configDigest))
 
   private def sha256(content: String): String =

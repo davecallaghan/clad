@@ -46,7 +46,10 @@ class SupervisedEngine(
 
     val result = supervisor.supervise(
       ComponentId.Epg, interactionId, posture,
-      () => engine.evaluate(prompt, promptMeta)
+      // Stamp the identifier the GIL was registered under onto the audit record.
+      // Without it the two stores hold the same interaction under no common key, and
+      // ghost detection cannot match them.
+      () => engine.evaluate(prompt, promptMeta, Some(interactionId))
     )
 
     SupervisedEvaluation(interactionId, result, gilRegistered)

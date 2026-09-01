@@ -145,6 +145,27 @@ class AppendOnlyFileStoreSpec extends AnyFunSuite with Matchers with BeforeAndAf
     restored.signature.keyId shouldBe original.signature.keyId
     restored.signature.algorithm shouldBe original.signature.algorithm
 
+  test("AuditRecordCodec round-trips the interaction identifier"):
+    val t1 = Instant.parse("2024-01-01T10:00:00Z")
+    val base = makeRecord(t1, "artifact-interaction")
+    val withId = base.copy(record = base.record.copy(
+      interactionId = Some(clad.core.InteractionId("i-42"))))
+
+    val restored = AuditRecordCodec.decode(AuditRecordCodec.encode(withId)).toOption.get
+    restored.record.interactionId.map(_.value) shouldBe Some("i-42")
+
+  test("AuditRecordCodec decodes a record written before interactionId existed"):
+    // Ghost detection reports such a record as unlinkable. Throwing here instead would
+    // fail readAll as CorruptionDetected and take the whole chain down with it.
+    val t1 = Instant.parse("2024-01-01T10:00:00Z")
+    val encoded = AuditRecordCodec.encode(makeRecord(t1, "artifact-legacy"))
+    val stripped = ujson.read(encoded)
+    stripped("record").obj.remove("interactionId")
+
+    val decoded = AuditRecordCodec.decode(ujson.write(stripped))
+    decoded shouldBe a[Right[_, _]]
+    decoded.toOption.get.record.interactionId shouldBe None
+
   test("AuditRecordCodec returns Left for invalid JSON"):
     val result = AuditRecordCodec.decode("{invalid json}")
     result shouldBe a[Left[_, _]]

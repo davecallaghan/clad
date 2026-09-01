@@ -207,3 +207,26 @@ class AuditRecordSpec extends AnyFlatSpec with Matchers:
 
     lengths shouldBe Vector(0, 1, 2, 3, 4, 5)
   }
+
+    // --- Interaction identifier (Audit Linkability) ---
+
+    "AuditRecord.interactionId" should "default to absent, leaving the digest as it was before the field existed" in {
+      // Pinned to a literal computed from the pre-field canonical form. If the digest
+      // of an identifier-less record ever changes, every stored signature is
+      // invalidated, and that must fail here rather than in production.
+      val record = mkRecord(Vector(mkEntry(phi, satisfied = true)))
+      record.interactionId shouldBe None
+      record.digest shouldBe "sha256:4dad5255b57988ad10c5ff587ec6a3c47cbc629a38c0af474b31644104f57048"
+    }
+
+    it should "be covered by the digest" in {
+      val entries = Vector(mkEntry(phi, satisfied = true))
+      val without = mkRecord(entries)
+      val with1 = without.copy(interactionId = Some(InteractionId("i-1")))
+      val with2 = without.copy(interactionId = Some(InteractionId("i-2")))
+
+      // An identifier outside the hash could be re-pointed at a different interaction
+      // without breaking the signature.
+      with1.digest should not be without.digest
+      with1.digest should not be with2.digest
+    }

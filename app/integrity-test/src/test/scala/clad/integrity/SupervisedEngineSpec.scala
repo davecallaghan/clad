@@ -39,6 +39,25 @@ class SupervisedEngineSpec extends AnyFlatSpec with Matchers:
     gil.count shouldBe scala.util.Success(1)
   }
 
+  it should "stamp the GIL interaction id onto the audit record" in {
+    // The end of the linkability chain: SupervisedEngine registers the interaction in
+    // the GIL and the engine writes an audit record. If the record does not carry the
+    // same identifier, the two stores describe one interaction under no shared key and
+    // ghost detection reports it as unaudited.
+    val gil = InMemoryInteractionLog()
+    val supervised = SupervisedEngine(mkEngine(), supervisor, gil, FailurePosture.FailClosed)
+
+    val eval = supervised.evaluate("test prompt", Map("audit_logging" -> "enabled"))
+
+    val SupervisedResult.Success(Right(report)) = eval.result: @unchecked
+    report.audit.interactionId shouldBe Some(eval.interactionId)
+
+    val scala.util.Success(entries) =
+      gil.entriesBetween(Instant.EPOCH, Instant.now().plusSeconds(60)): @unchecked
+    entries.map(_.interactionId) shouldBe Vector(eval.interactionId)
+  }
+
+
   it should "register in GIL before evaluating" in {
     val gil = InMemoryInteractionLog()
     val engine = mkEngine()

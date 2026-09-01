@@ -3,6 +3,13 @@ package clad.integrity
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import java.time.Instant
+import scala.util.Success
+import clad.audit.{SignedAuditRecord, Signature}
+import clad.audit.test.InMemoryAuditStore
+import clad.core.{Constraint, Level, PropertyId}
+import clad.evaluation.MechanicalDetail
+import clad.integrity.test.InMemoryInteractionLog
+import clad.runtime.{AuditEntry, AuditRecord, EvaluabilityClass}
 
 class GhostDetectorSpec extends AnyFlatSpec with Matchers:
   import GhostDetector.*
@@ -102,3 +109,84 @@ class GhostDetectorSpec extends AnyFlatSpec with Matchers:
     val values = Set(Unknown, ComponentFailure, EnforcementBypass, InFlight)
     values.size shouldBe 4
   }
+
+    // --- detectFromStores: deriving the sets from real stores ---
+    //
+    // These are regression tests. detectFromStores hardcoded auditedIds and
+    // degradedIds to Set.empty, so it reported every GIL entry as a ghost —
+    // total governance failure on a healthy system, and the identical report
+    // on a failing one.
+
+    def mkAuditRecord(interactionId: Option[InteractionId], ts: Instant = now): SignedAuditRecord =
+      val entry = AuditEntry(
+        Constraint.Obligation(PropertyId.unsafe("phi_logging"), Level.Enterprise), "1.0",
+        EvaluabilityClass.Mechanical, satisfied = true, MechanicalDetail(true), ts
+      )
+      val record = AuditRecord("sha256:artifact", Vector(entry), "sha256:config", ts, None, interactionId)
+      SignedAuditRecord(record, Signature(Array[Byte](1, 2, 3), "key-1", "test"), Some(record.digest))
+
+    def storesWith(
+      gilIds: Vector[String],
+      auditIds: Vector[Option[String]]
+    ): (InMemoryInteractionLog, InMemoryAuditStore) =
+      val gil = new InMemoryInteractionLog
+      gilIds.foreach(id => gil.register(mkEntry(id)) shouldBe a[Success[?]])
+      val store = new InMemoryAuditStore
+      auditIds.foreach(id => store.append(mkAuditRecord(id.map(InteractionId(_)))) shouldBe a[Success[?]])
+      (gil, store)
+
+    val window: TimeWindow = TimeWindow(now.minusSeconds(60), later)
+
+    "GhostDetector.detectFromStores" should "find no ghosts when every entry has a linked audit record" in {
+      val (gil, store) = storesWith(Vector("id1", "id2"), Vector(Some("id1"), Some("id2")))
+
+      val Success(report) = GhostDetector.detectFromStores(gil, store, window): @unchecked
+
+      report.gilEntryCount shouldBe 2
+      report.ghostCount shouldBe 0
+      report.hasGhosts shouldBe false
+      report.unlinkableRecordCount shouldBe 0
+      report.isDegradedMeasurement shouldBe false
+    }
+
+    it should "report only the entries that genuinely lack an audit record" in {
+      val (gil, store) = storesWith(Vector("id1", "id2", "id3"), Vector(Some("id1")))
+
+      val Success(report) = GhostDetector.detectFromStores(gil, store, window): @unchecked
+
+      report.ghostCount shouldBe 2
+      report.ghosts.map(_.interactionId).toSet shouldBe Set(InteractionId("id2"), InteractionId("id3"))
+      report.ghosts.map(_.classification).toSet shouldBe Set(GhostClassification.Unknown)
+    }
+
+    it should "count records with no identifier as unlinkable rather than silently as ghosts" in {
+      val (gil, store) = storesWith(Vector("id1", "id2"), Vector(None, None))
+
+      val Success(report) = GhostDetector.detectFromStores(gil, store, window): @unchecked
+
+      // Both entries still look unaudited — that part is unavoidable — but the report
+      // says why, so the number is legible as an upper bound rather than a measurement.
+      report.ghostCount shouldBe 2
+      report.unlinkableRecordCount shouldBe 2
+      report.isDegradedMeasurement shouldBe true
+    }
+
+    it should "classify a ghost with a degraded record as ComponentFailure" in {
+      val (gil, store) = storesWith(Vector("id1", "id2"), Vector(Some("id1")))
+      val degraded = SignedDegradedRecord(
+        DegradedAuditRecord(
+          InteractionId("id2"), now, ComponentId("roc"), DegradedStatus.Degraded,
+          "classifier timeout", FailurePosture.FailClosed, FailureAction.Blocked
+        ),
+        Signature(Array[Byte](9), "key-1", "test"),
+        signedBy = ComponentId("supervisor"),
+        onBehalfOf = ComponentId("roc")
+      )
+
+      val Success(report) =
+        GhostDetector.detectFromStores(gil, store, window, Vector(degraded)): @unchecked
+
+      report.ghostCount shouldBe 1
+      report.ghosts.head.interactionId shouldBe InteractionId("id2")
+      report.ghosts.head.classification shouldBe GhostClassification.ComponentFailure
+    }

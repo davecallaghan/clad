@@ -17,15 +17,29 @@ case class AuditEntry(
   timestamp: Instant
 )
 
+/** @param interactionId
+  *   which governed interaction this record belongs to — `A_g(i, t)`. `Option`, and
+  *   last, so that records written before the field existed still decode and still
+  *   hash to the same digest; see `digest`. Ghost detection cannot link a record
+  *   without it, and `GhostDetector` counts those separately rather than treating an
+  *   unlinkable record as an absent one.
+  */
 case class AuditRecord(
   artifactDigest: String,
   entries: Vector[AuditEntry],
   configDigest: String,
   timestamp: Instant,
-  previousDigest: Option[String]
+  previousDigest: Option[String],
+  interactionId: Option[InteractionId] = None
 ):
   lazy val digest: String =
-    val canonical = s"$artifactDigest|$configDigest|$timestamp|$previousDigest|" +
+    // The identifier is PREFIXED only when present, rather than always appended, so
+    // that a record with no identifier hashes exactly as it did before the field
+    // existed. Appending unconditionally would invalidate every stored signature.
+    // It must be inside the digest either way: an identifier outside the hash could
+    // be re-pointed at a different interaction without detection.
+    val idPart = interactionId.fold("")(id => s"interaction:${id.value}|")
+    val canonical = idPart + s"$artifactDigest|$configDigest|$timestamp|$previousDigest|" +
       entries.map(e =>
         s"${e.constraint.property.value}:${e.constraintVersion}:${e.evaluabilityClass}:${e.satisfied}"
       ).sorted.mkString("|")
