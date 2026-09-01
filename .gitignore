@@ -46,3 +46,6 @@ papers/*/build/
 
 # Metals semantic index
 *.semanticdb
+
+# Lean build output and mathlib cache
+lean/.lake/
