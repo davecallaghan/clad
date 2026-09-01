@@ -1,6 +1,6 @@
 # Appendix B — Worked Examples
 
-End-to-end examples for the control layers of Part II.
+End-to-end examples for the control layers of Part IV.
 
 ## B.1 Prompt Governance (EPG)
 
@@ -99,7 +99,7 @@ Resolution: Enterprise Precedence Table specifies Safety > Efficiency as the def
 
 ### Healthcare: Patient-Facing Chatbot (continued)
 
-The EPG example in Appendix B.1 established constraints for a Patient FAQ Chatbot. ROC extends governance to the output:
+The EPG example above established constraints for a Patient FAQ Chatbot. ROC extends governance to the output:
 
 **Output constraints applied:**
 

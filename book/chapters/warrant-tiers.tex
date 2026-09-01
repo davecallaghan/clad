@@ -1,0 +1,262 @@
+% !TEX root = ../main.tex
+\chapter{Institutional Warrant and Tiered Reliance}
+\label{ch:warrant-tiers}
+\label{sec:tiers}
+
+The architecture of Section~\ref{sec:governed-rag} serves a condition I have so far
+used without defining. This section defines it and makes the controls proportional
+to consequence.
+
+\section{Warrant}
+
+Grounding is necessary for reliance and not sufficient. An assertion can rest on
+authentic, applicable, authoritative evidence, be traceable to it, and still be
+something the institution is not entitled to act on---because nobody checked it, or
+because nobody with the standing to authorize reliance did so.
+
+\begin{definition}[Institutional warrant]
+\label{def:warrant}
+\begin{equation}
+  \begin{aligned}
+  \Warranted_I(p \mid c) \;\leftrightarrow\;
+    &\Resolved(c) \wedge \Grd_S(p \mid c)\\
+    &\wedge\ \Verified(V, p, c) \wedge \Authorized(I, p, c).
+  \end{aligned}
+  \label{eq:warrant}
+\end{equation}
+\end{definition}
+
+where
+
+\begin{itemize}
+  \item $\Resolved(c)$: the material context variables of \eqref{eq:context} are
+        explicit rather than assumed or inferred without validation;
+  \item $\Grd_S(p \mid c)$: Definition~\ref{def:grounding}---which unpacks to the
+        six evidence conditions of \eqref{eq:grounded} plus $\Sensitive$, so
+        authenticity, versioning, authority, and applicability are preconditions of
+        valid support rather than separate requirements;
+  \item $\Verified(V, p, c)$: an appropriate procedure has checked the assertion,
+        its evidence relation, and the controls the decision class requires;
+  \item $\Authorized(I, p, c)$: the institution permits reliance at the relevant
+        risk tier, possibly subject to human review or approval.
+\end{itemize}
+
+Three properties of \eqref{eq:warrant} matter for how it is used.
+
+It is a conjunction, not a score. There is no aggregation of the four conjuncts into
+a confidence figure, and an assertion satisfying three of them is not
+three-quarters warranted. This is the same point as the flow in
+Section~\ref{sec:governed-rag}: these are distinct conditions with distinct owners
+and distinct failure records.
+
+It is a property of a process, not of a model. Nothing in \eqref{eq:warrant} is a
+property of model weights, a benchmark score, or a generated response.
+$\Authorized$ in particular is a fact about an institution's governing rules and
+delegations, and no improvement to $M$ can supply it. This is why warrant cannot be
+procured: a vendor can sell you a component that makes grounding measurable, and
+cannot sell you an authorization.
+
+It is revocable and context-relative. \eqref{eq:warrant} is not a claim that $p$ is
+certain, or even that $p$ is true. It is the condition under which an institution
+may responsibly act on $p$ for a defined purpose, knowing that it may be wrong and
+that the record will show what was relied upon and why. That is the standard
+ordinary institutional decision-making already meets, and the standard machine
+assertion currently does not.
+
+\section{Reliance tiers}
+
+Controls should be proportional to the consequence of reliance. The table below is
+deliberately compact: its purpose is to show that permissible reliance is set by
+consequence rather than by model quality, and that argument does not require a
+fully specified control catalog. Any real program will need its own tiering,
+calibrated to its regulator and its risk appetite.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
+    \toprule
+    Tier & Use & Required & Invariants engaged \\
+    \midrule
+    0 & Unwarranted generative assistance: brainstorming, drafting
+      & Clear framing as unverified; no reliance claim
+      & none \\
+    \addlinespace
+    1 & Informational assistance
+      & Visible uncertainty; no reliance claim
+      & I17 \\
+    \addlinespace
+    2 & Evidence-linked assistance
+      & Sources visible; user retains verification duty
+      & I8, I9, I12 \\
+    \addlinespace
+    3 & Governed decision support
+      & Context-bound evidence, verification controls, audit trail, authorized
+        human reliance
+      & I8--I19 \\
+    \addlinespace
+    4 & Constrained execution
+      & Deterministic guardrails, approvals, reversibility, monitoring, full
+        records
+      & I8--I19 plus action controls \\
+    \addlinespace
+    5 & Autonomous consequential action
+      & Narrowly specified settings, stringent formal controls, continuing
+        assurance, explicit authority to act
+      & all, plus independent assurance \\
+    \bottomrule
+  \end{tabular}
+  \caption{Reliance tiers. The tier is set by the consequence of reliance, not by
+    model quality. Tier~5 is included for completeness and should be approached
+    with considerable caution in regulated settings; nothing in this book argues
+    that current systems are ready for it.}
+  \label{tab:tiers}
+\end{table}
+
+Assignment to a tier needs criteria, and while a full consequence taxonomy is out of
+scope, the dimensions are nameable: \emph{reversibility} of the action the assertion
+supports; \emph{magnitude} of the exposure if it is wrong; \emph{breadth}, meaning how
+many parties are affected and whether they consented; \emph{detectability}, whether an
+error would surface before harm; and \emph{availability of a competent human check} in
+the time the decision allows. A use case scoring badly on reversibility and
+detectability belongs at a higher tier than its nominal risk rating suggests, because
+those two dimensions determine whether anything can be done after the fact.
+
+The principle the table exists to enforce is a negative one. Permissible reliance
+does not rise because the model got better. It rises when evidence, verification,
+constraints, authorization, and accountability rise together and in proportion to
+what is at stake. A system that improves its benchmark score has not thereby earned
+a higher tier, and a system that has implemented I8--I19 has not thereby earned
+Tier~5.
+
+Two boundaries are worth marking explicitly, because they are where programs
+drift. The step from Tier~2 to Tier~3 is the step at which the institution rather
+than the user assumes the verification duty, and it requires everything in
+Table~\ref{tab:invariants-system}; systems are frequently described as Tier~3 while
+implementing Tier~2. And the step from Tier~3 to Tier~4 is the step from assertion
+to action, at which reversibility and blast radius become first-order design
+questions rather than operational details.
+
+\section{Three Teams, Three Budgets}
+\label{sec:three-teams}
+
+Everything above is stated as though an organization were a single agent that could
+decide to satisfy Table~\ref{tab:invariants-system}. It is not, and the way it is
+divided is itself a principal cause of the failures this book describes. This
+section is the least formal in the book and, for practitioners, possibly the most
+useful.
+
+\subsection{The division}
+
+Responsibility for the conditions of warrant is distributed across organizational
+functions that were not designed to hold it jointly. In financial services the fourth
+row below is a second-line function with an independent reporting line and a
+supervisory mandate; in other sectors the equivalent may sit in quality assurance,
+clinical governance, or internal audit. Wherever it sits, it is the function that
+performs the independent challenge this book argues for, and it is the one most often
+absent from discussions of these systems.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.8cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{4.0cm}@{}}
+    \toprule
+    Function & Typical responsibility & Owns & Failure if left in isolation \\
+    \midrule
+    Data / knowledge
+      & Source ingestion, curation, lineage, metadata, quality
+      & I8, I9
+      & Authentic documents with no policy applicability or output control \\
+    \addlinespace
+    Policy / risk / compliance
+      & Rules, jurisdiction, decision authority, approvals, procedures
+      & I10, I15
+      & Governing policy with no control over how assertions are retrieved,
+        generated, or verified \\
+    \addlinespace
+    Platform / AI engineering
+      & Models, prompts, orchestration, retrieval, evaluation, monitoring
+      & I11--I14, I17
+      & Answer quality, latency, and usability with no evidentiary authority or
+        institutional authorization \\
+    \addlinespace
+    Model risk / independent validation
+      & Independent challenge, validation, and approval of models and their use
+      & I13, I15, I16
+      & Validating $M$ while the risk sits in $S$: a well-documented model, an
+        unexamined evidence path \\
+    \bottomrule
+  \end{tabular}
+  \caption{Four functions, and the invariants each is positioned to supply. No
+    function owns a complete path from source to authorized reliance.}
+  \label{tab:three-teams}
+\end{table}
+
+These are not merely three technical workstreams. They typically have separate
+budgets, separate incentives, separate release cadences, separate accountability
+structures, and separate systems of record. A data team is measured on lineage
+coverage and freshness. A compliance function is measured on policy completeness
+and audit findings. A platform team is measured on answer quality, latency,
+adoption, and cost. None is measured on the grounding rate of
+\eqref{eq:rate}, because it spans all three.
+
+\subsection{The unit of failure is the handoff}
+
+The consequence is that failures concentrate at the boundaries rather than inside
+any function's remit. A system may have:
+
+\begin{itemize}
+  \item excellent data lineage and weak policy binding---I8 and I9 without I10;
+  \item well-specified governing policy and uncontrolled retrieval---I10 without
+        I11;
+  \item high benchmark accuracy and no per-assertion provenance---nothing in
+        Table~\ref{tab:invariants-system} at all, with a validation report that
+        looks complete;
+  \item citations without applicability validation---I12 without I11, which is
+        precisely cell (v);
+  \item human review without a reproducible evidence path---review that cannot be
+        re-performed and therefore cannot be audited, which is I13 without I14;
+  \item a validated model inside an unvalidated system---documentation of $M$'s
+        training, evaluation, and limitations, with no examination of context
+        resolution, applicability logic, defeater checking, or authorization. This is
+        the characteristic failure of the fourth row, and it is the most dangerous
+        because it produces a formal approval.
+\end{itemize}
+
+Each of these is a system in which every function has done its job. The ungoverned
+handoff is the operational unit of failure, and it is invisible from inside any one
+function's metrics.
+
+This also explains a pattern worth naming, because it is the most expensive form of
+the problem. Cell (v)---misapplied grounding---sits exactly on the boundary between
+the data function, which supplies authentic versioned sources, and the policy
+function, which knows which sources govern which decisions. The metadata required to
+enforce applicability is a policy artifact stored in a data system and consumed by a
+platform component. It is nobody's deliverable, and it is the single most common
+thing I find missing.
+
+\subsection{What follows}
+
+Two conclusions, and the first is uncomfortable for how these programs are
+usually organized.
+
+Evidentiary controls must be architecture and cross-functional invariants, not
+after-the-fact review tasks. A review step owned by one function cannot establish a
+property that requires artifacts from two others, and adding reviewers does not
+change this. Table~\ref{tab:invariants-system} is a specification for a system, and
+a specification that spans three budgets needs an owner who spans them.
+
+A fifth function appears once retention is considered. Privacy and records
+management own the tension described in Section~\ref{sec:retention}: the audit record
+that reconstructability requires is in direct conflict with minimization and erasure
+obligations, and neither the data, policy, platform, nor validation function is
+positioned to resolve it. That handoff has the same structure as the others and is
+usually discovered later.
+
+And the grounding rate is the right cross-functional metric precisely because no
+single function can move it alone. Accuracy can be improved by the platform team
+without reference to the others, which is part of why it is the number that gets
+reported. \eqref{eq:rate} cannot: improving it requires corpus work, policy
+metadata, and pipeline control together. A metric that only improves when three
+functions cooperate is an unusually honest instrument for a problem whose failures
+live between them.

@@ -1,0 +1,71 @@
+% !TEX root = ../main.tex
+\section{Limitations and Threats to Validity}
+\label{sec:limitations}
+
+The framework has costs and unresolved edges, and a governance argument that does not
+state its own is asking for a trust it has not earned. Eight, in descending order of how
+much they would change the conclusions.
+
+\paragraph{No empirical validation of the framework's central claims.} This is a
+conceptual and architectural paper. The failure shapes it describes are drawn from
+deployment experience and are offered as illustrations rather than as measurements; the
+prevalence claims are correspondingly weak, and where the text says a failure is common I
+mean that I have encountered it repeatedly, not that I have counted it.
+Section~\ref{sec:evaluation} specifies the measurements that would settle these
+questions, and Appendix~\ref{sec:benchmark} specifies a corpus and case design that would
+support them, but neither has been run. In particular: the claim that faithfulness metrics
+score misapplied evidence as clean is an analytic consequence of how those metrics are
+defined, and has not been demonstrated by running them.
+
+\paragraph{The sensitivity condition is estimated, not established.}
+Section~\ref{sec:sensitivity-protocol} sets out a controlled design and is explicit that
+it yields a dependence estimate with error in both directions --- false positives from
+residual form sensitivity, false negatives from redundant supporting evidence. Grounding
+as defined therefore has one conjunct that is, in practice, measured with noise. A
+programme reporting a grounding rate should report the protocol and its error properties
+alongside, and a rate quoted without them is not comparable across systems.
+
+\paragraph{The defeater search is relative to a search.} By
+Section~\ref{sec:why-defeater}, $\NoDefeater$ is bounded to a governed query rather than
+quantified over the evidential base. That makes it checkable and it means an undetected
+defeater outside the search is not a violation of the definition. Whether the search is
+adequate is a corpus-coverage question that the definition cannot answer, and a system
+can satisfy the condition while a contrary authority sits in a repository nobody indexed.
+
+\paragraph{Authority ordering is assumed to exist.} The precedence order $\standing$ is
+treated as an institutional artefact. Real authority is issue-specific,
+jurisdiction-specific, temporally unstable, and sometimes genuinely incomparable; it is
+better described as a maintained decision procedure than as a partial order, and an
+institution that has not built one cannot evaluate the condition. The framework converts
+that absence into a visible missing deliverable, which is progress, but it does not
+supply the deliverable.
+
+\paragraph{The framework is silent on how much control is enough.}
+Section~\ref{sec:thresholds} derives thresholds by anchoring to the incumbent manual
+standard, which presumes such a standard exists and is defensible. Where the manual
+process was never held to an evidentiary standard --- which is common --- the anchor is
+missing and the framework offers no substitute.
+
+\paragraph{The proportionality argument could license under-control.} Tiering exists
+because the full control set is not economic for all traffic. The same argument can be
+used to classify consequential work into a lower tier to avoid the cost, and nothing in
+this paper prevents that; tier assignment is exactly where a governance regime is
+gamed. The dimensions in Section~\ref{sec:tiers} constrain the argument without settling
+it.
+
+\paragraph{Applicability may be less crisp than the formalism suggests.} $c$ is treated
+as resolvable into jurisdiction, valid time, material facts, and intended use. Real
+decisions include cases where the governing regime is itself contested, where the
+material facts are what is under determination, and where the intended use changes after
+the assertion is made. The formalism handles unresolved context by declining to answer,
+which is correct and is also a cost that a system facing many such cases will pay
+heavily.
+
+\paragraph{Generalisation beyond the systems in scope is unaddressed.}
+Section~\ref{sec:scope} restricts the argument to autoregressive transformer language
+models emitting natural-language assertion. Section~\ref{sec:determinism} argues the
+structural properties survive the developments visible now, and that argument is about
+current architectures rather than a claim about what is possible. An architecture that
+maintained content-level representations, closed its asserted set, and gated on evidence
+would satisfy the invariants of Section~\ref{sec:invariants}, and the framework would
+then be measuring something that holds rather than something that fails.

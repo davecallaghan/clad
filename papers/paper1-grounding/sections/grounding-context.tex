@@ -1,0 +1,190 @@
+% !TEX root = ../main.tex
+\section{Grounding, Context, and Applicability}
+\label{sec:grounding-context}
+
+Definition~\ref{def:grounded-evidence} listed seven conditions on evidence without
+explaining them. This section takes them in turn and identifies the generalisation error
+that makes applicability the hardest of the seven to enforce. The resolved context $c$
+that four of them depend on was defined in Section~\ref{sec:resolved-context}.
+
+\subsection{Illicit universalization}
+\label{sec:illicit}
+
+Relation \eqref{eq:no-transfer} names a failure that deserves its own label,
+because treating it as ordinary inaccuracy leads to the wrong remedy.
+
+\emph{Illicit universalization} is the treatment of a claim that holds under one
+jurisdiction, time, population, policy, or use as though it held generally, because
+the relevant context was never resolved. The claim is not fabricated. It is not
+even, in its own frame, wrong. It has been detached from the frame that made it
+assessable, and then asserted into a frame where its truth value is simply a
+different question.
+
+This is worth insisting on because it reframes a large fraction of what gets
+reported as hallucination. Many apparent failures are not invented facts. They are
+unresolved-reference failures, temporal-validity failures, jurisdiction failures,
+or applicability failures: information that is correct somewhere, stated without a
+valid binding to the context in which reliance is proposed. The diagnostic question
+is not ``is this true?'' but ``true \emph{where}, \emph{when}, \emph{for whom}, and
+\emph{for what use}?''---and a system that cannot represent the question cannot be
+said to have answered it.
+
+The data-architecture analogue is exact, and worth stating because it makes the
+failure recognisable rather than novel. A measure without its dimension keys is not
+a fact; it is a number. Revenue is meaningless without period, entity, and currency,
+and no data architect would accept it into a warehouse unqualified. Illicit
+universalization is the same defect at the level of an assertion: a claim detached
+from the dimensions that make it assessable, presented as though those dimensions
+were universal rather than merely unstated. What ordinary dimensional modelling
+enforces by schema, these systems do not enforce at all, because by
+\eqref{eq:signature} there is no schema to enforce it with.
+
+There is a structural reason this failure is native to the architecture rather than
+incidental. By \eqref{eq:signature} the system's input is a token sequence, and a
+token sequence carries no context index. A question that omits its jurisdiction is
+not, to the system, an incomplete question; it is a complete string. Nothing in
+\eqref{eq:objective} rewards noticing that a binding is missing, and by
+Section~\ref{sec:rlhf} preference optimisation actively rewards answering anyway.
+The system is not failing to resolve context. It has no representation of context
+to resolve, and no mechanism that could register the omission.
+
+\subsection{The seven dimensions}
+\label{sec:six-dimensions}
+
+\paragraph{Authentic.} The source is what it purports to be. In practice this means
+retrieval from a controlled corpus whose contents have known origin, not from a
+scrape whose provenance is a URL. Authenticity is a property an organisation
+establishes by ingestion controls, and it is the dimension most familiar from
+ordinary data governance.
+
+\paragraph{Versioned.} The source version, its effective date, and the corpus state
+$t_k$ at retrieval can all be identified. A regulation without an effective date is
+not evidence about what was required at a decision date; it is evidence about what
+some document said at some point. Both timestamps are needed, for different purposes:
+the effective date establishes validity at $t_v$, and $t_k$ establishes what the
+system could have seen. This is the dimension that permits replay, and without it the record itself cannot
+support reconstruction: whatever an investigator eventually pieces together from
+archives and change logs, it will not be a reconstruction from the system's own
+evidence.
+
+\paragraph{Authoritative.} The source has the standing required for the decision
+type. A vendor summary of a regulation and the regulation itself may agree on
+content and differ entirely in standing, and which one is required is a function of
+the decision, not of the content. Authority is a relation between a source and a
+decision class, not a scalar attached to a document---which is why an authority
+ranking that is global rather than use-conditional will misclassify.
+
+\paragraph{Applicable.} The source governs or materially bears on $c$. Read
+component-wise, this requires the source to govern in jurisdiction $j$, to be in force
+at valid time $t_v$---interval containment, per
+Section~\ref{sec:resolved-context}, so neither not-yet-enacted nor
+already-superseded---to bear on the material facts $f$, and to cover the intended use
+$u$. This is where \eqref{eq:no-transfer} bites, and it is the dimension standard
+retrieval most reliably fails, for reasons developed in
+Section~\ref{sec:retrieval-insufficient}.
+
+\paragraph{Supports.} The source establishes $p$ at the strength asserted.
+Section~\ref{sec:entails-supports} distinguishes the grades of support this covers.
+
+\paragraph{Sufficient.} The source addresses every condition the claim requires,
+not merely some of them. A rule imposing five conditions is not satisfied by evidence
+speaking to three, and an assertion resting on partial evidence is grounded in every
+other dimension while being inadequate in the one that matters. Sufficiency and
+support are separated because their remedies differ: insufficient support is fixed by
+retrieving \emph{more}, inadequate support by retrieving \emph{better}.
+
+\paragraph{Traceable.} A reviewer can reconstruct the evidence-to-assertion
+relation: which passage, which version, retrieved at which corpus state, supporting
+which claim. Traceability is a property of the record rather than of the evidence, and
+it is what turns the other six into an auditable finding rather than an assertion
+about the system's internals.
+
+Note that four of the seven---$\Authoritative$, $\Applicable$, $\Supports$, and
+$\Sufficient$---are relations to $c$ rather than properties of the document. A corpus
+can be perfectly authentic, fully versioned, and completely traceable while failing
+all four, and a governance programme that treats grounding as a corpus property will
+build exactly that system. The no-defeater condition of \eqref{eq:nodefeater} is
+stronger still: it is a relation to the \emph{entire base}, so no examination of a
+single retrieved source can establish it.
+
+\subsection{Entailment and support}
+\label{sec:entails-supports}
+
+$\Supports(E, p, c)$ covers a range, and collapsing it is a common source of
+overclaiming. At the strong end,
+\begin{equation}
+  \Entails(E, p, c) \;\Rightarrow\; \Supports(E, p, c),
+  \label{eq:entails}
+\end{equation}
+where $E$ together with the governing rules of $c$ settles $p$. A capital
+calculation that follows deterministically from a rule and a set of positions is of
+this kind, and so is a policy question whose answer is stated in the policy.
+
+Most enterprise questions are weaker. Evidence may make $p$ substantially more
+likely without settling it; it may support a qualified version of $p$ but not the
+unqualified assertion; it may support $p$ for a class of cases of which $c$ is
+plausibly but not demonstrably a member. None of this is a defect. It is the normal
+condition of decision-making under real evidence.
+
+The requirement is not that every assertion be entailed. It is that the kind and
+strength of support be \emph{explicit and proportional to the consequence of
+reliance}. A system that reports ``supported'' without distinguishing entailment
+from suggestive correlation has not given a reviewer what they need, and has
+created the specific failure in which an assertion adequate for one decision class
+is relied upon for another. This is cell (iii) in its most defensible form: the
+evidence was authentic, applicable, and authoritative, and it was adequate for a
+weaker claim than the one asserted.
+
+\subsection{Why retrieval and citation are not enough}
+\label{sec:retrieval-insufficient}
+
+The anticipated objection to this entire section is that retrieval-augmented
+generation \citep{lewis2020} already addresses it. Retrieval does help, materially,
+and no argument here counts against using it. It does not establish grounding in
+the sense of Definition~\ref{def:grounded-evidence}, and the gap is specific.
+
+Standard retrieval ranks passages by semantic similarity to the query and places
+the top results in the context window. Consider what that procedure establishes
+against the six dimensions. It can establish authenticity, if the corpus is
+controlled. It can establish traceability, if the retrieval event is logged. It
+establishes nothing about versioning unless version metadata is carried and used,
+nothing about authority unless authority is represented and conditioned on the
+decision type, and---critically---nothing about applicability, because semantic
+similarity to the query is not applicability to the context.
+
+That last point deserves to be stated as a slogan, because it is the practical core
+of this paper:
+
+\begin{quote}
+Retrieval is not applicability. Citation is not entailment. And authoritative
+evidence is not automatically governing evidence for the case at hand.
+\end{quote}
+
+The nearest existing measurement is worth naming, since retrieval evaluation does
+score something adjacent. Context-relevance metrics assess whether retrieved evidence
+is relevant \emph{to the query}. Applicability asks whether it \emph{governs the
+case}. A paediatric question that retrieves adult guidance scores as highly
+relevant---the topic matches exactly---and the guidance does not govern. Relevance to a
+query and authority over a decision are different relations, and only the first is
+measured.
+
+Each clause of the slogan names a distinct substitution that systems make routinely. A
+passage
+about paediatric dosing and a passage about adult dosing are near-neighbours in
+embedding space; that is what makes similarity search work, and it is exactly why
+similarity search will surface the wrong one. A citation demonstrates that a
+document was consulted, not that it supports the claim attached to it, and
+citation-to-claim alignment is a separate check that standard pipelines do not
+perform. And a source may be the most authoritative document in the corpus and
+still not govern this decision.
+
+Nor does $\Sensitive$ come for free. Placing evidence in the context raises the
+probability of consistent continuations; it does not make the assertion conditional
+on the evidence having supported it. By Section~\ref{sec:missing} retrieved text is
+more tokens, not a precondition, and a system may retrieve an authoritative passage
+and then answer from parametric memory, agreeing with it or not.
+
+The conclusion is not that retrieval fails. It is that retrieval supplies one of
+six dimensions reliably, two more if metadata is carried and logged, and none of
+the three that are relations to $c$. The remaining work is architecture, and
+Section~\ref{sec:governed-rag} sets out what it consists of.

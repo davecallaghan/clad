@@ -1,0 +1,56 @@
+% !TEX root = ../main.tex
+\section{From Model Output to Institutional Warrant}
+\label{sec:warrant}
+
+The account so far is epistemological, and it stops short of the question that
+motivates it in practice: under what conditions may an institution justifiably
+rely on a machine-generated claim? I close by stating the transition, not by
+making it, since the constructive theory belongs to a companion paper.
+
+The answer is not ``when the model knows.'' Sections~\ref{sec:output-operator}
+and~\ref{sec:hyperintensionality} rule that out as a question, and
+Section~\ref{sec:internal} explains why even a truth-correlated internal
+representation would not supply it. A raw output is better understood as
+\emph{unlicensed testimony}: a candidate proposition requiring evaluation. That a
+model produced $\phi$ does not authorise reliance on $\phi$.
+
+What can bear the weight is warrant, and warrant is a property of a governed
+process rather than of model parameters. A preliminary schema:
+\begin{equation}
+  \Warranted_{I,c}(\phi)
+  \;\Leftrightarrow\;
+  \Resolved(\phi, c) \wedge \Grd_M(\phi \mid c)
+  \wedge \Verified(V, \phi, c) \wedge \Authorized(I, \phi, c),
+  \label{eq:warrant}
+\end{equation}
+for an institution $I$, context $c$, and verification procedure $V$. The schema is
+schematic, as the notation of this paper generally is: it states necessary
+components rather than a reduction, and each conjunct names a body of work rather
+than a settled condition.
+
+Three things are worth noting about how the present account feeds it.
+
+First, $\Resolved(\phi, c)$ is not an administrative preliminary. By
+Section~\ref{sec:contextual-truth}, an unresolved claim is not yet evaluable, so
+resolution is prior to grounding rather than parallel to it. In deployment this
+is the step most often skipped, because natural language does not announce that
+its decisive parameters are missing.
+
+Second, $\Grd_M(\phi \mid c)$ is doing the work that ``justification'' does in the
+doxastic case, and Section~\ref{sec:measurement} showed it is measurable only for
+architectures that make $E$ explicit and applicable at the point of assertion.
+Warrant therefore has an architectural precondition, not merely a procedural one.
+
+Third, verification and authorization are irreducible to either. A grounded,
+resolved, correctly asserted claim may still be one an institution is not
+entitled to act on, and no amount of improvement to $M$ changes that. This is why
+the sequence
+\[
+  \text{raw output} \rightarrow \text{candidate claim} \rightarrow
+  \text{grounded claim} \rightarrow \text{verified claim} \rightarrow
+  \text{authorized reliance}
+\]
+is a sequence of distinct conditions rather than a gradient of confidence. The
+model may contribute at every stage---retrieving, summarising, comparing,
+structuring, explaining. Its output is not identical with the warranted
+conclusion at any of them.

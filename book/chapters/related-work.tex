@@ -1,0 +1,165 @@
+% !TEX root = ../main.tex
+\chapter{Related Work}
+\label{ch:related-work}
+\label{sec:related}
+
+This book draws on nine bodies of work and departs from each in the same way: it
+treats the object of interest as institutional reliance on a \emph{particular}
+assertion rather than as an aggregate property of a model or a distribution. The
+contribution is integration and operationalization, not discovery in any of these
+fields, and the sections below say specifically what is taken and where the departure
+lies.
+
+\paragraph{Attribution, faithfulness, and citation verifiability.} The problem of
+determining whether generated text is attributable to identified sources has a
+careful operational treatment, and the framework of \citet{rashkin2023} is what the
+audit procedure of Section~\ref{sec:measure-rate} adopts. The distinction between
+consistency with a source and correspondence with the world originates in work on
+summarization \citep{maynez2020} and is established as standard by surveys of the area
+\citep{ji2023}; this book claims no priority for it. \citet{liu2023} measure how
+often statements in generative search output are actually supported by the citations
+attached to them, which is the closest existing measurement to the one proposed here.
+
+The departure is that attribution is necessary and not sufficient. A citation can be
+present, accurate, and authoritative while still failing temporal validity,
+applicability to $c$, standing for the decision class, or authorization for reliance.
+Attribution establishes I12. Warrant requires I8--I19.
+
+\paragraph{Data quality dimensions, evidence doctrine, and records management.}
+Six of the seven dimensions of Section~\ref{sec:six-dimensions} are established
+terms of art, and Section~\ref{sec:six-dimensions} attests them individually. Three
+vocabularies supply them. The data quality literature has provided dimensional
+frameworks for three decades --- believability, reputation, relevancy,
+completeness, currency and the rest --- codified in enterprise data management
+bodies of knowledge and in the corresponding ISO standards. Evidence doctrine
+supplies authentication, relevance and materiality, the best-evidence preference,
+weight, sufficiency, and chain of custody. Records management and archival science
+supply authenticity, reliability, integrity and usability as the qualities a record
+must have to be relied upon; evidence-grading frameworks in medicine supply
+indirectness, which is applicability under another name.
+
+The contribution is the partition rather than the vocabulary. Data quality
+dimensions are assessed by profiling a corpus and are properties of it. Evidence
+doctrine is settled by a tribunal, after the fact, about an item offered for a
+purpose. Records management governs the artifact, not the inference drawn from it.
+None of the three is evaluated at the moment a machine emits a sentence, which is
+the only moment at which a control can act --- and reorganizing the dimensions
+around that moment is what separates document properties from relations to a
+resolved context, and shows the second group to be where retrieval-based systems
+fail and where corpus-level assurance cannot reach.
+
+% TODO(cite): Wang and Strong's data quality dimensional framework (1996) and the
+% enterprise data management and ISO data quality standards that codify it; the
+% rules of evidence on authentication, relevance and materiality; ISO 15489 and the
+% archival-science literature on record authenticity and reliability; and the GRADE
+% treatment of indirectness. Named here without citation keys because I have not
+% verified editions, clause numbers, or rule numbers, and a wrong rule number in
+% this paragraph would be worse than none.
+
+\paragraph{Provenance, lineage, and temporal data management.} The requirement that a
+derived value carry the record of what produced it is not new; it is the subject of a
+substantial database literature, surveyed by \citet{cheney2009} under the
+why/how/where taxonomy of provenance. The valid-time and transaction-time distinction
+this book leans on in Section~\ref{sec:resolved-context} is standard bitemporal
+modeling \citep{snodgrass1999}, and none of it is offered as novel.
+
+What this book does is apply those requirements to machine-generated assertion, where
+they are routinely absent. The observation that an enterprise would not accept a
+warehouse fact without lineage, and does accept a model assertion without it, is the
+whole of the argument in Section~\ref{sec:canonical-form}.
+
+\paragraph{Retrieval-augmented generation and grounded generation.} Retrieval
+conditioning \citep{lewis2020} is the architectural ancestor of
+Section~\ref{sec:governed-rag}, and it does improve factuality and supply provenance
+of a kind. Section~\ref{sec:retrieval-insufficient} states the departure precisely
+rather than dismissively: standard retrieval supplies authenticity where the corpus is
+controlled and traceability where the event is logged, and supplies none of the four
+conditions that are relations to $c$ or to the evidential base as a whole.
+% TODO(cite): metadata-filtered and structured/hybrid retrieval, knowledge-graph
+% grounding, and neuro-symbolic or rule-based eligibility systems. Several of the
+% controls in Section 11 are standard practice in that literature and it should be
+% credited rather than implied to be new here.
+
+\paragraph{Uncertainty, selective prediction, and abstention.} A substantial
+literature addresses whether models know what they know and how uncertainty can be
+surfaced \citep{kadavath2022,lin2022}, and conformal methods give distribution-free
+coverage guarantees under stated exchangeability assumptions
+\citep{angelopoulos2023}. The abstention design of Section~\ref{sec:abstention}
+borrows the risk-coverage framing directly.
+
+The departure is the one recorded at I5 and generalized in
+Section~\ref{sec:independence}: these are properties of a distribution, and reliance
+decisions are made about individual assertions. A calibrated probability of
+correctness is not an audit trail, does not identify the evidence relied upon, and
+does not establish applicability to the case at hand. Conformal coverage is the
+closest thing to a per-instance guarantee in this family, and it guarantees coverage
+of a label set, not that the asserted content rests on evidence that governs the
+decision.
+% TODO(cite): selective classification / learning-to-defer. I could not verify a
+% specific reference for the risk-coverage tradeoff in deep networks; supply one.
+
+\paragraph{Robustness, paraphrase consistency, and behavioral testing.} The
+observation that model behavior moves under semantically inert input variation is
+well established: format and prompt-design sensitivity \citep{sclar2024},
+paraphrase-consistency measurement \citep{elazar2021}, insensitivity to prompt meaning
+\citep{webson2022}, and framing effects under user preference cues
+\citep{sharma2024}. Behavioral and capability-based testing beyond aggregate accuracy
+is the program of \citet{ribeiro2020}, and the form-invariance audit of
+Section~\ref{sec:form-audit} is a specialization of it.
+
+The departure is what the instability is taken to \emph{mean}. That literature treats
+paraphrase sensitivity primarily as a robustness defect to be reduced. This book
+treats it as the reason a validation inference fails, and therefore as an argument for
+measuring a different property rather than for hardening the same one.
+
+\paragraph{Assurance cases and model risk management.} The argument here belongs to a
+tradition older than the technology: structuring a claim, the evidence for it, the
+argument connecting them, the controls applied, and the accountable party.
+Safety-case and assurance-case practice in regulated engineering supplies the shape of
+Table~\ref{tab:invariants-system}, and independent model validation as a second-line
+function supplies the fourth row of Table~\ref{tab:three-teams}.
+% TODO(cite): structured assurance-case notation, safety-case practice, and
+% supervisory model-risk guidance. I could not verify specific references and have
+% deliberately not guessed; the author is better placed to cite the governing
+% standards for the target sector.
+
+\paragraph{Legal, temporal, and jurisdiction-aware reasoning.} The phenomena this
+book indexes into $c$ are each recognized in their own literatures --- temporal
+validity in time-sensitive question answering, jurisdiction in legal information
+retrieval, population scope in clinical decision support.
+% TODO(cite): time-sensitive QA, legal-domain retrieval and reasoning, and
+% jurisdiction-aware systems. This is the literature most likely to contain a prior
+% statement of the applicability condition, and the priority claim in
+% Section~\ref{sec:novelty} should not be made until it has been checked.
+What appears to be absent, and what Section~\ref{sec:novelty} claims, is their
+integration into a single condition on grounded assertion together with the
+observation that faithfulness metrics cannot express it.
+
+\paragraph{Human factors and automation bias.} That operators over-trust automated
+output, and under-verify it when it appears authoritative, is long established
+\citep{parasuraman1997,skitka1999}. This bears directly on the argument of
+Section~\ref{sec:cell-ii}: a fluent assertion with an accurate citation is precisely
+the presentation most likely to suppress the verification it requires, which is why
+cell (ii) is dangerous rather than merely mislabelled. It also bears on
+Section~\ref{sec:relocation}: rendering a resolved request back for confirmation is a
+control that automation-bias research predicts will be under-used, and it should be
+designed accordingly.
+
+\paragraph{Causal attribution and the limits of ablation.} The
+sensitivity condition of Definition~\ref{def:grounding} is a counterfactual claim
+about the production of an assertion, and estimating it inherits every difficulty of
+attribution in generative systems. Section~\ref{sec:sensitivity-protocol} sets out the
+controlled design this book requires and is explicit that the protocol
+\emph{estimates} rather than establishes dependence.
+% TODO(cite): RAG attribution methods and known limitations of ablation-based
+% attribution. The confound identified in Section~\ref{sec:sensitivity-protocol} is
+% likely to be documented in that literature and should be credited if so.
+
+\paragraph{Alignment and output shaping.} Preference optimization
+\citep{ouyang2022} and rule-conditioned training \citep{bai2022} shape output
+distributions and improve compliance behavior; Section~\ref{sec:rlhf} treats the
+first as part of the object of analysis rather than as a competing proposal. The
+departure follows from the structure of \eqref{eq:rlhf}: the reward is a function of
+the output, so unless the training and deployment architecture explicitly represents
+and verifies the evidence relation, these methods cannot establish a source-specific,
+version-specific, context-specific evidence path for a live assertion.

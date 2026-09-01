@@ -1,0 +1,224 @@
+% !TEX root = ../main.tex
+\section{Bounding the Request Space}
+\label{sec:bounded}
+
+Section~\ref{sec:canonical-form} argued that the absence of a canonical form is what
+makes accuracy uncertifiable, and Section~\ref{sec:normaliser} argued that training a
+semantic normaliser is not the remedy. There is a third option, and it is the one an
+architect reaches for first: if the model will not canonicalise its input and cannot
+be taught to, \emph{do not give it free-form input at all}.
+
+Restricting the interface is not a workaround. It is the direct application of the
+diagnosis: canonicalisation moves upstream of the model, into a schema, where it is
+inspectable and versioned. This section works through what that buys, what it does
+not, and where the residual risk goes---because it does not disappear.
+
+\subsection{The construction}
+
+Replace free text with a typed request. Instead of ``is this approved for children?''
+the interface accepts an object:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{7.2cm}@{}}
+\toprule
+\texttt{intent} & \texttt{INDICATION\_CHECK} (from a closed set) \\
+\texttt{subject\_id} & a key into a system of record \\
+\texttt{indication} & a coded value \\
+\texttt{jurisdiction} & required \\
+\texttt{as\_of} & required \\
+\texttt{population} & required, from a controlled vocabulary \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The object is rendered into a fixed template by code the organisation controls and
+versions. Requests are stateless: one request, one fresh context.
+
+The fields are not arbitrary, and the discipline that selects them is the point rather
+than the example. Every component of $c$ appears, because
+Section~\ref{sec:resolved-context} established that a claim whose context is unresolved is
+not yet evaluable---so jurisdiction, valid time, and intended use are required fields, and
+a request missing any of them does not validate. The material facts $f$ enter as keys into
+systems of record rather than as free text, so that the entity under discussion is
+identified rather than described. The intent is drawn from a closed set, because the
+decision class determines which sources have standing under $\standing$ and therefore what
+counts as authoritative. And coded values replace prose wherever a controlled vocabulary
+exists, since that is what allows applicability to be evaluated as a predicate in
+Section~\ref{sec:governed-rag}'s third component rather than judged.
+
+What the schema encodes, in other words, is the set of bindings that would otherwise have
+to be guessed. Anything the type system requires is a thing the system can no longer
+silently assume.
+
+\subsection{What this fixes}
+
+Against Table~\ref{tab:invariants-system}, the gains are specific and substantial.
+
+\paragraph{I1 becomes satisfied by construction.} Not because the model acquired form
+invariance, but because the opportunity to violate it has been removed. Two
+materially equivalent requests are now \emph{the same request}: the equivalence class
+of Section~\ref{sec:canonical-form} has exactly one member, and the canonical form is
+supplied by the schema.
+
+\paragraph{The request space becomes enumerable.} It is a product of typed fields
+rather than $\mathcal{V}^{*}$. It may be combinatorially large, but it is
+\emph{stratifiable}: coverage can be designed by jurisdiction, date band, population,
+and intent, with known sampling properties. That is ordinary test design. The
+validation problem becomes well posed in the sense of
+Section~\ref{sec:not-easier}---the same sense in which it is well posed for a
+classifier.
+
+\paragraph{I10 is enforced by the type system rather than detected.} A request without
+a jurisdiction does not validate. The misapplied category of
+Section~\ref{sec:cell-v} does not need to be caught downstream, because the binding
+it depends on is a precondition of submission. This is the single largest gain, and
+it is available with no machine learning at all.
+
+\paragraph{I7 becomes achievable.} Statelessness removes context accumulation, which
+is the dominant source of within-session drift. Combined with the reproducibility
+conditions of Section~\ref{sec:determinism}, replay becomes a realistic control
+rather than an aspiration.
+
+\subsection{What this does not fix}
+
+\paragraph{The output space is still $\mathcal{V}^{*}$.} Bounding the input bounds the
+input. The model can still emit any string, so ungrounded assertion survives
+untouched: a confident figure resting on nothing is exactly as available as before.
+Grounding is I13 and no amount of input discipline supplies it.
+
+\paragraph{Errors are still not label mismatches.} If the response is prose, it can be
+partly right, right for the wrong reason, or adequate for a weaker claim than the one
+made. The atomic countable error of the classifier case does not follow from a typed
+input.
+
+\subsection{Where the problem goes}
+\label{sec:relocation}
+
+This is the part that decides whether the design is an improvement or a disguise.
+\textbf{Who fills in the request?}
+
+If a person translates their need into the typed object, the ambiguity has not been
+eliminated; it has been moved into that translation, and it is unrecorded unless the
+system captures it.
+
+If a language model performs the translation---which is what is usually built,
+because it preserves the interface that made the technology attractive---then the
+unbounded input space has been reintroduced at the parsing stage. Form-invariance
+failure now determines \emph{which request object is constructed}. A paraphrase can
+produce a different jurisdiction, a different population, or a different intent, and
+everything downstream will process that object correctly and produce a well-grounded
+answer to the wrong question.
+
+This is worse than the original failure in one specific respect: it is less visible.
+An ungrounded assertion at least looks like an assertion, and the audit record shows
+what evidence was and was not used. A misparsed request produces a record that is
+internally consistent and complete. Every control passes. The evidence applies to the
+context in the record, and the context in the record is not the user's context.
+
+The mitigation is not technical. It is to \textbf{render the resolved request back and
+require confirmation before proceeding}, which converts a silent failure into a
+visible one and puts the binding decision where accountability already sits. This is
+the pattern enterprise systems have always used before consequential execution, and
+the argument of this paper is that a natural-language front end does not earn an
+exemption from it. Where confirmation is impractical, the parse should be treated as
+part of the assertion for audit purposes: recorded, versioned, and measured for
+accuracy against reviewed samples like any other component.
+
+\subsection{Constraining the output, and what that does and does not buy}
+\label{sec:constrained-output}
+
+The natural complement is to constrain the output as well: grammar-constrained
+decoding into a schema, with an enumerated verdict field, required evidence
+references, and an explicit \texttt{INSUFFICIENT\_EVIDENCE} variant.
+
+This is worth doing and its benefits should be stated exactly, because it is easy to
+credit it with more than it delivers.
+
+It \emph{does} guarantee that the output parses, that the output space is enumerable,
+and that errors become atomic and countable again---restoring on the output side the
+well-posedness that typed requests restore on the input side. It \emph{does} make
+abstention a first-class value rather than a hoped-for phrasing, and it makes
+per-field evidence linkage (I12) structurally enforceable rather than conventional.
+
+It does \emph{not} satisfy I17. A grammar constrains which strings can be emitted; it
+does not determine which the model selects. The choice between a substantive verdict
+and the abstention variant is made by the same next-token computation as everything
+else, subject to the same pressures identified in Section~\ref{sec:rlhf}. Constrained decoding makes abstention \emph{expressible}, not
+\emph{correctly triggered}.
+
+I17 is therefore satisfied by the check, not by the schema. The evidence conditions of
+Definition~\ref{def:grounded-evidence} are evaluated outside the model, and the gate
+must be able to \emph{override} a substantive verdict the model produced---replacing it
+with a qualification, a refusal, or an escalation---when those conditions are not met.
+A system that trusts the model's own choice of variant has implemented a vocabulary
+for abstention and no gate.
+
+\subsection{Where this is practical}
+
+The design suits high-volume, repetitive, well-typed decisions: eligibility
+determinations, coding against a rulebook, standard disclosures, reconciliations,
+completeness checks. The user is an operator working a queue against a known decision
+class, and the intent set is small and stable.
+
+It suits exploratory work badly, and that matters, because exploration is a large part
+of why these systems were adopted. An analyst pursuing an unanticipated question has
+no intent to select.
+
+Two costs deserve naming.
+
+\paragraph{The intent taxonomy is an ontology project.} Enumerating decision classes,
+coding their fields, and maintaining controlled vocabularies is the same work as
+building a conformed dimensional model, with the same effort profile and the same
+tendency to be underestimated.
+
+\paragraph{An incomplete taxonomy fails quietly.} A question outside the intent set
+does not raise an error. It is routed to the nearest available intent, which is a
+misparse of the kind described in Section~\ref{sec:relocation}. Twenty intents may
+cover most of the volume, and the residual tail is disproportionately where the
+unusual, high-consequence cases live. A closed intent set therefore needs an explicit
+\emph{no matching intent} outcome and a route for it, or the constraint will silently
+manufacture the failure it was introduced to prevent.
+
+\subsection{The effect on what the system is}
+
+One consequence should be faced directly, because it changes how the component should
+be described and governed.
+
+If the input is typed, the output is schema-constrained, and the evidence conditions
+are checked outside the model, then it is fair to ask what the model is contributing.
+Frequently the honest answer is: retrieval, summarisation, and the rendering of a
+determination into readable language---while the determination itself is made by
+deterministic rules over structured evidence.
+
+That is a legitimate and valuable architecture, and it is one enterprises already know
+how to validate. But it \emph{reclassifies} the system. The model is a retrieval and
+presentation layer over a decision service, not the decision-maker, and the assurance
+argument should say so. A programme that describes such a system as ``AI-driven
+decisioning'' is overstating the model's role and, more importantly, misdirecting its
+own validation effort toward the component that is doing the least consequential work.
+
+There is a further consequence worth facing, because it follows from combining this
+section with Section~\ref{sec:structured} and a reader will combine them. If structured
+evidence is the strongest available form of $E$, and typed requests plus constrained
+output are what reach the higher reliance tiers, then the architecture that best
+satisfies this paper's conditions is one in which the model does comparatively little of
+the deciding. Taken to its conclusion, that is an argument for routing decidable claims
+\emph{away} from the model altogether.
+
+I take that to be a feature rather than an embarrassment. A framework that identifies
+which decisions do not need a language model is more useful than one that assumes every
+decision does. What remains for the model, once the decidable residue is routed away, is
+the genuinely open-textured part: synthesis across heterogeneous sources, questions whose
+evidence exists only as prose, interpretation where the governing text is ambiguous, and
+interaction with people who cannot state their need in a schema. That is a smaller claim
+about the technology than the field usually makes, and a more defensible one---and it is
+the part where the measurement problem of Section~\ref{sec:auditable} genuinely bites,
+because it is the part no schema can decide.
+
+The tiering of Section~\ref{sec:tiers} is where this resolves. Bounding the request
+space is not a general answer to the problem of ungrounded assertion; it is the
+mechanism by which a narrow, well-understood decision class can be moved to a higher
+reliance tier than free-form interaction can support. Free-form interfaces are
+appropriate at Tiers~0 to~2. Reaching Tier~3 and above is, in practice, an exercise in
+bounding what may be asked and what may be answered.

@@ -1,0 +1,103 @@
+% =====================================================================
+%  arXiv-ready preprint.  Stands alone: it depends on no companion paper.
+%  A formal treatment of the epistemology is kept in ../paper1-subdoxastic/
+%  as an unsubmitted reference only.
+%
+%  Build:  make          Ship:  make arxiv
+%
+%  Self-contained: shares no files with the sibling paper directories.
+%  Notation is kept in step by hand, via macros.tex.
+% =====================================================================
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}           % before hyperref: blue!50!black is xcolor-only
+\usepackage{hyperref}         % load last
+\hypersetup{
+  colorlinks=true, linkcolor=blue!50!black,
+  citecolor=blue!50!black, urlcolor=blue!50!black,
+  pdftitle={Accuracy Does Not Establish Auditable Warrant: Grounding as a Runtime Control for Language Model Assertion},
+  pdfauthor={David Callaghan}
+}
+
+\emergencystretch=2em
+
+% --- Float placement -----------------------------------------------------
+% This paper is table-heavy: eleven floats, several in consecutive
+% subsections.  With LaTeX's defaults the queue backs up and a deferred float
+% can drift past the bibliography to the end of the document, which happened
+% before these settings were added.  Two fixes, both needed.
+%
+% 1. Permit more of a page to be float and more floats per page, so the queue
+%    drains instead of accumulating.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.7}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
+%
+% 2. placeins with [section] inserts an implicit barrier at each \section, so a
+%    float can never appear before its own section heading or after the next.
+%    A table that discusses one section's argument stays in that section.
+\usepackage[section]{placeins}
+
+\input{macros}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{fact}{Fact}
+
+\title{Accuracy Does Not Establish Auditable Warrant:\\
+       Grounding as a Runtime Control for\\
+       Language Model Assertion}
+\author{%
+  David Callaghan\\
+  \texttt{mr.david.callaghan@gmail.com}
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+
+\input{sections/introduction}
+\input{sections/epistemic-premise}
+\input{sections/architecture-training}
+\input{sections/taxonomy}
+\input{sections/independence}
+\input{sections/grounding-context}
+\input{sections/canonical-form}
+\input{sections/invariants}
+\input{sections/auditable}
+\input{sections/governed-rag}
+\input{sections/bounded-requests}
+\input{sections/scale-and-scope}
+\input{sections/warrant-tiers}
+\input{sections/three-teams}
+\input{sections/evaluation}
+\input{sections/limitations}
+\input{sections/related-work}
+\input{sections/conclusion}
+
+\input{sections/appendix-worked}
+\input{sections/appendix-benchmark}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

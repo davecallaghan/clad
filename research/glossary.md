@@ -7,6 +7,36 @@ collected separately in *Notation & Conventions* at the front of the book.
 that cannot be checked mechanically, recorded as auditable evidence. See
 *decomposition*.
 
+**Invariants (I1--I19).** The properties an assertion-emitting system does not
+supply on its own (I1--I7, *behavioral*) and those it must be built to supply
+(I8--I19, *system*). Both sets are tabulated in the invariants chapter; they are
+listed here because they are referred to by number throughout.
+
+| | Name | What it requires |
+|---|---|---|
+| I1 | Form invariance | Materially equivalent requests give equivalent decision-relevant outcomes |
+| I2 | Closure | Asserting `p` and `p → q` implies asserting `q` |
+| I3 | Decomposition | Asserting a conjunction implies asserting its parts |
+| I4 | Consistency | Not both `p` and `not p` |
+| I5 | Self-report fidelity | Claims about what it knows track what it asserts |
+| I6 | Correctness | What is asserted is true |
+| I7 | Repeatability | Same input, same session, same assertion |
+| I8 | Source identity | Every cited source has stable identity and established authority |
+| I9 | Temporal validity | Source version and effective date are recorded and compared to the decision date |
+| I10 | Context binding | The resolved context is explicit before assertion, or explicitly marked unresolved |
+| I11 | Applicability | Evidence is filtered on scope, not on similarity alone |
+| I12 | Traceability | Each consequential claim links to the evidence supporting it |
+| I13 | Support verification | Cited evidence is checked to support the claim at the strength asserted |
+| I14 | Reproducibility | The assertion can be re-derived from recorded inputs and versions |
+| I15 | Authorization | Reliance is permitted at the applicable tier, with duties assigned |
+| I16 | Reconstructability | The full decision path is retained for the required period |
+| I17 | Controlled failure | Unmet conditions produce qualification, refusal, or escalation |
+| I18 | Sufficiency | The evidence set is checked for coverage of every condition the claim requires |
+| I19 | Defeater search | A scoped search for contrary or undermining authority of comparable standing |
+
+I1--I7 are the ones that do *not* hold; naming them is how the book states what a
+system cannot be assumed to do. I8--I19 are requirements, each tied to a control.
+
 **Audit chain.** The composed, hash-linked sequence of audit records produced for
 a single interaction by the components that processed it. Written `chain(i)`.
 
@@ -107,7 +137,7 @@ three components in this book have `R_hard = ∅` — each is independently
 deployable.
 
 **Interaction.** A single, non-agentic exchange with an AI model, modeled as the
-tuple `(p, u, m, θ, o)` — prompt, user input, model, inference configuration, and
+tuple `(x, u, M, θ, o)` — prompt, user input, model, inference configuration, and
 output (Chapter 1, Axiom 1).
 
 **Interface contract.** The formal agreement `K(g₁, g₂)` describing what one

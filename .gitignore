@@ -30,3 +30,16 @@ build/.chromium/
 
 # local GCP deploy config (contains project id)
 gcp/config.env
+
+# LaTeX build output — regenerable from sources via tools/rebuild-book.sh
+book/build/
+papers/*/build/
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Metals semantic index
+*.semanticdb

@@ -1,0 +1,131 @@
+\section{The Evidence Surface}
+\label{sec:framework-15}
+
+The surface partition of Section~\ref{sec:framework-4} is exhaustive, and
+Theorem~1 proves it. This section argues that the theorem is true and the axiom it
+rests on is incomplete, and that closing the gap requires a sixth surface rather than
+a wider reading of an existing one.
+
+The argument is put here, at the end of the chapter, because it is a critique of the
+foregoing rather than a qualification of it. Nothing above needs to be withdrawn.
+
+\subsection{What the theorem actually proves}
+
+Theorem~1 establishes that every element of every interaction is assigned to exactly
+one control surface. Its first proof step is the load-bearing one: \emph{by Axiom 1,
+every interaction is described by} $(x, u, M, \theta, o)$. The partition is then
+exhaustive over that tuple, and the conclusion follows.
+
+So the theorem's scope is the tuple, and its truth is relative to the tuple. It proves
+completeness of the partition, not completeness of the tuple. Axiom~1 is careful about
+this and says so directly: it claims governance scope rather than completeness, and
+concedes that elements outside the tuple ``may influence outputs'' while declining to
+model them.
+
+Among the elements named as outside: \emph{retrieval index state}. The three-tier
+classification places it in Tier~2, known but unmodeled, contributing documented
+ungoverned risk.
+
+\subsection{Why that placement does not hold for retrieval-augmented systems}
+
+Tier~2 is the right classification for infrastructure that perturbs an output without
+being part of what the output claims. Load balancing, caching, replica differences: an
+interaction is not \emph{about} its own routing, and nothing an auditor asks concerns
+which replica served the request.
+
+Retrieved evidence is not of that kind. When a system answers a regulated question from
+a retrieved instrument, the instrument is not a factor that influenced the output. It is
+the \emph{basis of the assertion} --- the thing an auditor is asking about when they ask
+why. Placing it in Tier~2 makes the governance framework unable to represent the one
+element the audit is for.
+
+The chapter's own architecture shows the consequence. The prompt surface governs the
+assembled artifact, and the evaluation engine operates on that assembled text rather
+than on the materials that composed it; the composition process is invisible to the
+evaluation layer. So retrieved evidence enters the governed tuple as opaque tokens
+inside $x$. Two prompts of identical text, one assembled from a current authoritative
+instrument and one from a superseded foreign-jurisdiction instrument, are the same
+governed artifact under this model. They evaluate identically, produce identical audit
+records, and are distinguishable only by information the framework has declared out of
+scope.
+
+That is not a gap in enforcement. It is a gap in \emph{representation}, and it cannot be
+closed by strengthening any of the five surfaces, because none of them has a term for a
+source.
+
+\subsection{The sixth surface}
+
+Adding evidence therefore requires amending Axiom~1 rather than extending
+Definition~3.2. Write the amended tuple
+\begin{equation}
+  i = (x, u, M, \theta, o, E)
+  \label{eq:meta-amended-tuple}
+\end{equation}
+where $E$ is the evidential basis available to the interaction: the identified,
+versioned sources the assertion is permitted to rest on. The partition then gains
+\begin{equation}
+  \sigma_{\mathrm{evidence}} = \{E\}
+  \label{eq:meta-evidence-surface}
+\end{equation}
+and Theorem~1 is restated over the six-element tuple, where it holds by the same proof.
+
+Its governability class is worth stating precisely, because it is the reason the surface
+is worth adding:
+\begin{equation}
+  \gov(\sigma_{\mathrm{evidence}}) =
+  \begin{cases}
+    \text{full}    & \text{retrieval-provided evidence, identified at inference time}\\
+    \text{external}& \text{parametric evidence absorbed in training}
+  \end{cases}
+  \label{eq:meta-evidence-governability}
+\end{equation}
+
+This is the only surface in the framework whose class is \emph{split by deployment
+choice rather than fixed by the technology}. The prompt surface is governable because
+prompts are constructed; model internals are external because they are not observable.
+Evidence is either, depending on whether the architecture makes it explicit --- which
+turns a governability classification into a design requirement, and is the strongest
+architectural conclusion in this book.
+
+\subsection{What the new surface requires}
+
+Three things the existing five do not supply.
+
+\paragraph{An applicability relation.} The output-evaluation machinery of the runtime
+control layer is defined over $\mathrm{applicable}(R_{\mathrm{ROC}}, i)$, and the
+completeness theorem for that layer asserts its audit record is total over exactly that
+set. The function is used and never defined anywhere in this framework. For constraints
+the omission is survivable, because applicability of a rule to an interaction is
+settled by level and domain. For evidence it is not: whether a source governs a case is
+the substance of the question, and it is developed in
+Chapter~\ref{ch:grounding-context} as a relation to a resolved context of jurisdiction,
+valid time, material facts, and intended use.
+
+\paragraph{A second time axis.} Axiom~5 gives temporal identity over a single totally
+ordered domain, which is sufficient for asking which rule version was in force when an
+interaction ran. Evidence needs two axes: the time a source was valid, and the time the
+system could have known it. Their divergence is a detectable failure in both
+directions, and neither is expressible with one axis.
+
+\paragraph{A dependence condition.} The prompt surface can establish that required text
+was present and the output surface that prohibited text was absent. Neither can establish
+that an assertion \emph{rested on} the evidence cited for it. The framework's own worked
+example makes the point: a citation check fails, the prompt is reinforced, the model
+returns the same analysis with citations attached, and the second evaluation passes.
+Nothing in the five surfaces can distinguish that from grounded assertion, because a
+presence check on the artifact is the only instrument available.
+
+\subsection{Consequence for the guarantees}
+
+The composed guarantee of Section~\ref{sec:framework-12} is unaffected in what it claims and
+narrowed in what it covers. Every theorem in this chapter remains true over the tuple it
+quantifies over. What changes is the residual-risk accounting: evidence moves from Tier~2
+undocumented influence to a governed surface with its own class, its own audit fields, and
+its own failure modes --- which means the risk attributable to it becomes nameable
+instead of being absorbed into the irreducible remainder.
+
+The conditions on $\sigma_{\mathrm{evidence}}$ are the grounding conditions of
+Chapter~\ref{ch:taxonomy}; the invariants that make them checkable, and the
+measurement that establishes them, are stated where the other system invariants are. This section
+claims only that the surface belongs in the partition, and that its absence was a
+scoping decision made before retrieval-augmented deployment was the normal case.

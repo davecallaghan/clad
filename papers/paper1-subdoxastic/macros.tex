@@ -1,0 +1,51 @@
+% Operator macros for Paper 1.
+%
+% Every multi-letter operator is defined here and nowhere else.  Bare 'Says_M'
+% sets as a product of italic variables with the wrong spacing; \operatorname
+% gives upright type and correct spacing.  Routing everything through one
+% definition makes a notation change a one-line edit.
+%
+% \newcommand (not \providecommand) is deliberate: if a package ever claims one
+% of these names the build should fail loudly rather than silently resolve to
+% someone else's definition.
+
+% --- The two central operators -------------------------------------------
+% Upright, because they are operators rather than variables.  O takes a bare
+% proposition; G is indexed to a practical context c.
+\newcommand{\Out}{\mathrm{O}}
+\newcommand{\Grd}{\mathrm{G}}
+
+% --- Non-entailment ------------------------------------------------------
+\newcommand{\nentails}{\;\not\Rightarrow\;}
+
+% --- Assertion and disposition -------------------------------------------
+\newcommand{\Says}{\operatorname{Says}}
+\newcommand{\GenDisp}{\operatorname{GenDisp}}
+\newcommand{\utter}{\operatorname{utter}}
+\newcommand{\Abstain}{\operatorname{Abstain}}
+
+% --- Truth, context, evaluability ----------------------------------------
+\newcommand{\True}{\operatorname{True}}
+\newcommand{\Resolved}{\operatorname{Resolved}}
+\newcommand{\Evaluable}{\operatorname{Evaluable}}
+
+% --- Evidence ------------------------------------------------------------
+\newcommand{\Supports}{\operatorname{Supports}}
+\newcommand{\Authentic}{\operatorname{Authentic}}
+\newcommand{\Traceable}{\operatorname{Traceable}}
+\newcommand{\Current}{\operatorname{Current}}
+\newcommand{\Applicable}{\operatorname{Applicable}}
+\newcommand{\TrainedOn}{\operatorname{TrainedOn}}
+
+% --- Verification, authorization, warrant --------------------------------
+\newcommand{\Verified}{\operatorname{Verified}}
+\newcommand{\Authorized}{\operatorname{Authorized}}
+\newcommand{\Warranted}{\operatorname{Warranted}}
+
+% --- Defined predicates of the account -----------------------------------
+\newcommand{\Hall}{\operatorname{Hallucination}}
+\newcommand{\Err}{\operatorname{Error}}
+
+% --- Omniscience and finiteness ------------------------------------------
+\newcommand{\Omniscient}{\operatorname{Omniscient}}
+\newcommand{\Reliable}{\operatorname{Reliable}}

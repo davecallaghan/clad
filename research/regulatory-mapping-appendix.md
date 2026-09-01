@@ -1,7 +1,5 @@
 # Chapter 5 — Meeting Regulators
 
-**Part III · Assurance in Practice**
-
 Parts I and II built the framework and its three control layers. This final chapter turns the framework outward: it maps Clad's controls to the regulatory frameworks and industry standards an enterprise in a regulated sector must answer to — NIST AI RMF, the EU AI Act, ISO/IEC 42001, HIPAA, SOX, GLBA, and NERC CIP.
 
 By the end of the chapter you will be able to:
@@ -103,7 +101,7 @@ HIPAA compliance for AI systems requires controls across the Privacy Rule, Secur
 | Notice of privacy practices | Privacy §164.520 | EPG: O(hipaa_disclaimer_present) | Strong | Enforceable as a prompt constraint with mechanical evaluation. |
 | PHI protection in outputs | Privacy §164.502(a) | ROC: composite PHI check (O_d + O_c), PHI-first policy (§6.3) | Moderate | Deterministic pattern matching + NER classifier with conservative threshold and post-redaction re-evaluation. Classifier false negatives are possible (ROC Theorem 4: irreducible residual risk). Best-available detection, not guaranteed prevention. |
 | Access controls | Security §164.312(a) | EPG §4 (RBAC), Meta-framework EA2 (identity binding) | Strong | Role-based constraint authorship. Identity-bound model invocations. |
-| Audit controls | Security §164.312(b) | Meta-framework §9 (audit chain), AI1-AI5 (integrity) | Strong | Tamper-evident, version-stamped, independently verifiable audit records. |
+| Audit controls | Security §164.312(b) | Meta-framework §9 (audit chain), AI1-AI6 (integrity) | Strong | Tamper-evident, version-stamped, independently verifiable audit records. |
 | Integrity controls | Security §164.312(c) | Meta-framework AI2-AI3 (hash chain, signing) | Strong | Cryptographic chain integrity with KMS-managed signing. |
 | Transmission security | Security §164.312(e) | Out of scope | None | Encryption in transit is infrastructure-level, not framework-provided. |
 | Breach notification | Breach §164.404 | MDR §5.4 (regulatory reporting), forensic evidence locker | Moderate | MDR provides detection and evidence. 60-day notification compliance requires organizational reporting processes. |

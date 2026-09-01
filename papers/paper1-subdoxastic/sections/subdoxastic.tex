@@ -1,0 +1,116 @@
+% !TEX root = ../main.tex
+\section{Sub-Doxastic Systems and the Limits of the Analogy}
+\label{sec:subdoxastic}
+
+\subsection{The positive characterisation}
+
+If machine assertion-states are not beliefs, what are they?
+\citet{stich1978} introduced the category of the \emph{sub-doxastic} for states
+that carry information and influence behaviour while failing two marks of belief:
+they are not inferentially integrated with the agent's other states, interacting
+with beliefs and with each other only along narrow special-purpose channels; and
+they are not available at the person level. His examples are the states of the
+visual system computing depth from disparity, and the internalised grammar
+generating acceptability intuitions. A speaker's parser registers that a string
+is ill-formed, but this registration does not enter general reasoning the way a
+belief would: it cannot be weighed against other evidence, deployed in planning,
+or revised by argument.
+
+The category is the right one for these systems, but it needs reconstruction on
+both of Stich's marks rather than one, and I would rather do that openly than
+borrow the term and hope the differences go unnoticed.
+
+\subsection{Why inferential isolation is the wrong mark}
+\label{sec:isolation}
+
+It is tempting to say that machine assertion-states satisfy Stich's
+isolation criterion superbly, and to read the axiom failures of
+Section~\ref{sec:output-operator} as its formal signature. That reading conflates
+two properties, and on the one Stich actually specified, these systems fail the
+criterion---in an unexpected direction.
+
+Stich's isolation is \emph{encapsulation}: a boundary condition. The parser's
+states cannot interact with the general belief set. What the normal axioms
+formalise is something else: \emph{closure}, a discipline condition on a set of
+contents. These are independent. A module may be internally well-disciplined and
+informationally sealed, which is roughly the picture of the modular mind that
+Stich's examples belong to. And a system may be radically unencapsulated and
+wholly undisciplined: everything interacting with everything, just not logically.
+
+The second description fits a language model better than the first. Content in a
+forward pass is globally available to the computation; there is no wall, and
+nothing is special-purpose. What these systems exhibit is not inferential
+isolation but inferential \emph{promiscuity without discipline}---which is, if
+anything, the opposite of encapsulation. So the analogy does not survive on this
+mark, and the appearance that it does comes from hearing ``isolation'' as
+``failure to draw the right conclusions'' rather than as ``walled off.''
+
+\subsection{Why the personal-level relatum is missing}
+\label{sec:relatum}
+
+The second mark fails for a different and more interesting reason. Stich's notion
+is defined relationally. Sub-doxastic states are \emph{sub-personal}: states of
+subsystems within a creature that also has a personal level, a locus of belief,
+inference, and rational agency relative to which they are ``sub.'' The visual
+system's disparity-states are sub-doxastic of a perceiver; the parser's states are
+sub-doxastic of a speaker. The inferential isolation that defines them is
+isolation \emph{from the agent's beliefs}.
+
+In the machine case there is no personal-level believer for these states to be
+sub-personal relative to. The system is, so to speak, sub-doxastic all the way
+up: a parser without a speaker, a visual module without a perceiver. This is not
+a quibble. It removes the contrast that gave Stich's category its content.
+Strictly, then, these states are not sub-doxastic in Stich's sense, because
+nothing satisfies the relatum his definition requires.
+
+\subsection{The monadic core}
+\label{sec:monadic}
+
+What survives both departures is a monadic core, which the apparatus of this
+paper lets us state without the missing relatum and without the misdescribed
+mark. Call a content-bearing state sub-doxastic in the extended sense iff it is:
+
+\begin{enumerate}
+  \item \textbf{informational}---apt for grounding in an evidential base, hence
+        apt for $\Grd_M$;
+  \item \textbf{behaviour-guiding}---issuing in assertion, hence apt for
+        $\Out_M$; and
+  \item \textbf{closure-free}---failing the normal axioms constitutively rather
+        than by performance limitation.
+\end{enumerate}
+
+Call systems all of whose content-bearing states meet (1)--(3) \emph{sub-doxastic
+systems} in an extended sense: not systems containing sub-doxastic states beneath
+a doxastic level, but systems exhibiting the sub-doxastic profile with no doxastic
+level anywhere. The extension is a genuine conceptual novelty and I flag it as
+such. Human cognitive science never needed the monadic notion, because in humans
+sub-doxastic states always come embedded in a believer. These may be the first
+well-studied free-standing sub-doxastic systems.
+
+Condition (3) is where the philosophical weight sits, and it is worth connecting
+to why closure is a norm for belief in the first place. Belief is constitutively
+aimed at truth \citep{shah2005,wedgwood2002}; assertion is governed by a norm
+that holds the asserter to what she is in a position to know
+\citep{williamson2000}, and to the commitments her assertion incurs
+\citep{brandom1994}. Closure is not an ornament on belief but a consequence of
+its aim: a state that will be recruited by open-endedly many projects must be
+kept consistent and closed, on pain of the projects failing. A state that carries
+information and guides output while answering to no such aim is exactly what
+conditions (1)--(3) describe.
+
+The characterisation earns its keep by steering between the two crude positions
+of Section~\ref{sec:intro}. Against the enthusiast: sub-doxastic states are not
+beliefs, and no scaling of the same architecture makes them beliefs, because the
+deficit is structural. Against the eliminativist: sub-doxastic states are not
+nothing---they carry information, admit of grounding and ungrounding, and support
+a genuine if non-doxastic epistemology of the kind
+Sections~\ref{sec:grounding}--\ref{sec:hallucination} provide. ``Stochastic
+parrot'' is as much an underdescription as ``artificial believer.''
+
+Two corollaries. First, familiar person-level appraisal---rationality,
+irrationality, dishonesty, sincerity---misfires for such systems not because they
+are bad believers but because there is no believer; the appraisals lack a
+subject. Second, the appraisals that do apply are the mechanism-level ones of
+Section~\ref{sec:hallucination}: grounded or ungrounded, faithful or fabricating,
+sensitive or lucky. The sub-doxastic framing and the hallucination framework are
+again two faces of one view.

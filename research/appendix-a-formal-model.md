@@ -1,18 +1,20 @@
-# Appendix A — Formal Model & Theorems
+# The EPG and ROC Formal Models
 
 This appendix collects the formal models underpinning the control layers of
-Part II: the deontic constraint model of Enterprise Prompt Governance (Chapter 2)
+Part IV: the deontic constraint model of Enterprise Prompt Governance (Chapter 2)
 and the output-evaluation model of Runtime Output Controls (Chapter 3). The
 chapters draw on these results without requiring the reader to work through them
 in full.
 
 ## A.1 Prompt Governance (EPG)
 
-This appendix contains the complete, authoritative EPG formal model. It extends and supersedes the standalone formal model document (`formal-model.md`). The formal model uses symbolic logic throughout; refer to §3 for business-language explanations of these concepts.
+This appendix contains the complete EPG formal model. It uses symbolic logic throughout; §3 gives business-language explanations of the same concepts.
 
-### Conservative Extension Argument
+### Two Layers: Logical Core and Governance Meta-Layer
 
-The formal constructs introduced beyond the base model (RBAC, domain isolation, conflict detection, decomposition mapping) extend the existing formal model without altering the truth of existing theorems. New symbols (`author`, `approver`, `scope`, `decomp`, `CONTRADICTION`, `shared_scope`, `precedence`) operate on the governance meta-layer — who can create constraints and how they are checked. They do not change the satisfaction relation for a given C*(level) and prompt p. They do not change the inheritance rules. They do not change the evaluability classification or evaluation functions. Existing theorems (Audit Completeness, No Evaluability Gap) hold over the unchanged logical core. New theorems operate over the governance meta-layer and are independent of the logical core.
+The model has two layers, and keeping them apart is what makes the results composable. The **logical core** is the satisfaction relation for a given C*(level) and prompt x, the inheritance rules, and the evaluability classification with its evaluation functions. The **governance meta-layer** — `author`, `approver`, `scope`, `decomp`, `CONTRADICTION`, `shared_scope`, `precedence` — governs who may create a constraint and how it is checked.
+
+The meta-layer does not reach into the core. It changes neither the satisfaction relation, nor the inheritance rules, nor the evaluability classification. Audit Completeness and No Evaluability Gap are therefore theorems over the core alone, while Contradiction Freedom, Scope Isolation and Decomposition Coverage are theorems over the meta-layer and hold independently of it. A deployment can change its authorship controls without disturbing either set.
 
 The logical core uses a two-operator deontic fragment {O, F} over atomic properties (§3.2a). P_meta is a governance annotation outside this fragment. The standard axiom O(φ) → P(φ) does not apply because P_meta is not a deontic operator.
 
@@ -23,7 +25,7 @@ L = {enterprise, department, project}     — governance levels
 C = C_m ⊎ C_p                            — operational constraints (disjoint union)
 C_s                                       — semantic constraints (intent records,
                                             NOT part of C, documentation only)
-P = set of all prompts                    — the governed artifacts
+X = set of all prompts                    — the governed artifacts
 A = set of all agents                     — authors/owners of constraints
 D = set of all domains                    — legal, security, data_privacy, etc.
 T = totally ordered set of time points    — for versioning and audit
@@ -42,7 +44,7 @@ enterprise ≻ department ≻ project
 
 ### A.1.3 Core Functions
 
-Base functions (unchanged):
+Base functions:
 ```
 level   : C → L           — assigns constraint to governance level
 owner   : C → A           — who authored the constraint
@@ -50,7 +52,7 @@ domain  : C → D           — which domain the constraint belongs to
 ver     : C × T → C_t     — version of constraint c active at time t
 ```
 
-RBAC and governance meta-layer (new):
+RBAC and governance meta-layer:
 ```
 scope    : A → 𝒫(D)       — domains agent may author constraints for
 approve  : C → A           — who approved the constraint
@@ -77,14 +79,14 @@ Enterprise Precedence Table:
 
 ### A.1.4 Constraint Taxonomy
 
-Evaluability classes (unchanged in structure):
+Evaluability classes:
 ```
 C_m = mechanically evaluable constraints
 C_p = procedurally evidenced constraints
 C = C_m ⊎ C_p              (operational constraints, disjoint)
 ```
 
-Semantic constraints and decomposition mapping (new):
+Semantic constraints and decomposition mapping:
 ```
 C_s = semantic constraints (intent records, NOT part of C)
 
@@ -208,31 +210,31 @@ Decomposition change triggers:
 ### A.1.10 Satisfaction Relations
 
 ```
-⊨_m : P × C_m → {⊤, ⊥}           — automated, deterministic
+⊨_m : X × C_m → {⊤, ⊥}           — automated, deterministic
 ⊨_p : Evidence × C_p → {⊤, ⊥}    — human-attested, deterministic
                                       given evidence
 
 Deontic satisfaction:
-  p ⊨ O(φ)  iff  φ holds in p
-  p ⊨ F(φ)  iff  φ does not hold in p
+  x ⊨ O(φ)  iff  φ holds in x
+  x ⊨ F(φ)  iff  φ does not hold in x
 ```
 
 ### A.1.11 Core Principles (Formal)
 
 ```
 Principle 1 (Constraint, not prescription):
-  ∀ c ∈ C : c ∈ (P → {⊤, ⊥})
+  ∀ c ∈ C : c ∈ (X → {⊤, ⊥})
 
 Principle 2 (Execution is local):
-  ∀ p ∈ P_executed : level(p) = project
+  ∀ x ∈ X_executed : level(x) = project
 
 Principle 3 (Risk management):
-  System guarantees: ∀ p ∈ P_executed : audit(p,t) is COMPLETE ∧ IMMUTABLE
-  System does NOT guarantee: ∀ p ∈ P_executed : ∀ c ∈ C*(project) : p ⊨ c
+  System guarantees: ∀ x ∈ X_executed : audit(x, t) is COMPLETE ∧ IMMUTABLE
+  System does NOT guarantee: ∀ x ∈ X_executed : ∀ c ∈ C*(project) : x ⊨ c
 
 Principle 4 (Audit the artifact):
-  ∀ p ∈ P_executed, ∀ t ∈ T :
-    ∃ audit(p,t) = {(c, ver(c,t), eval(c,p)) | c ∈ C*(project)}
+  ∀ x ∈ X_executed, ∀ t ∈ T :
+    ∃ audit(x, t) = {(c, ver(c,t), eval(c,p)) | c ∈ C*(project)}
 
 Principle 5 (Downward inheritance, lateral scoping):
   Inheritance: C*(l) = ⋃{C(l') | l' ≽ l}
@@ -242,9 +244,9 @@ Principle 5 (Downward inheritance, lateral scoping):
 ### A.1.12 Audit Record
 
 ```
-audit(p, t) =
-  { (c, ver(c,t), ⊨_m(p,c))                       | c ∈ C*_m(project) }
-∪ { (c, ver(c,t), ⊨_p(evidence(p,c),c), attestor) | c ∈ C*_p(project) }
+audit(x, t) =
+  { (c, ver(c,t), ⊨_m(x, c))                       | c ∈ C*_m(project) }
+∪ { (c, ver(c,t), ⊨_p(evidence(x, c),c), attestor) | c ∈ C*_p(project) }
 
 Extended fields:
   - conflict_detection_results : CONTRADICTION scan outcome
@@ -255,19 +257,19 @@ Extended fields:
 
 ### A.1.13 Theorems
 
-Existing theorems (unchanged):
+Theorems over the logical core:
 
 ```
 THEOREM (Audit Completeness):
-  ∀ p ∈ P_executed : audit(p,t) is total over C*(project)
-  ∧ audit(p,t) is deterministic
-  ∧ audit(p,t) is immutable
+  ∀ x ∈ X_executed : audit(x, t) is total over C*(project)
+  ∧ audit(x, t) is deterministic
+  ∧ audit(x, t) is immutable
 
 THEOREM (No Evaluability Gap):
   ∀ c ∈ C*(project) : c ∈ C_m ∨ c ∈ C_p
 ```
 
-New theorems (with explicit preconditions and scope):
+Theorems over the governance meta-layer, with explicit preconditions and scope:
 
 ```
 THEOREM (Contradiction Freedom — Pairwise, Atomic Fragment):
@@ -322,6 +324,50 @@ R     = set of all deterministic rules      — pattern, blocklist, structural c
 ```
 
 ROC also uses the shared sets from the meta-framework: I (interactions), T (time), V (audit records), Φ (property vocabulary).
+
+#### Applicability
+
+`applicable` is used in the pipeline definition and in the Output Evaluation
+Completeness theorem, and it carries more weight than its notation suggests. The
+theorem states that the audit record is *total over* `applicable(C_ROC, i)`. Left
+undefined, that claim is vacuous: an implementation could define `applicable` to
+return ∅ for every interaction and satisfy the theorem while evaluating nothing.
+The definition is therefore part of the guarantee, not a detail beneath it.
+
+```
+scope    : C_ROC → (I → {true, false})   — each constraint declares the
+                                            interactions it governs
+applicable : 𝒫(C_ROC) × I → 𝒫(C_ROC)
+applicable(X, i) = { c ∈ X | scope(c)(i) }
+
+Resolved against the interaction's context — the same four dimensions the
+grounding chapters index evidence to, named here rather than symbolized, because
+in this appendix `c` is a constraint:
+  jurisdiction
+  valid time (which version of the rule was in force)
+  data classification / regulated form
+  the requesting role
+```
+
+Three requirements make the definition load-bearing rather than decorative:
+
+- **Totality.** `scope(c)` is total over I. There is no interaction for which a
+  constraint's applicability is undefined; a constraint either governs an
+  interaction or it does not.
+- **Recorded exclusion.** `A_ROC(i, t)` records `C_ROC \ applicable(C_ROC, i)`
+  together with the `scope` predicate version that excluded each constraint. A
+  constraint deemed inapplicable is an auditable decision, not an absence. This
+  is what closes the vacuity: narrowing applicability does not shrink the audit
+  record, it changes what the record must justify.
+- **Governed change.** `scope` is a versioned governed artifact under the same
+  dual-control and version-stamping rules as `τ` (§A.2.6). Narrowing a
+  constraint's applicability is a governance action with an author, an approver,
+  and a timestamp.
+
+Without recorded exclusion, evaluation completeness and evaluation avoidance are
+indistinguishable in the audit record — the failure mode the meta-framework's
+evidence-surface discussion identifies, where a control that is never invoked
+looks identical to a control that always passes.
 
 ### A.2.2 Output Constraint Taxonomy
 

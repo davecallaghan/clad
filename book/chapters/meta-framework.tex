@@ -1,0 +1,1404 @@
+\chapter{The Architecture of Assurance}
+\label{ch:framework}
+
+
+Every later chapter of this book is an instance of one idea developed here: that
+the \emph{evidence} an AI system produces about its own governance can be made
+provable, even though its outputs cannot. The distinction is the whole point, and
+it is easy to lose. What follows proves properties of the audit record --- that it
+is complete over the governed surfaces, that it is tamper-evident, that a missing
+interaction is detectable --- conditional on a set of assumptions enumerated at the
+end of this chapter. It proves nothing about whether any particular output is
+compliant; the chapters on ungrounded assertion and canonical form explain why no
+such proof is available.
+
+This chapter builds the foundation --- the
+axioms Clad rests on, the surfaces at which an interaction can be governed, the
+model of a governance component, and the algebra by which components compose.
+
+By the end of the chapter you will be able to:
+
+\begin{itemize}
+  \item state the axioms Clad's guarantees depend on, and recognize when a deployment violates them;
+  \item decompose an AI interaction into its five control surfaces and classify each surface's governability;
+  \item describe a governance component as the tuple \texttt{g = (S, C, E, A, R)} and read the interface contract between two components;
+  \item explain what the composition algebra guarantees when components are deployed together.
+\end{itemize}
+
+
+Clad formalizes a governance boundary that makes risk, responsibility, and evidentiary state explicit for regulated AI use. Rather than promising perfect prevention, it focuses on provability: it guarantees that every governed interaction produces auditable evidence of which rules were in effect, which evaluations occurred (or failed), and what artifacts and versions participated in the interaction. That provability is the core compliance deliverable for regulators and internal auditors.
+
+Clad's architecture combines enforcement points, a Global Interaction Log to prevent undetectable bypasses, and tamper-evident audit chains with independent signing and Supervisor-mediated degraded records. Together these elements ensure that failures and deviations are visible and investigable, enabling traceability, root-cause analysis, and remediation. The framework formalizes the residual-risk reality: governance reduces but does not eliminate risk from stochastic model behavior and external unknowns, which must be documented, monitored, and mitigated with companion controls.
+
+This meta-framework is the normative baseline for the component chapters that follow: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. The three components developed in Part IV --- Enterprise Prompt Governance (EPG), Runtime Output Controls (ROC), and Monitoring, Detection and Response (MDR) --- are each independently rigorous but derive their scope, interfaces, and composability properties from the model built here. Those three abbreviations are used throughout the rest of the book: EPG governs the prompt before the model runs, ROC governs the output before it is delivered, and MDR watches the whole system over time.
+
+
+
+\section{Axioms}
+\label{sec:framework-1}
+
+
+The following axioms are accepted as true about the world in which this governance system operates. They are not proven; they are the foundation on which all subsequent definitions, lemmas, and theorems rest. If any axiom is invalid in a specific deployment context, the theorems that depend on it must be re-evaluated.
+
+\begin{caxiom}[1 (Interaction Model)]
+
+An AI interaction is described by the tuple:
+
+\begin{cladnote}
+$\forall$ i $\in$ I : i = (x, u, M, $\theta$, o)
+\par\smallskip
+where:\\
+~~x $\in$ X~~~\textemdash{} the assembled prompt, including any retrieved context,\\
+~~~~~~~~~~~~~conversation history, and system instructions\\
+~~u $\in$ U~~~\textemdash{} the user input that triggered the interaction\\
+~~M $\in$ $\mathcal{M}$~~~\textemdash{} the model identifier and version (a specific artifact, not\\
+~~~~~~~~~~~~~an endpoint or family name)\\
+~~$\theta$ $\in$ $\Theta$~~~\textemdash{} the inference configuration: temperature, top-p, top-k,\\
+~~~~~~~~~~~~~sampling parameters, tool availability, and any other\\
+~~~~~~~~~~~~~parameters that affect the output distribution\\
+~~o $\in$ O~~~\textemdash{} the model output
+\end{cladnote}
+
+
+\end{caxiom}
+
+\textbf{Scope limitation:} This axiom models a single, non-agentic interaction turn. Multi-turn conversations are modeled as ordered sequences of interactions where each p\_\allowbreak{}k includes relevant prior context from interactions i\_\allowbreak{}1 through i\_\allowbreak{}\{k-1\}. Agentic workflows (tool use, multi-model chains) are modeled as directed acyclic graphs of interactions where one interaction's output feeds into another's prompt. These extensions preserve the per-interaction governance properties but introduce additional composition concerns addressed in \S{}12.
+
+\textbf{Governance scope claim:} This tuple captures the elements within the governance scope of this framework. Elements outside this tuple --- such as retrieval index state, external tool behavior, system-level routing, agent orchestration logic, and infrastructure configuration --- may influence outputs but are classified as external factors per the three-tier model below. The framework does not claim that (x, u, M, $\theta$, o) is a complete causal description of the output; it claims that these are the elements the governance system observes, constrains, and audits.
+
+\textbf{Three-tier element classification:}
+
+\begin{cdef}[(Element Classification)]
+All factors that may influence an AI interaction's output are classified into exactly one of three tiers:
+
+Tier 1 --- Modeled and Observable: Elements in the interaction tuple (x, u, M, $\theta$, o). These are within governance scope: constrainable, evaluable, auditable.
+
+Tier 2 --- Known but Unmodeled: Elements that are identified as influencing outputs but are not captured in the interaction tuple. Examples:
+\begin{itemize}
+  \item RAG index state and ranking parameters
+  \item External tool implementations and their behavior
+  \item System-level routing, caching, and load balancing
+  \item Agent orchestration logic and internal scratchpads
+  \item Infrastructure differences across replicas
+\end{itemize}
+These contribute documented ungoverned risk (Theorem 4, in the theorems appendix).
+Each deployment must enumerate its Tier 2 elements.
+
+Tier 3 --- Unknown / Emergent: Factors not yet identified that may influence outputs. These contribute undocumented residual risk. The governance system cannot account for Tier 3 elements by definition, but it must acknowledge their possible existence.
+
+\end{cdef}
+
+
+\textbf{What ``prompt" includes:} The assembled prompt x is the complete input to the model at inference time. In RAG architectures, p includes retrieved documents (though the retrieval process itself is Tier 2). In multi-turn conversations, p includes conversation history. In systems with tool-use definitions, p includes tool schemas. The governance system governs p as assembled --- the assembly process itself is within prompt governance scope insofar as it determines the content of p, but upstream factors that influence assembly (index state, retrieval ranking) are Tier 2.
+
+\textbf{Statelessness assumption:} This axiom assumes stateless conditional generation: the model's output distribution is fully determined by (p, u, $\theta$) with no hidden internal state. Models with persistent memory, non-reset hidden states, or recurrent reasoning chains that carry state across invocations violate this assumption. For such models, the internal state must be captured in p or $\theta$, or the model must be classified as having reduced auditability on the temporal dimension (Axiom 5).
+
+\begin{caxiom}[2 (Non-Determinism)]
+
+Governance systems must not assume deterministic model output. The output is sampled from a conditional distribution parameterized by the prompt, user input, model, and inference configuration.
+
+\begin{cladnote}
+M : X $\times$ U $\times$ $\Theta$ $\to$ Dist(O)\\
+o \textasciitilde{} M(x, u, $\theta$)
+\par\smallskip
+Formally: governance must be correct under the assumption that\\
+~~$\neg$$\forall$ (x, u, M, $\theta$) : |support(M(x, u, $\theta$))| = 1
+\par\smallskip
+The output distribution M(x, u, $\theta$) may have non-singleton support,\\
+meaning different outputs are possible for identical inputs. The\\
+degree of non-determinism is influenced by $\theta$ but cannot be assumed\\
+to be zero for any configuration.
+\end{cladnote}
+
+
+\end{caxiom}
+
+\textbf{Implication:} No governance mechanism operating solely on prompts can guarantee specific output properties. This is not a limitation of the governance system; it is a property of the governed artifact. Governance reduces the probability of non-compliant outputs; it does not eliminate it.
+
+\textbf{Note on near-deterministic configurations:} Some inference configurations (e.g., temperature $\approx$ 0) produce near-deterministic output. The axiom does not claim high variance --- it claims that governance systems must not \emph{depend} on determinism, because (a) floating-point non-determinism in GPU computation prevents true determinism even at temperature 0, and (b) model updates can change output distributions without changing the API contract.
+
+\begin{caxiom}[3 (Guarantee Independence, Conditional)]
+
+Each governance component's formal guarantees hold independently of whether other components are deployed, \textbf{provided that the following infrastructure preconditions are met:}
+
+\begin{cladnote}
+$\forall$ g $\in$ G, $\forall$ G' $\subseteq$ G :\\
+~~guar(g) holds in deployment(\{g\}) $\leftrightarrow$ guar(g) holds in deployment(G')
+\par\smallskip
+~~GIVEN preconditions P1, P2, P3:
+\par\smallskip
+~~P1 (Infrastructure Stability):\\
+~~~~Infrastructure shared across components (storage, networking,\\
+~~~~compute) maintains its availability, capacity, and integrity\\
+~~~~guarantees independent of the number of deployed components.\\
+~~~~Adding a component does not degrade shared infrastructure below\\
+~~~~the thresholds required by existing components.
+\par\smallskip
+~~P2 (Pipeline Non-Interference):\\
+~~~~No component UNILATERALLY prevents another component from\\
+~~~~receiving its governed artifacts, EXCEPT when blocking is a\\
+~~~~declared governance action (fail-closed posture per \S{}7).
+\par\smallskip
+~~~~Specifically:\\
+~~~~- No component silently drops or redirects interactions.\\
+~~~~- A component MAY block an interaction (fail-closed) if and only\\
+~~~~~~if: (a) the block is a declared governance action, AND\\
+~~~~~~~~~~(b) the blocking event is recorded in the audit chain\\
+~~~~~~~~~~~~~~(as a degraded record or a policy-enforcement record), AND\\
+~~~~~~~~~~(c) downstream components are notified of the block so they\\
+~~~~~~~~~~~~~~can record their own ``interaction blocked upstream" entry.
+\par\smallskip
+~~~~This exemption resolves the conflict between fail-closed posture\\
+~~~~(\S{}7) and pipeline non-interference: blocking IS interference, but\\
+~~~~it is AUTHORIZED, RECORDED interference \textemdash{} distinguishable from\\
+~~~~silent bypass or malicious short-circuiting.
+\par\smallskip
+~~P3 (Surface Isolation with Read-Only Cross-Flow):\\
+~~~~Components' EVALUATION GUARANTEES are determined solely by\\
+~~~~artifacts within their own governed surfaces. However, components\\
+~~~~MAY receive read-only data from other surfaces via soft\\
+~~~~requirements (R\_soft) to enhance effectiveness.
+\par\smallskip
+~~~~Formally, P3 distinguishes two types of cross-surface data flow:
+\par\smallskip
+~~~~ALLOWED \textemdash{} Read-only cross-surface data (soft dependencies):\\
+~~~~~~A component g$_2$ may read artifacts from S\_g$_1$ (e.g., ROC reads\\
+~~~~~~prompt context from EPG). This does NOT violate P3 because:\\
+~~~~~~- g$_2$'s guarantee guar(g$_2$) holds even without this data (R\_soft)\\
+~~~~~~- g$_2$ does not modify S\_g$_1$ artifacts\\
+~~~~~~- The data flow is one-directional and read-only
+\par\smallskip
+~~~~PROHIBITED \textemdash{} Shared mutable state affecting evaluation:\\
+~~~~~~Components must not share writable state that any component's\\
+~~~~~~evaluation function E\_g depends on for its guarantee. Examples:\\
+~~~~~~- Two components writing to the same constraint store\\
+~~~~~~- A component modifying artifacts another component evaluates\\
+~~~~~~- Shared caches whose state affects evaluation outcomes
+\par\smallskip
+~~~~Infrastructure services (GIL, Supervisor, KMS) are shared but\\
+~~~~are NOT governance components \textemdash{} they do not evaluate constraints\\
+~~~~or produce evaluation records. Their availability is covered by\\
+~~~~P1 (Infrastructure Stability), not P3.
+\end{cladnote}
+
+
+\end{caxiom}
+
+\textbf{What this claims:} Given P1-P3, EPG's guarantee (every prompt is evaluated against all applicable constraints and a complete audit record is produced) does not require ROC to be present. ROC's guarantee does not require EPG. The guarantees are independent.
+
+\textbf{What this does NOT claim:} It does not claim that governed \emph{artifacts} are independent --- prompts causally influence outputs. It does not claim that infrastructure is automatically stable under composition --- P1 must be verified. It does not claim that pipeline interference is impossible --- P2 must be architecturally enforced.
+
+\textbf{If preconditions are violated:} If P1 fails (e.g., adding ROC causes audit storage to degrade), $\guarantee(g)$ for other components may be compromised. If P2 fails (e.g., ROC short-circuits requests before EPG processes them), $\Phi$(EPG) is violated. If P3 fails (e.g., components share mutable constraint state), evaluation determinism is compromised. Each violation must be detectable and reported (see \S{}6: Enforcement Model).
+
+\textbf{Why the conditional claim is sufficient:} Phased adoption requires that deploying component A alone provides A's full guarantees. P1-P3 are architectural requirements that a competent infrastructure team can verify and maintain. The preconditions are testable, not aspirational --- they can be validated through capacity testing (P1), pipeline tracing (P2), and architecture review (P3).
+
+\textbf{Status note:} This axiom is a \emph{design goal} that requires architectural enforcement, not a fact about the world. Downstream theorems that depend on Axiom 3 are conditional on P1-P3. This conditionality is explicit in each dependent proof.
+
+\begin{caxiom}[4 (Observability)]
+
+All elements of an AI interaction that are relevant to governance must be observable and recordable by the governance system.
+
+\begin{cladnote}
+$\forall$ e $\in$ elements(i) governed by some g $\in$ G :\\
+~~$\exists$ observe(e) : e $\to$ record(e)\\
+~~where record(e) is capturable, storable, and retrievable at any future time t
+\par\smallskip
+The governance scope is bounded by the observability boundary:\\
+~~governable(e) $\to$ observable(e)\\
+~~$\neg$observable(e) $\to$ $\neg$governable(e)
+\end{cladnote}
+
+
+\end{caxiom}
+
+\textbf{Implication:} If the full assembled prompt is not logged, it cannot be governed or audited. If inference parameters are not recorded, they cannot be constrained. If model version is not tracked, temporal audit is impossible. Observability is a precondition for governance, not a consequence of it.
+
+\textbf{Contrapositive (critical for architecture):} Any interaction element that is not observable is, by definition, outside the governance scope. The governance system must explicitly declare its observability boundary and acknowledge that elements beyond it contribute ungoverned risk.
+
+\begin{caxiom}[5 (Temporal Identity)]
+
+Models, constraints, configurations, and all governed artifacts are versioned entities whose identity includes their state at a specific point in time.
+
+\begin{cladnote}
+$\forall$ x $\in$ \{M, C, $\Theta$, P\}, $\forall$ t$_1$, t$_2$ $\in$ T :\\
+~~x(t$_1$) and x(t$_2$) are potentially distinct artifacts\\
+~~$\wedge$ identity(x, t) = (x, ver(x, t))
+\par\smallskip
+Specifically for models:\\
+~~A model endpoint updated between interactions i$_1$ and i$_2$ is treated\\
+~~as two distinct models for governance purposes:\\
+~~~~m(t$_1$) $\neq$ m(t$_2$) if ver(m, t$_1$) $\neq$ ver(m, t$_2$)\\
+~~~~even if endpoint(m, t$_1$) = endpoint(m, t$_2$)
+\end{cladnote}
+
+
+\end{caxiom}
+
+\textbf{Implication:} Audit records must capture the version of every governed element at the time of the interaction. ``Which model was used?" is not answered by an endpoint URL --- it is answered by a versioned model identifier. "Which constraints were in effect?" is not answered by the current constraint set --- it is answered by the versioned constraint set at interaction time.
+
+\textbf{Practical constraint:} This axiom requires that all governed elements expose version information. If a model provider does not expose model version (only an endpoint), the governance system must either (a) record whatever version signal is available (e.g., response headers, model ID strings) and document the limitation, or (b) classify the model as having reduced auditability on the temporal dimension.
+
+
+
+\subsection{Design Requirement: Audit Linkability}
+
+
+This is an engineering requirement on the implementation rather than a property of the world, so it is stated here as a design requirement rather than an axiom.
+
+\begin{creq}[(Audit Linkability)]
+\begin{cladnote}
+Audit records produced by different governance components for the same\\
+interaction must share a propagated interaction identifier enabling\\
+chain composition.\\
+\end{cladnote}
+\begin{cladnote}
+$\forall$ g$_1$, g$_2$ $\in$ G, $\forall$ i $\in$ I :\\
+~~A\_g$_1$(i).interaction\_id = A\_g$_2$(i).interaction\_id\\
+\end{cladnote}
+The identifier must be:
+\begin{itemize}
+  \item Generated at interaction initiation (before any component processes it)
+  \item Propagated through the pipeline without modification
+  \item Included in every component's audit record
+  \item Resistant to spoofing, duplication, and accidental collision
+\end{itemize}
+
+\begin{cladnote}
+IMPLEMENTATION NOTE: This is a distributed tracing problem with\\
+well-established solutions (e.g., W3C Trace Context, OpenTelemetry).\\
+The meta-framework does not prescribe an implementation \textemdash{} it requires\\
+the property.\\
+\end{cladnote}
+\end{creq}
+
+
+\subsection{Design Requirement: Global Interaction Log}
+
+
+This requirement addresses the ``Ghost Chain" problem: Theorem 3a proves that existing records cannot be tampered with, but it does not prove that every interaction \emph{has} a record. A bypassed or failed enforcement point could leave an interaction completely unrecorded --- indistinguishable from "no interaction occurred."
+
+Together these four properties make every interaction that enters the pipeline
+either fully governed, governed with degraded records, or detectable as a gap.
+The Ghost Detection theorem states this precisely, and states what it does not
+cover.
+
+
+
+
+\section{Threat Model}
+\label{sec:framework-2}
+
+
+A governance framework without an explicit threat model is incomplete for regulated industries. This section enumerates the adversary types, in-scope threats, and explicitly out-of-scope threats. All theorems and guarantees in subsequent sections are conditional on this threat model --- they hold against the in-scope threats and make no claims about out-of-scope threats.
+
+\subsection{Adversary Types}
+
+
+\begin{cdef}[(Adversary Classification)]
+A1 --- External User (Adversarial): Capability: crafts inputs u to elicit non-compliant outputs. Motivation: data exfiltration, policy bypass, boundary probing. Knowledge: may have partial knowledge of prompt structure, constraints, and model behavior through iterative probing.
+
+A2 --- Insider (Malicious or Compromised): Capability: authors or modifies constraints, attestations, or prompts within their authorized scope. Motivation: weaken governance, create backdoors, exfiltrate data. Knowledge: full knowledge of governance structure within their domain.
+
+A3 --- Compromised Vendor / Supply Chain: Capability: provides models with hidden behaviors (backdoors, data leakage triggers, biased outputs under specific inputs). Motivation: espionage, competitive advantage, sabotage. Knowledge: full knowledge of model internals (opaque to governance).
+
+A4 --- Regulator as Adversarial Auditor: Capability: requests complete audit evidence for any interaction, tests claims against evidence, probes for gaps. Motivation: verify compliance, identify violations. Knowledge: full knowledge of governance claims and framework structure.
+
+\end{cdef}
+
+
+\subsection{In-Scope Threats}
+
+
+These threats are addressed by the governance components defined in this framework. For each, the responsible component is identified.
+
+\begin{cladnote}
+T1 \textemdash{} Policy Drift and Misconfiguration:\\
+~~Constraints change over time without trace; model or inference\\
+~~config changes without governance awareness.\\
+~~Addressed by: EPG (constraint versioning), MDR (drift monitoring),\\
+~~Axiom 5 (temporal identity).
+\par\smallskip
+T2 \textemdash{} Incomplete or Absent Audit Trail:\\
+~~Interactions processed without evaluation or logging; audit records\\
+~~missing, incomplete, or tampered with.\\
+~~Addressed by: Audit chain (\S{}8), Audit integrity (\S{}8.4), Component\\
+~~guarantees (\S{}5.2), Failure semantics (\S{}5.3).
+\par\smallskip
+T3 \textemdash{} Constraint Authoring Abuse (Insider \textemdash{} A2):\\
+~~Malicious or negligent constraint authors weaken governance by\\
+~~creating trivially satisfiable constraints, disabling constraints\\
+~~for specific projects, or decomposing semantic constraints in\\
+~~bad faith.\\
+~~Addressed by: EPG (RBAC, separation of duties, dual control for\\
+~~constraint authorship, decomposition attestation). This chapter\\
+~~defines the requirement; EPG specifies controls.
+\par\smallskip
+~~ADDITIONAL REQUIREMENT (Decomposition Verification):\\
+~~~~Semantic constraint decompositions (mechanical + procedural)\\
+~~~~must be subject to periodic validation ensuring the decomposed\\
+~~~~checks actually prevent the behavior the original semantic\\
+~~~~constraint intended to prevent. This requires:\\
+~~~~~~- Independent red-team testing of decomposed constraints\\
+~~~~~~- Periodic re-attestation by domain experts other than the\\
+~~~~~~~~original decomposition authors\\
+~~~~~~- Automated regression testing with known-bad inputs that\\
+~~~~~~~~mechanical checks must catch\\
+~~~~Without this, a formally ``passing" decomposition can functionally\\
+~~~~fail \textemdash{} the ``auditing a lie" problem. EPG must specify the\\
+~~~~verification protocol and minimum testing cadence.
+\par\smallskip
+T4 \textemdash{} Governance Bypass:\\
+~~Interactions routed around governance components (shadow AI, direct\\
+~~API access, local deployments outside governed platform).\\
+~~Addressed by: Enforcement model (\S{}6), MDR (bypass detection).
+\par\smallskip
+T5 \textemdash{} Adversarial User Input (A1):\\
+~~Users craft inputs designed to elicit non-compliant outputs,\\
+~~extract data, or probe policy boundaries.\\
+~~Addressed by: ROC (output evaluation/filtering), MDR (input\\
+~~monitoring, rate limiting, anomaly detection).\\
+~~Note: prompt governance (EPG) reduces but cannot eliminate this\\
+~~risk per Axiom 2 and Theorem 4.
+\par\smallskip
+T6 \textemdash{} Component Failure During Interaction:\\
+~~A governance component becomes unavailable mid-interaction,\\
+~~leaving interactions ungoverned.\\
+~~Addressed by: Failure semantics (\S{}5.3).
+\end{cladnote}
+
+
+\subsection{Acknowledged Threats -- Out of Meta-Framework Scope}
+
+
+These threats are real but addressed by companion documents or external disciplines. The meta-framework explicitly does not claim to address them.
+
+\begin{cladnote}
+T7 \textemdash{} Prompt Injection (Direct and Indirect):\\
+~~Untrusted content (user input, retrieved documents, tool outputs)\\
+~~embedded in the prompt overrides governance instructions.\\
+~~Scope: ROC (runtime output controls) and MDR (input sanitization,\\
+~~output classification). The meta-framework acknowledges this as\\
+~~R\_input risk. EPG can require "prompt must include injection\\
+~~defenses" as a constraint, but cannot prevent injection at the\\
+~~framework level.
+\par\smallskip
+T8 \textemdash{} Model Jailbreaking:\\
+~~Adversarial inputs that cause the model to ignore its instructions.\\
+~~Scope: ROC (output filtering), MDR (red-team testing, monitoring).\\
+~~The meta-framework models this as part of Axiom 2 (non-determinism)\\
+~~and Theorem 4 (irreducible residual risk). It cannot be solved at\\
+~~the governance level \textemdash{} it requires model-level and output-level\\
+~~controls.
+\par\smallskip
+T9 \textemdash{} Model Poisoning / Supply Chain Compromise (A3):\\
+~~Models with hidden backdoors or biased training data.\\
+~~Scope: External to this framework entirely. Model governance\\
+~~(training data audits, model cards, bias testing) is a distinct\\
+~~discipline. MDR can verify model selection criteria but cannot\\
+~~inspect model internals (\S{}13.2).
+\par\smallskip
+T10 \textemdash{} Training Data Leakage / Memorization:\\
+~~Models reproduce training data (PII, copyrighted content) in outputs.\\
+~~Scope: ROC (output filtering for PII/sensitive content), MDR\\
+~~(monitoring for data leakage patterns). The meta-framework classifies\\
+~~model internals as $\gamma$ = external.
+\par\smallskip
+T11 \textemdash{} Cross-Tenant Data Leakage (Multi-Tenant Providers):\\
+~~In shared model deployments, data from one tenant influences\\
+~~outputs for another.\\
+~~Scope: Infrastructure security (outside this framework). MDR can\\
+~~monitor for anomalous cross-tenant patterns.
+\end{cladnote}
+
+
+\subsection{Threat Model Completeness Statement}
+
+
+\begin{cdef}[(Threat Model Scope)]
+This framework's guarantees are valid against threats T1-T6.
+They are NOT valid against threats T7-T11 without deployment of the companion controls specified for ROC and MDR.
+
+Any claim of ``complete governance" must be qualified: "Complete within the meta-framework's threat model (T1-T6), with residual risks from T7-T11 addressed by companion controls."
+
+\end{cdef}
+
+
+
+
+\section{Ontology (Primitive Sets and Pipeline)}
+\label{sec:framework-3}
+
+
+\subsection{Primitive Sets}
+
+
+\begin{cladnote}\footnotesize
+I~~= set of all AI interactions~~~~~~~~~~~~\textemdash{} the fundamental unit of governance\\
+P~~= set of all prompts~~~~~~~~~~~~~~~~~~~~\textemdash{} assembled instructions sent to the model\\
+U~~= set of all user inputs~~~~~~~~~~~~~~~~\textemdash{} runtime input from end users\\
+M~~= set of all models~~~~~~~~~~~~~~~~~~~~~\textemdash{} AI models as versioned artifacts\\
+$\Theta$~~= set of all inference configurations~~~\textemdash{} parameters affecting output distribution\\
+O~~= set of all outputs~~~~~~~~~~~~~~~~~~~~\textemdash{} raw model outputs\\
+O' = set of all delivered outputs~~~~~~~~~~~\textemdash{} outputs after post-processing/filtering\\
+T~~= ($\mathbb{R}$, $\leq$) \textemdash{} totally ordered time domain~~\textemdash{} for versioning and temporal audit\\
+$\Sigma$~~= set of all control surfaces~~~~~~~~~~~\textemdash{} partitioned elements of the interaction\\
+G~~= set of all governance components~~~~~~~\textemdash{} the building blocks of the solution\\
+V~~= set of all audit records~~~~~~~~~~~~~~\textemdash{} evaluation evidence
+\end{cladnote}
+
+
+\subsection{The AI Interaction Pipeline}
+
+
+An AI interaction is a temporally ordered sequence of transformations:
+
+\begin{cdef}[(AI Interaction Pipeline)]
+An interaction i $\in$ I is a tuple i = (x, u, M, $\theta$, o, o', t) where:
+
+\begin{cladnote}
+p~~$\in$ P~~~\textemdash{} the assembled prompt (including retrieved context,\\
+~~~~~~~~~~~~conversation history, system instructions, tool schemas)\\
+u~~$\in$ U~~~\textemdash{} user input at runtime\\
+m~~$\in$ M~~~\textemdash{} the model as a versioned artifact: identity(m, t)\\
+$\theta$~~$\in$ $\Theta$~~~\textemdash{} inference configuration (temperature, top-p, tool\\
+~~~~~~~~~~~~availability, sampling parameters)\\
+o~~$\in$ O~~~\textemdash{} raw model output:~~o \textasciitilde{} M(x, u, $\theta$)\\
+o' $\in$ O'~~\textemdash{} delivered output:~~~o' = filter(o)~~where filter $\in$ runtime controls\\
+t~~$\in$ T~~~\textemdash{} timestamp of the interaction\\
+\end{cladnote}
+The pipeline has a causal ordering: x precedes u  (prompt exists before user input arrives) (p, u, $\theta$) precedes o  (output is conditioned on all three) o precedes o'  (filtering follows generation)
+
+\end{cdef}
+
+
+
+
+\section{Control Surface Decomposition}
+\label{sec:framework-4}
+
+
+\subsection{Definition}
+
+
+\begin{cdef}[(Control Surface)]
+A control surface S $\in$ $\Sigma$ is a subset of the interaction pipeline elements that can be governed. Each surface has:
+
+\begin{itemize}
+  \item elements(S) $\subseteq$ \{p, u, m, $\theta$, o, o'\}  --- which pipeline elements it covers
+  \item governability(S) $\in$ \{full, partial, external\}  --- degree of control
+  \item owner(S) $\to$ G  --- which governance component is responsible
+\end{itemize}
+
+\end{cdef}
+
+
+\subsection{Surface Partitioning}
+
+
+\begin{cdef}[(Governance Surface Partition)]
+The interaction pipeline decomposes into five control surfaces:
+
+\begin{cladnote}
+$\sigma$\_prompt~~~= \{p\}~~~~~~~\textemdash{} prompt content and structure\\
+$\sigma$\_input~~~~= \{u\}~~~~~~~\textemdash{} user input at runtime\\
+$\sigma$\_config~~~= \{m, $\theta$\}~~~~\textemdash{} model selection and inference configuration\\
+$\sigma$\_output~~~= \{o\}~~~~~~~\textemdash{} raw model output\\
+$\sigma$\_delivery = \{o'\}~~~~~~\textemdash{} post-processing and delivery\\
+\end{cladnote}
+These are exhaustive and disjoint: S\_\allowbreak{}prompt $\cup$ S\_\allowbreak{}input $\cup$ S\_\allowbreak{}config $\cup$ S\_\allowbreak{}output $\cup$ S\_\allowbreak{}delivery = \{p, u, m, $\theta$, o, o'\} $\forall$ S$_i$, S$_j$ : i $\neq$ j $\to$ S$_i$ $\cap$ S$_j$ = $\emptyset$
+
+\end{cdef}
+
+
+\subsection{Governability Classification}
+
+
+\begin{cdef}[(Governability)]
+A control surface S has governability class $\gov(\sigma)$:
+
+\begin{cladnote}
+gov($\sigma$) = full~~~~~~iff $\exists$ mechanism that deterministically constrains all\\
+~~~~~~~~~~~~~~~~~~~~~~elements of S prior to or during interaction execution,\\
+~~~~~~~~~~~~~~~~~~~~~~AND all elements of S are observable (Axiom 4)\\
+\end{cladnote}
+\begin{cladnote}
+gov($\sigma$) = partial~~~iff $\exists$ mechanism that influences but cannot deterministically\\
+~~~~~~~~~~~~~~~~~~~~~~constrain elements of S, OR some elements are observable\\
+~~~~~~~~~~~~~~~~~~~~~~but not fully constrainable\\
+\end{cladnote}
+$\gov(\sigma)$ = external  iff elements of S are outside the solution's observability boundary entirely
+
+\end{cdef}
+
+
+\textbf{Classification of surfaces:}
+
+\begin{cladnote}
+~~gov($\sigma$\_prompt)~~~= full~~~~~~~\textemdash{} prompts are authored within constraints before\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~execution; fully observable and constrainable
+\par\smallskip
+~~gov($\sigma$\_input)~~~~= partial~~~~\textemdash{} input validation constrains form (length, format,\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~injection patterns) but not semantic content;\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~observable but not fully constrainable
+\par\smallskip
+~~gov($\sigma$\_config)~~~= partial~~~~\textemdash{} model selection and inference parameters ($\theta$) are\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fully constrainable; model internals/weights are\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~external. Mixed governability within this surface.\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Decomposition:\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~$\gamma$(model selection) = full\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~$\gamma$($\theta$)~~~~~~~~~~~~~~~= full\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~$\gamma$(model internals)~~= external
+\par\smallskip
+~~gov($\sigma$\_output)~~~= partial~~~~\textemdash{} output is stochastic (Axiom 2); influenced by\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~$\sigma$\_prompt and $\sigma$\_config governance, not determined\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~by it; observable post-generation
+\par\smallskip
+~~gov($\sigma$\_delivery) = full~~~~~~~\textemdash{} post-processing/filtering is deterministic\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~and fully controllable; observable
+\end{cladnote}
+
+
+\section{Governance Component Model}
+\label{sec:framework-5}
+
+
+\subsection{Component Definition}
+
+
+\begin{cdef}[(Governance Component)]
+A governance component g $\in$ G is a tuple g = (S\_\allowbreak{}g, C\_\allowbreak{}g, E\_\allowbreak{}g, A\_\allowbreak{}g, R\_\allowbreak{}g) where:
+
+\begin{cladnote}
+S\_g $\subseteq$ $\Sigma$~~~~~~~~~~~~~~\textemdash{} the control surfaces this component governs\\
+C\_g~~~~~~~~~~~~~~~~~~~\textemdash{} the constraint set this component enforces\\
+E\_g : artifact(S\_g) $\times$ C\_g $\to$ V\\
+~~~~~~~~~~~~~~~~~~~~~~\textemdash{} the evaluation function (produces audit records)\\
+A\_g $\subseteq$ V~~~~~~~~~~~~~~\textemdash{} the audit records this component produces\\
+R\_g~~~~~~~~~~~~~~~~~~~\textemdash{} the requirements this component has of other components\\
+~~~~~~~~~~~~~~~~~~~~~~~~(may be $\emptyset$ for independently deployable components)\\
+\end{cladnote}
+Precondition (from Axiom 4): $\forall$ s $\in$ S\_\allowbreak{}g : observable(s) = true A component can only govern surfaces whose elements are observable.
+
+\end{cdef}
+
+
+\subsection{Component Guarantees}
+
+
+\begin{cdef}[(Component Guarantee)]
+A component g provides guarantee $\guarantee(g)$ iff:
+
+\begin{cladnote}
+$\forall$ i $\in$ I\_governed\_by\_g :\\
+~~E\_g is total over C\_g~~~~~~~~~~~~~~~~~~~\textemdash{} every constraint is evaluated\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(completeness)\\
+~~$\wedge$ E\_g is deterministic~~~~~~~~~~~~~~~~~~~\textemdash{} same inputs produce same\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~evaluation (repeatability)\\
+~~$\wedge$ Audit\_g(i) is immutable~~~~~~~~~~~~~~~~~~~~\textemdash{} audit records cannot be\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~altered post-hoc\\
+~~$\wedge$ Audit\_g(i) contains interaction\_id~~~~~~~~~\textemdash{} enables chain composition\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~(Design Requirement)\\
+~~$\wedge$ Audit\_g(i) contains ver(x, t) for all~~~~~~\textemdash{} all governed elements are\\
+~~~~governed elements x (Axiom 5)~~~~~~~~~~~~~version-stamped\\
+\end{cladnote}
+\end{cdef}
+
+
+\section{Enforcement Model}
+\label{sec:framework-6}
+
+
+The governance framework describes what SHOULD happen. The enforcement model defines HOW compliance is ensured at runtime. Without enforcement, governance is advisory --- which contradicts the ``inviolable" property required for regulated industries.
+
+\subsection{Enforcement Points}
+
+
+\begin{cdef}[(Enforcement Point)]
+An enforcement point is a location in the interaction pipeline where governance constraints are evaluated and non-compliant interactions are blocked, modified, or flagged.
+
+\begin{cladnote}
+EP = \{ ep$_1$, ep$_2$, ..., ep$_n$ \}\\
+\end{cladnote}
+Each enforcement point has:
+\begin{itemize}
+  \item location(ep) $\in$ pipeline stages   --- where in the pipeline it operates
+  \item mode(ep) $\in$ \{blocking, flagging\}  --- whether it can stop interactions
+  \item component(ep) $\to$ g                --- which governance component operates it
+  \item bypass\_\allowbreak{}resistance(ep) $\in$ \{strong, moderate, weak\}
+\end{itemize}
+
+\end{cdef}
+
+
+\subsection{Required Enforcement Architecture}
+
+
+\begin{cdef}[(Enforcement Architecture)]
+For the governance system to provide its guarantees, the following enforcement properties must hold:
+
+EA1 (Chokepoint Enforcement): All AI interactions MUST pass through governed enforcement points. No path from user input to model invocation may bypass EPG. No path from model output to user delivery may bypass ROC.
+
+\begin{cladnote}
+Formally: $\forall$ i $\in$ I\_governed :\\
+~~$\exists$ ep $\in$ EP : component(ep) = g\_EPG $\wedge$ i passes through ep\\
+~~$\wedge$ $\exists$ ep' $\in$ EP : component(ep') = g\_ROC $\wedge$ i passes through ep'\\
+\end{cladnote}
+EA2 (Identity Binding): Every model invocation is bound to a governed project identity. Anonymous or unattributed model calls are blocked by default. This prevents shadow AI and ungoverned deployments.
+
+\begin{cladnote}
+Formally: $\forall$ i $\in$ I :\\
+~~$\exists$ project\_id(i) $\in$ governed\_projects\\
+~~$\vee$ i is blocked\\
+\end{cladnote}
+EA3 (Bypass Detection): The system MUST detect and alert on interactions that circumvent governance enforcement points. Detection mechanisms include:
+\begin{itemize}
+  \item Network-level monitoring for direct model API calls
+  \item API key / credential management restricting model access
+  \item Anomaly detection for ungoverned interaction patterns
+\end{itemize}
+
+\begin{cladnote}
+Formally: $\forall$ i $\in$ I\_ungoverned :\\
+~~P(detect(i)) $\geq$ detection\_threshold (deployment-specific)\\
+\end{cladnote}
+EA4 (Enforcement of Constraint Authorship): Constraint creation, modification, and deletion require:
+\begin{itemize}
+  \item Authenticated identity with authorized scope
+  \item Separation of duties: author $\neq$ sole approver
+  \item Audit trail of all constraint changes
+\end{itemize}
+This addresses insider threat T3 from \S{}2.2.
+
+\end{cdef}
+
+
+\subsection{Governability Conditioned on Enforcement}
+
+
+Full governability of a surface is therefore conditional on enforcement, not a
+property of the surface alone: without a chokepoint, a surface classified as fully
+governable is only fully governable for the interactions that happen to pass
+through the governed path. The Conditional Full Governability theorem states the
+condition.
+
+
+\subsection{Enforcement Failure Modes}
+
+
+See \S{}7 (Failure Semantics) for how enforcement point failures are handled.
+
+
+
+\section{Failure Semantics}
+\label{sec:framework-7}
+
+
+Governance components can fail. The framework must define what happens when they do. A framework silent on failure semantics does not say what its guarantees mean during an outage, which is when they matter most.
+
+\subsection{Failure Postures}
+
+
+\begin{cdef}[(Failure Posture)]
+\begin{cladnote}
+Each governance component and enforcement point declares a failure\\
+posture:\\
+\end{cladnote}
+fail\_\allowbreak{}posture(g) $\in$ \{fail-closed, fail-open-flagged, fail-open\}
+
+fail-closed: If the component cannot evaluate or log, the interaction is BLOCKED. No interaction proceeds without governance. Appropriate for: high-risk workloads, regulated data, safety-critical.
+
+fail-open-flagged: If the component cannot evaluate or log, the interaction proceeds but is FLAGGED as ungoverned in the audit trail with a degraded- state indicator. A separate monitoring alert is generated. Appropriate for: medium-risk workloads where availability matters.
+
+fail-open: If the component cannot evaluate or log, the interaction proceeds silently. NOT RECOMMENDED for any regulated workload. This posture exists to model legacy/uncontrolled deployments.
+
+\end{cdef}
+
+
+\subsection{Degraded State Audit Records}
+
+
+\begin{cdef}[(Degraded Audit Record)]
+\begin{cladnote}
+When a component g fails during interaction i, a degraded audit\\
+record is produced:\\
+\end{cladnote}
+\begin{cladnote}
+A\_g\_degraded(i, t) = \{\\
+~~interaction\_id~~~: identifier(i)\\
+~~timestamp~~~~~~~~: t\\
+~~component~~~~~~~~: g\\
+~~status~~~~~~~~~~~: DEGRADED\\
+~~failure\_reason~~~: description of failure\\
+~~posture\_applied~~: fail\_posture(g)\\
+~~action\_taken~~~~~: \{blocked, proceeded\_flagged, proceeded\_silent\}\\
+\}\\
+\end{cladnote}
+This record is written to the audit chain in place of the normal $\Audit_g(i,t)$, preserving chain completeness even during failures.
+
+\end{cdef}
+
+
+\subsection{Component Guarantee Under Failure}
+
+
+\begin{cdef}[(Component Guarantee Under Failure)]
+A component g provides guarantee $\guarantee(g)$ iff:
+
+\begin{cladnote}
+For all interactions i where g is operational:\\
+~~E\_g is total over C\_g~~~~~~~~~~~~~~~~~~~~\textemdash{} completeness\\
+~~$\wedge$ E\_g is deterministic~~~~~~~~~~~~~~~~~~~\textemdash{} repeatability\\
+~~$\wedge$ Audit\_g(i) is immutable~~~~~~~~~~~~~~~~~~~~\textemdash{} tamper resistance\\
+~~$\wedge$ Audit\_g(i) contains interaction\_id~~~~~~~~~\textemdash{} chain linkage\\
+~~$\wedge$ Audit\_g(i) contains ver(x, t) for all~~~~~~\textemdash{} version stamps\\
+~~~~governed elements x\\
+\end{cladnote}
+\begin{cladnote}
+For all interactions i where g has failed:\\
+~~A\_g\_degraded(i, t) is produced~~~~~~~~~~~\textemdash{} failure is recorded\\
+~~$\wedge$ fail\_posture(g) is enforced~~~~~~~~~~~~\textemdash{} declared posture applies\\
+~~$\wedge$ monitoring alert is generated~~~~~~~~~~~\textemdash{} failure is detected\\
+\end{cladnote}
+$\guarantee(g)$ is thus a guarantee about BOTH normal and failure modes.
+The component either governs the interaction fully OR records that it could not and applies the declared failure posture.
+
+\end{cdef}
+
+
+\subsection{Supervisor Signing Protocol for Degraded Records}
+
+
+\emph{Added after Round 2 review identified that a crashed component cannot call KMS to sign its own degraded record, breaking the cryptographic chain (AI2-AI3).}
+
+\begin{cdef}[(Governance Supervisor)]
+A Governance Supervisor is an infrastructure service that:
+\begin{itemize}
+  \item Monitors the health of all governance components
+  \item Produces and signs degraded audit records on behalf of failed components
+  \item Operates independently of any individual governance component
+  \item Has its own KMS-managed signing key (distinct from component keys)
+\end{itemize}
+
+\smallskip\noindent\textbf{Protocol (Degraded Record Signing).}
+When component g fails during interaction i:
+
+\begin{cladnote}
+1. The Supervisor detects g's failure (via health check or timeout).\\
+2. The Supervisor generates A\_g\_degraded(i, t) containing:\\
+~~~- The failure reason and posture applied\\
+~~~- The Supervisor's identity (not g's)\\
+~~~- A signature using the Supervisor's KMS key\\
+3. The degraded record includes:\\
+~~~signed\_by~~~~: supervisor\_id (NOT component g)\\
+~~~signing\_key~~: KMS\_key\_supervisor\\
+~~~on\_behalf\_of : g\\
+4. The Merkle chain continues: the degraded record's chain\_hash\\
+~~~is computed from the predecessor, maintaining AI2 integrity.\\
+\end{cladnote}
+\end{cdef}
+
+\begin{cprp}[(Chain Continuity Under Failure)]
+The audit chain remains cryptographically intact even when a component fails, because:
+\begin{itemize}
+  \item The Supervisor signs on behalf of the failed component
+  \item The chain\_\allowbreak{}hash links through the degraded record
+  \item Independent verifiers can distinguish Supervisor-signed records from component-signed records (different key identity)
+  \item A Supervisor-signed record is weaker evidence than a component- signed record (the Supervisor did not perform evaluation), but it is stronger than a gap in the chain (which is undetectable without the GIL)
+\end{itemize}
+
+\end{cprp}
+
+
+
+
+\section{Interface Contracts}
+\label{sec:framework-8}
+
+
+\subsection{Contract Definition}
+
+
+\begin{cdef}[(Interface Contract)]
+An interface contract between components g$_1$ and g$_2$ is a tuple K(g$_1$, g$_2$) = (provides, requires, handoff) where:
+
+\begin{cladnote}
+provides(g$_1$ $\to$ g$_2$)~~\textemdash{} what g$_1$ makes available to g$_2$\\
+requires(g$_2$ $\leftarrow$ g$_1$)~~\textemdash{} what g$_2$ needs from g$_1$ to function optimally\\
+handoff(g$_1$, g$_2$)~~~~\textemdash{} the data and identifiers exchanged at the boundary\\
+\end{cladnote}
+A contract is SATISFIED iff: provides(g$_1$ $\to$ g$_2$) $\supseteq$ requires(g$_2$ $\leftarrow$ g$_1$)
+
+\end{cdef}
+
+
+\subsection{Contract Optionality}
+
+
+\begin{cdef}[(Hard vs. Soft Requirements)]
+\begin{cladnote}
+R\_hard(g) $\subseteq$ R\_g~~~\textemdash{} requirements without which g cannot produce guar(g)\\
+R\_soft(g) $\subseteq$ R\_g~~~\textemdash{} requirements that enhance g's effectiveness but\\
+~~~~~~~~~~~~~~~~~~~~~~are not necessary for guar(g)\\
+\end{cladnote}
+For independently deployable components (required by Axiom 3): R\_\allowbreak{}hard(g) = $\emptyset$
+
+\begin{cladnote}
+For dependent components:\\
+~~R\_hard(g) $\neq$ $\emptyset$~~~~~~\textemdash{} the component requires another component's output\\
+\end{cladnote}
+\end{cdef}
+
+
+\subsection{Handoff Protocol}
+
+
+\begin{cdef}[(Handoff)]
+A handoff between g$_1$ and g$_2$ for interaction i is:
+
+\begin{cladnote}
+handoff(g$_1$, g$_2$, i) = \{\\
+~~interaction\_id~~~: identifier(i)~~~~~~~\textemdash{} shared linking key\\
+~~artifact~~~~~~~~~: output(g$_1$, i)~~~~~~~\textemdash{} the governed artifact\\
+~~artifact\_hash~~~~: hash(artifact)~~~~~~~\textemdash{} integrity verification\\
+~~audit\_ref~~~~~~~~: pointer(A\_g$_1$(i))~~~~\textemdash{} reference to g$_1$'s audit record\\
+~~constraint\_ctx~~~: C\_g$_1$~~~~~~~~~~~~~~~~\textemdash{} the constraints g$_1$ enforced\\
+~~version\_manifest : \{ver(x, t) | x $\in$~~~~\textemdash{} version stamps of all governed\\
+~~~~~~~~~~~~~~~~~~~~~elements(S\_g$_1$)\}~~~~~~~elements (Axiom 5)\\
+\}\\
+\end{cladnote}
+\end{cdef}
+
+
+\section{Audit Chain}
+\label{sec:framework-9}
+
+
+\subsection{Audit Record Definition}
+
+
+\begin{cdef}[(Component Audit Record)]
+For component g and interaction i at time t:
+
+\begin{cladnote}
+Audit\_g(i, t) = \{\\
+~~interaction\_id~~~: identifier(i)\\
+~~timestamp~~~~~~~~: t\\
+~~component~~~~~~~~: g\\
+~~surface~~~~~~~~~~: S\_g\\
+~~evaluations~~~~~~: \{ (c, ver(c, t), eval(c, artifact(i))) | c $\in$ C\_g \}\\
+~~artifact\_hash~~~~: hash(artifact(i))\\
+~~version\_manifest : \{ (x, ver(x, t)) | x $\in$ elements(S\_g) \}~~~\textemdash{} Axiom 5\\
+~~predecessor~~~~~~: pointer(A\_g'(i, t)) | $\bot$\\
+~~observability\_note : any elements of S\_g not fully observable~~\textemdash{} Axiom 4\\
+\}\\
+\end{cladnote}
+\end{cdef}
+
+
+\subsection{Chain Composition}
+
+
+\begin{cdef}[(Audit Chain)]
+An audit chain for interaction i is an ordered sequence of component audit records:
+
+\begin{cladnote}
+chain(i) = [A\_g$_1$(i, t), A\_g$_2$(i, t), ..., A\_g$_n$(i, t)]\\
+\end{cladnote}
+\begin{cladnote}
+where:\\
+~~$\forall$ k $\in$ \{2,...,n\} : A\_g$_k$.predecessor = A\_\{g(k-1)\}~~~~~~\textemdash{} linked\\
+~~$\wedge$ $\forall$ k : A\_g$_k$.interaction\_id = identifier(i)~~~~~~~~~~~~\textemdash{} same interaction\\
+~~$\wedge$ $\forall$ k : artifact integrity is verifiable via hash chain~~\textemdash{} tamper-evident\\
+\end{cladnote}
+\end{cdef}
+
+
+\subsection{Audit Integrity Properties}
+
+
+An artifact hash alone is insufficient for tamper resistance in regulated industries: a malicious administrator or compromised system could rewrite records and recompute the hashes. The properties below close that gap.
+
+\begin{cdef}[(Audit Integrity Requirements)]
+The audit system must satisfy the following integrity properties:
+
+AI1 (Immutable Storage): Audit records, once written, cannot be modified or deleted by any party, including system administrators, for the duration of the regulatory retention period. Implementation approaches: WORM storage (e.g., S3 Object Lock, Azure Immutable Blob), append-only databases, write-once volumes.
+
+AI2 (Cryptographic Chain Integrity): Each audit record A\_\allowbreak{}g$_k$ includes a cryptographic hash of its predecessor record, forming a Merkle-like chain:
+
+A\_\allowbreak{}g$_k$.chain\_\allowbreak{}hash = hash(A\_\allowbreak{}g(k-1).chain\_\allowbreak{}hash $\parallel$ A\_\allowbreak{}g$_k$.content)
+
+Tampering with any record in the chain invalidates all subsequent chain\_\allowbreak{}hash values, making modification detectable.
+
+AI3 (Record Signing): Each audit record is signed by the producing component using a key managed by an independent key management service (KMS):
+
+$\Audit_g(i,t)$.signature = sign(KMS\_\allowbreak{}key\_\allowbreak{}g, $\Audit_g(i,t)$.content)
+
+No component holds its own signing key. Key management is
+independent of component operation, preventing a compromised component from forging records.
+
+AI4 (Independent Verification): An external auditor or independent system can verify the integrity of the audit chain without relying on any governance component:
+\begin{itemize}
+  \item Chain\_\allowbreak{}hash values can be independently recomputed
+  \item Signatures can be verified against KMS public keys
+  \item Record completeness can be verified against interaction\_\allowbreak{}id generation logs
+\end{itemize}
+
+AI5 (Chain Truncation Detection): Whole-interaction deletion is detected by AI4's comparison against interaction\_\allowbreak{}id generation logs. PARTIAL truncation is not: dropping ROC's record while keeping EPG's leaves a chain whose every remaining link verifies and whose every remaining signature is valid, under an interaction\_\allowbreak{}id that is present as expected.
+
+The audit system MUST therefore record, per interaction, the set of components its risk tier requires, and verification MUST compare the chain against that set:
+
+\begin{cladnote}
+$\forall$ i $\in$ I\_governed :\\
+~~expected\_components(tier(i)) $\subseteq$ \{g | A\_g $\in$ chain(i)\}\\
+~~$\vee$ $\exists$ degraded\_record(g, i) for each g in the difference\\
+\end{cladnote}
+A chain shorter than its tier requires, with no degraded record accounting for the gap, is a truncation and MUST be investigated on the GIL3 ghost pathway. Without this check the cryptographic chain provides no protection against a truncating adversary, because truncation is not modification.
+
+AI6 (Retention and Jurisdiction): Audit records must be:
+\begin{itemize}
+  \item Retained for the regulatory minimum period applicable to the deployment context (e.g., 6 years for SOX, as required by HIPAA, as specified by sector regulators)
+  \item Stored in jurisdictions compliant with applicable data residency requirements (GDPR, state privacy laws)
+  \item Protected when they contain PII/PHI: encrypted at rest, access-controlled, with PII minimization where possible (e.g., hashing identifiers in logs rather than storing plaintext)
+\end{itemize}
+
+\end{cdef}
+
+
+These properties are what make the chain tamper-evident: modification of any
+record is detectable by an independent verifier even if immutable storage is
+bypassed for one of them. The Tamper-Evident Audit Chain theorem states the result
+and the case it does not cover, which is deletion.
+
+
+
+
+\section{Risk Model}
+\label{sec:framework-10}
+
+
+\subsection{Risk Attribution}
+
+
+\begin{cdef}[(Compliance Risk)]
+For an interaction i, define compliance risk R(i) as the probability that the delivered output o' violates a compliance requirement.
+
+By the pipeline model: R(i) = P(o' violates requirement | p, u, m, $\theta$)
+
+This risk is attributable to multiple surfaces:
+
+R(i) = R\_\allowbreak{}prompt(i) + R\_\allowbreak{}input(i) + R\_\allowbreak{}config(i) + R\_\allowbreak{}output(i) + R\_\allowbreak{}delivery(i)
+
+\begin{cladnote}
+where each R\_S$_k$ represents risk attributable to surface S$_k$:\\
+~~R\_prompt~~~~\textemdash{} risk from inadequate prompt constraints\\
+~~R\_input~~~~~\textemdash{} risk from adversarial or edge-case user input\\
+~~R\_config~~~~\textemdash{} risk from inappropriate model selection or inference\\
+~~~~~~~~~~~~~~~~parameters (e.g., high temperature for safety-critical task)\\
+~~R\_output~~~~\textemdash{} risk from raw output content (model behavior)\\
+~~R\_delivery~~\textemdash{} risk from post-processing errors\\
+\end{cladnote}
+\smallskip\noindent\textbf{Modeling Simplification (Risk Additivity).}
+The additive decomposition R(i) = $\Sigma$R\_\allowbreak{}S$_k$ is a modeling simplification, not a claim of statistical independence. In practice, risks interact:
+a weak prompt constraint combined with high temperature (R\_\allowbreak{}prompt $\times$ R\_\allowbreak{}config) may produce higher risk than either alone. The additive model is used for ATTRIBUTION (which surface contributes what risk) not for precise QUANTIFICATION. Implementations requiring precise risk measurement should use empirical methods, not this decomposition.
+
+\begin{cladnote}
+ADDITIONAL RISK: Infrastructure Dependencies\\
+~~The governance infrastructure itself introduces risk:\\
+~~~~R\_GIL~~~~~~~\textemdash{} risk from GIL unavailability (fail-closed blocks all\\
+~~~~~~~~~~~~~~~~~~governed interactions; single critical-path dependency)\\
+~~~~R\_supervisor \textemdash{} risk from Supervisor unavailability (degraded records\\
+~~~~~~~~~~~~~~~~~~cannot be signed; chain integrity weakened)\\
+~~These are operational risks of the governance system, not compliance\\
+~~risks of the AI interaction. They must be managed through standard\\
+~~HA/DR practices for critical infrastructure.\\
+\end{cladnote}
+RISK-TIERED GOVERNANCE: Not all interactions require the same governance intensity. Deployments SHOULD define risk tiers that bind data classification to governance posture:
+
+\begin{cladnote}
+Tier: Critical (PHI, PCI, financial reporting)\\
+~~fail\_posture: fail-closed (mandatory)\\
+~~audit: full chain with AI1-AI6\\
+~~constraints: full EPG + ROC + MDR\\
+\end{cladnote}
+\begin{cladnote}
+Tier: Standard (internal tools, non-sensitive data)\\
+~~fail\_posture: fail-open-flagged\\
+~~audit: full chain, sampling permitted for volume management\\
+~~constraints: EPG + ROC, MDR optional\\
+\end{cladnote}
+\begin{cladnote}
+Tier: Low (development, sandbox, experimentation)\\
+~~fail\_posture: fail-open-flagged or fail-open\\
+~~audit: interaction logging, chain optional\\
+~~constraints: enterprise-level EPG only\\
+\end{cladnote}
+The specific tier definitions are deployment-specific. The meta- framework requires that tiers exist and that the binding between data classification and governance posture is itself a governed, auditable constraint (subject to EA4 change control).
+
+\end{cdef}
+
+
+\subsection{Governance as Risk Reduction}
+
+
+\begin{cdef}[(Risk Reduction)]
+A governance component g with guarantee $\guarantee(g)$ reduces the risk attributable to its governed surface:
+
+R\_\allowbreak{}Sg(i | g deployed) $\leq$ R\_\allowbreak{}Sg(i | g not deployed)
+
+The residual risk after deploying g is: R\_\allowbreak{}Sg\_\allowbreak{}residual = R\_\allowbreak{}Sg(i | g deployed)
+
+\end{cdef}
+
+
+\subsection{Prompt Governance Risk Reduction Syllogism}
+
+
+\begin{cladnote}
+SYLLOGISM 1 (Prompt-to-Output Risk Transfer):
+\par\smallskip
+Major Premise:\\
+~~The probability distribution of model outputs is conditioned on the\\
+~~prompt and inference configuration.\\
+~~Formally: o \textasciitilde{} M(x, u, $\theta$), therefore P(o | p$_1$, u, $\theta$) $\neq$ P(o | p$_2$, u, $\theta$)\\
+~~in general.
+\par\smallskip
+Minor Premise:\\
+~~Prompt governance constrains prompts to satisfy properties that reduce\\
+~~the probability of non-compliant outputs.\\
+~~Formally: x $\vDash$ C*(project) $\to$ P(o violates | p, u, $\theta$) $\leq$ P(o violates | p', u, $\theta$)\\
+~~where x' is an ungoverned prompt.
+\par\smallskip
+Conclusion:\\
+~~Prompt governance reduces the probability of non-compliant outputs\\
+~~for the class of violations attributable to prompt deficiency.\\
+~~Formally: R\_prompt(i | EPG deployed) < R\_prompt(i | EPG not deployed)
+\par\smallskip
+Note: This does NOT claim R\_input, R\_config, R\_output are reduced by\\
+prompt governance. Those risks require their own governance components.
+\end{cladnote}
+
+
+\section{Component Instantiation}
+\label{sec:framework-11}
+
+
+\subsection{Solution Component Map}
+
+
+\begin{cdef}[(Solution Components)]
+The Clad instantiates the following:
+
+\begin{cladnote}
+g\_EPG = (\\
+~~S~~~~~~= \{$\sigma$\_prompt\},\\
+~~C~~~~~~= constraint hierarchy (deontic),\\
+~~E~~~~~~= mechanical evaluation $\cup$ procedural attestation,\\
+~~A~~~~~~= prompt audit records,\\
+~~R\_hard = $\emptyset$~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} independently deployable\\
+~~R\_soft = \{constraint\_ctx from organizational governance\}\\
+)\\
+\end{cladnote}
+\begin{cladnote}
+g\_ROC = (\\
+~~S~~~~~~= \{$\sigma$\_output, $\sigma$\_delivery\},\\
+~~C~~~~~~= output constraint set,\\
+~~E~~~~~~= output evaluation function,\\
+~~A~~~~~~= output audit records,\\
+~~R\_hard = $\emptyset$~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} independently deployable\\
+~~R\_soft = \{handoff from g\_EPG\}~~~~~~~\textemdash{} enhanced by prompt context\\
+)\\
+\end{cladnote}
+\begin{cladnote}
+g\_MDR = (\\
+~~S~~~~~~= \{$\sigma$\_input, $\sigma$\_config\},\\
+~~C~~~~~~= monitoring rules, thresholds, model selection policies,\\
+~~E~~~~~~= anomaly detection, compliance drift analysis,\\
+~~~~~~~~~~~model/config constraint evaluation,\\
+~~A~~~~~~= monitoring and incident records,\\
+~~R\_hard = $\emptyset$~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} independently deployable\\
+~~R\_soft = \{audit records from g\_EPG, g\_ROC\}\\
+)\\
+\end{cladnote}
+\end{cdef}
+
+
+\subsection{Interface Contract Instantiation}
+
+
+\begin{cladnote}
+K(g\_EPG, g\_ROC) = \{\\
+~~provides(g\_EPG $\to$ g\_ROC):\\
+~~~~- The assembled prompt x and its cryptographic hash\\
+~~~~- The effective constraint set C*(project)\\
+~~~~- The prompt audit record Audit\_EPG(i, t) with version\_manifest\\
+~~~~- The interaction identifier
+\par\smallskip
+~~requires(g\_ROC $\leftarrow$ g\_EPG):\\
+~~~~- (soft) Prompt context for output evaluation\\
+~~~~- (soft) Constraint set for contextual output assessment
+\par\smallskip
+~~handoff:\\
+~~~~- interaction\_id: shared identifier (Design Requirement)\\
+~~~~- artifact: the assembled prompt x\\
+~~~~- artifact\_hash: hash(p)\\
+~~~~- audit\_ref: pointer to Audit\_EPG(i, t)\\
+~~~~- constraint\_ctx: C*(project)\\
+~~~~- version\_manifest: \{ver(m, t), ver($\theta$, t), ver(c, t) $\forall$ c\}\\
+\}
+\par\smallskip
+K(g\_ROC, g\_MDR) = \{\\
+~~provides(g\_ROC $\to$ g\_MDR):\\
+~~~~- The output audit record Audit\_ROC(i, t)\\
+~~~~- Any flagged violations or anomalies\\
+~~~~- The delivered output o' and its hash
+\par\smallskip
+~~requires(g\_MDR $\leftarrow$ g\_ROC):\\
+~~~~- (soft) Output audit records for trend analysis\\
+~~~~- (soft) Violation flags for incident correlation
+\par\smallskip
+~~handoff:\\
+~~~~- interaction\_id: same identifier\\
+~~~~- artifact: delivered output o'\\
+~~~~- artifact\_hash: hash(o')\\
+~~~~- audit\_ref: pointer to Audit\_ROC(i, t)\\
+~~~~- violation\_flags: set of flagged constraint violations\\
+\}
+\par\smallskip
+K(g\_EPG, g\_MDR) = \{\\
+~~provides(g\_EPG $\to$ g\_MDR):\\
+~~~~- The prompt audit record Audit\_EPG(i, t)\\
+~~~~- Constraint version history for drift detection
+\par\smallskip
+~~requires(g\_MDR $\leftarrow$ g\_EPG):\\
+~~~~- (soft) Prompt audit records for root cause analysis
+\par\smallskip
+~~handoff:\\
+~~~~- interaction\_id: same identifier\\
+~~~~- audit\_ref: pointer to Audit\_EPG(i, t)\\
+~~~~- constraint\_versions: \{ver(c, t) | c $\in$ C*(project)\}\\
+\}
+\end{cladnote}
+
+
+\section{Composition Algebra}
+\label{sec:framework-12}
+
+
+\subsection{Component Composition Operator}
+
+
+\begin{cdef}[(Composition)]
+Define the composition operator $\oplus$ on governance components:
+
+\begin{cladnote}
+g$_1$ $\oplus$ g$_2$ = (\\
+~~S~~~~~= S\_g$_1$ $\cup$ S\_g$_2$,\\
+~~C~~~~~= C\_g$_1$ $\cup$ C\_g$_2$,\\
+~~E~~~~~= E\_g$_1$ $\cup$ E\_g$_2$,\\
+~~A~~~~~= compose(A\_g$_1$, A\_g$_2$) via shared interaction\_id,\\
+~~R\_hard = R\_hard(g$_1$) $\cup$ R\_hard(g$_2$) \textbackslash\{\} \{mutual provisions\}\\
+)\\
+\end{cladnote}
+\end{cdef}
+
+
+\section{Scope Limitations and Extension Points}
+\label{sec:framework-14}
+
+
+\subsection{Single-Turn Interaction Scope}
+
+
+This meta-framework models single, non-agentic interaction turns. The following patterns require extension:
+
+\begin{cladnote}
+Multi-turn conversations:\\
+~~Modeled as: sequence [i$_1$, i$_2$, ..., i$_n$] where p\_k includes context\\
+~~from prior interactions. Per-interaction governance holds. Cross-turn\\
+~~governance (e.g., ``the conversation as a whole must not reveal X")\\
+~~requires additional constraints on the sequence, not yet formalized.
+\par\smallskip
+Agentic / tool-use workflows:\\
+~~Modeled as: DAG of interactions where output(i$_k$) $\to$ prompt(i$_j$).\\
+~~Per-interaction governance holds at each node. Graph-level governance\\
+~~(e.g., ``the agent must not take action X without authorization")\\
+~~requires constraints on the DAG, not yet formalized.
+\par\smallskip
+Multi-model chains:\\
+~~Modeled as: pipeline [m$_1$, m$_2$, ..., m$_n$] where each model processes\\
+~~the prior model's output. Per-interaction governance holds per model.\\
+~~Chain-level governance (e.g., ``no PII may flow from model 1 to model 2")\\
+~~requires constraints on inter-model data flow, not yet formalized.
+\end{cladnote}
+
+
+Per-interaction governance (applying EPG/ROC/MDR to each individual turn or node) is directly supported by this framework. However, cross-interaction governance (constraints that span multiple turns, nodes, or models) requires additional formal machinery not yet defined. The framework does NOT claim ``architectural compatibility" with these patterns in their full generality --- it claims that its per-interaction guarantees hold at each node, while acknowledging that graph-level and sequence-level governance is an open problem.
+
+Additionally, multi-turn and agentic patterns may introduce stateful behavior (KV caches, agent scratchpads, persistent memory) that violates Axiom 1's statelessness assumption. For such patterns, either the state must be captured in p or $\theta$ at each turn, or the deployment must accept reduced auditability for the stateful elements (classified as Tier 2).
+
+\subsection{Model Internals}
+
+
+Model internals (weights, training data, fine-tuning provenance) are classified as external to the governance scope ($\gamma$ = external in S\_\allowbreak{}config). Governance of model internals (model cards, training data audits, bias testing) is a distinct discipline not addressed by this framework. Interface point: g\_\allowbreak{}MDR can verify that a model meets selection criteria (e.g., ``model must have a published model card with bias assessment") without governing the internals themselves.
+
+
+
+\section{Where the results are}
+
+
+This chapter states the model: the surfaces an interaction presents, the component
+that governs one, the contracts between components, and the algebra by which they
+compose. What is \emph{proved} over that model --- sixteen theorems, lemmas and
+corollaries, their proofs, and the twenty-two assumptions every one of them depends
+on --- is collected in the theorems appendix.
+
+The separation is deliberate. Deciding whether to adopt this framework needs the
+model and the guarantees in prose, which is this chapter. Building it, or auditing
+someone else's build, needs the statements with their preconditions in one place,
+which is the appendix. Results are referred to by designation throughout --- Theorem
+4, Lemma 2, Axiom 5 --- and those designations are stable.
+
+\section{Key takeaways}
+
+
+\begin{itemize}
+  \item Clad's guarantees rest on the axioms of \S{}1 and the two design requirements derived from them --- audit linkability and the Global Interaction Log. Where a deployment cannot satisfy an axiom, the theorems that depend on it must be re-evaluated.
+  \item An AI interaction is governed at five control surfaces (\S{}4); each surface carries a governability class that bounds what any component can promise.
+  \item A governance component is the tuple \texttt{g = (S, C, E, A, R)} (\S{}5), and components compose under a well-defined algebra (\S{}12) that preserves each component's guarantees when they are deployed together.
+  \item Governance reduces but does not eliminate residual risk (Theorem 4); what it guarantees is provable evidence, not perfect prevention.
+\end{itemize}
+
+
+The three chapters of Part IV instantiate this model, one control surface at a time. They begin with the prompt --- the surface an enterprise fully controls before the model ever runs.
+
+\section{The Evidence Surface}
+\label{sec:framework-15}
+
+The surface partition of Section~\ref{sec:framework-4} is exhaustive, and
+Theorem~1 proves it. This section argues that the theorem is true and the axiom it
+rests on is incomplete, and that closing the gap requires a sixth surface rather than
+a wider reading of an existing one.
+
+The argument is put here, at the end of the chapter, because it is a critique of the
+foregoing rather than a qualification of it. Nothing above needs to be withdrawn.
+
+\subsection{What the theorem actually proves}
+
+Theorem~1 establishes that every element of every interaction is assigned to exactly
+one control surface. Its first proof step is the load-bearing one: \emph{by Axiom 1,
+every interaction is described by} $(x, u, M, \theta, o)$. The partition is then
+exhaustive over that tuple, and the conclusion follows.
+
+So the theorem's scope is the tuple, and its truth is relative to the tuple. It proves
+completeness of the partition, not completeness of the tuple. Axiom~1 is careful about
+this and says so directly: it claims governance scope rather than completeness, and
+concedes that elements outside the tuple ``may influence outputs'' while declining to
+model them.
+
+Among the elements named as outside: \emph{retrieval index state}. The three-tier
+classification places it in Tier~2, known but unmodeled, contributing documented
+ungoverned risk.
+
+\subsection{Why that placement does not hold for retrieval-augmented systems}
+
+Tier~2 is the right classification for infrastructure that perturbs an output without
+being part of what the output claims. Load balancing, caching, replica differences: an
+interaction is not \emph{about} its own routing, and nothing an auditor asks concerns
+which replica served the request.
+
+Retrieved evidence is not of that kind. When a system answers a regulated question from
+a retrieved instrument, the instrument is not a factor that influenced the output. It is
+the \emph{basis of the assertion} --- the thing an auditor is asking about when they ask
+why. Placing it in Tier~2 makes the governance framework unable to represent the one
+element the audit is for.
+
+The chapter's own architecture shows the consequence. The prompt surface governs the
+assembled artifact, and the evaluation engine operates on that assembled text rather
+than on the materials that composed it; the composition process is invisible to the
+evaluation layer. So retrieved evidence enters the governed tuple as opaque tokens
+inside $x$. Two prompts of identical text, one assembled from a current authoritative
+instrument and one from a superseded foreign-jurisdiction instrument, are the same
+governed artifact under this model. They evaluate identically, produce identical audit
+records, and are distinguishable only by information the framework has declared out of
+scope.
+
+That is not a gap in enforcement. It is a gap in \emph{representation}, and it cannot be
+closed by strengthening any of the five surfaces, because none of them has a term for a
+source.
+
+\subsection{The sixth surface}
+
+Adding evidence therefore requires amending Axiom~1 rather than extending
+Definition~3.2. Write the amended tuple
+\begin{equation}
+  i = (x, u, M, \theta, o, E)
+  \label{eq:meta-amended-tuple}
+\end{equation}
+where $E$ is the evidential basis available to the interaction: the identified,
+versioned sources the assertion is permitted to rest on. The partition then gains
+\begin{equation}
+  \sigma_{\mathrm{evidence}} = \{E\}
+  \label{eq:meta-evidence-surface}
+\end{equation}
+and Theorem~1 is restated over the six-element tuple, where it holds by the same proof.
+
+Its governability class is worth stating precisely, because it is the reason the surface
+is worth adding:
+\begin{equation}
+  \gov(\sigma_{\mathrm{evidence}}) =
+  \begin{cases}
+    \text{full}    & \text{retrieval-provided evidence, identified at inference time}\\
+    \text{external}& \text{parametric evidence absorbed in training}
+  \end{cases}
+  \label{eq:meta-evidence-governability}
+\end{equation}
+
+This is the only surface in the framework whose class is \emph{split by deployment
+choice rather than fixed by the technology}. The prompt surface is governable because
+prompts are constructed; model internals are external because they are not observable.
+Evidence is either, depending on whether the architecture makes it explicit --- which
+turns a governability classification into a design requirement, and is the strongest
+architectural conclusion in this book.
+
+\subsection{What the new surface requires}
+
+Three things the existing five do not supply.
+
+\paragraph{An applicability relation.} The output-evaluation machinery of the runtime
+control layer is defined over $\mathrm{applicable}(R_{\mathrm{ROC}}, i)$, and the
+completeness theorem for that layer asserts its audit record is total over exactly that
+set. The function is used and never defined anywhere in this framework. For constraints
+the omission is survivable, because applicability of a rule to an interaction is
+settled by level and domain. For evidence it is not: whether a source governs a case is
+the substance of the question, and it is developed in
+Chapter~\ref{ch:grounding-context} as a relation to a resolved context of jurisdiction,
+valid time, material facts, and intended use.
+
+\paragraph{A second time axis.} Axiom~5 gives temporal identity over a single totally
+ordered domain, which is sufficient for asking which rule version was in force when an
+interaction ran. Evidence needs two axes: the time a source was valid, and the time the
+system could have known it. Their divergence is a detectable failure in both
+directions, and neither is expressible with one axis.
+
+\paragraph{A dependence condition.} The prompt surface can establish that required text
+was present and the output surface that prohibited text was absent. Neither can establish
+that an assertion \emph{rested on} the evidence cited for it. The framework's own worked
+example makes the point: a citation check fails, the prompt is reinforced, the model
+returns the same analysis with citations attached, and the second evaluation passes.
+Nothing in the five surfaces can distinguish that from grounded assertion, because a
+presence check on the artifact is the only instrument available.
+
+\subsection{Consequence for the guarantees}
+
+The composed guarantee of Section~\ref{sec:framework-12} is unaffected in what it claims and
+narrowed in what it covers. Every theorem in this chapter remains true over the tuple it
+quantifies over. What changes is the residual-risk accounting: evidence moves from Tier~2
+undocumented influence to a governed surface with its own class, its own audit fields, and
+its own failure modes --- which means the risk attributable to it becomes nameable
+instead of being absorbed into the irreducible remainder.
+
+The conditions on $\sigma_{\mathrm{evidence}}$ are the grounding conditions of
+Chapter~\ref{ch:taxonomy}; the invariants that make them checkable, and the
+measurement that establishes them, are stated where the other system invariants are. This section
+claims only that the surface belongs in the partition, and that its absence was a
+scoping decision made before retrieval-augmented deployment was the normal case.

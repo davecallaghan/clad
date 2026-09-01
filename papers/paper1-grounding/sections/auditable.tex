@@ -1,0 +1,234 @@
+% !TEX root = ../main.tex
+\section{Grounding Is Auditable; Accuracy Is Not}
+\label{sec:auditable}
+
+\subsection{The asymmetry}
+
+Section~\ref{sec:invariants} said what does not hold. This section says which property
+can be measured instead, and why that property rather than the obvious one.
+
+Accuracy and grounding are both properties of assertions, and they differ in a way
+that decides which one a governance regime can use.
+
+To check whether an assertion is \emph{correct}, you need to know the answer.
+Sometimes you do: a deterministic
+calculation can be recomputed, a figure reconciled against a system of record, a
+constraint evaluated, an outcome observed later. Where correctness is cheaply decidable
+it should be checked directly, and Section~\ref{sec:structured} argues such claims
+should not be routed through a language model at all.
+
+The difficulty is the residue, and the residue is what these systems are used for:
+open-world questions whose answers are not available at the moment of decision. There,
+correctness can be established only against a reference built in advance---on questions
+somebody already had the answer to, which is to say not the question that was asked. You cannot check correctness on the query a user just sent, because
+if you could answer it you would not have sent it to the system.
+
+To check whether an assertion is \emph{grounded}, you do not need to know the
+answer. You need to know what evidence the system used and whether that evidence
+is applicable at $c$. Both are properties of the system's own execution. Condition
+(G1) is a check on the retrieved evidence: is it authentic, current at $t$, of
+the right jurisdiction and use? Condition (G2) is a perturbation test: ablate or
+contradict the evidence and see whether the assertion survives. Neither consults
+an answer key.
+
+This has a consequence out of proportion to how obvious it sounds once stated.
+Grounding can be checked \emph{at runtime, per assertion, on live traffic}.
+Accuracy cannot. That is the difference between a metric and a gate. A metric
+tells you, after the fact, how a sample went. A gate decides whether this
+particular assertion is allowed out. Everything a regulated deployment actually
+needs---blocking, escalating, qualifying, logging a reconstructable basis---requires
+a gate, and only grounding supplies one.
+
+It would be convenient to claim that grounding is stable under paraphrase where
+accuracy is not, and that claim would be false. A rephrased request can retrieve
+different evidence, resolve a different context, decompose into different claims, return a
+different verification outcome, or engage a different precedence rule. The grounding
+\emph{status} of the resulting assertion can change, and governed retrieval does not
+repair form sensitivity.
+
+What grounding supplies is different and, for a governance regime, more useful. It is
+auditable \emph{per execution}. However the request was phrased, the system can inspect
+the evidence, the resolved context, the verification result, the defeater search, and the
+authorization path for the assertion that was actually emitted. Form-invariance failure
+therefore becomes \emph{visible and attributable} rather than silent: two paraphrases that
+produce different assertions produce two traces, and the traces say which condition
+diverged and why. That is what accuracy cannot do, because a changed answer with no trace
+is indistinguishable from a changed answer with a good reason.
+
+So the pathology of Section~\ref{sec:canonical-form} is not repaired by measuring
+grounding. It is made observable, which is the most any measurement can offer against a
+property the architecture does not guarantee.
+
+\subsection{Determinism is not the requirement}
+\label{sec:determinism}
+
+Before the measurement itself, one reading has to be blocked. The asymmetry above may
+suggest that auditable systems must be deterministic, and grounding auditable because
+generation is not. That reading is false and it would misdirect the remedy.
+
+Plenty of non-deterministic computation is relied upon in regulated settings and
+audited without difficulty. Monte Carlo valuation, randomised algorithms, and
+sampling-based statistical procedures all produce different output on different
+runs, and all are defensible. What makes them so is not determinism but three other
+properties: the run is \emph{reproducible}, because the seed and the state are
+recorded and the computation can be replayed; the error is \emph{bounded}, because a
+convergence or confidence statement is available; and there is a
+\emph{specification} saying what the computation was supposed to approximate.
+
+Generation can satisfy the first of those, but only under conditions worth
+spelling out, because they are frequently not the conditions of a commercial
+deployment. Greedy decoding removes sampling variance. It does not by itself produce
+identical output run to run. Floating-point addition is not associative; the order in
+which a reduction is performed on an accelerator depends on which kernel is selected;
+and kernel selection depends on batch shape. A request batched with different
+neighbours can therefore yield slightly different logits, and where two candidate
+tokens are close, a different token. Sparse expert routing under capacity limits
+introduces the same batch dependence more directly. Behind a hosted endpoint, the
+served model version may change without notice.
+
+Reproducibility is therefore an architectural achievement rather than a property of
+the technology. It requires pinned model versions, controlled batching or
+single-request inference, deterministic kernel selection, recorded decoding
+parameters, and a stateless request. Those conditions are available to an
+organisation that self-hosts or contracts for them, and largely unavailable to one
+consuming a shared public endpoint. This is why I14 appears in
+Table~\ref{tab:invariants-system} as something a system must supply rather than
+something it has, and a validation programme that assumes replay works should test
+that assumption rather than inherit it.
+
+The point for this section is that non-determinism is not the \emph{irreducible}
+gap. It can be engineered away, at a cost that is ordinary architecture.
+
+The gap is that reproducibility over a single input buys very little when the set of
+inputs you need to reason about is a semantic equivalence class you cannot
+enumerate. Replaying one string tells you what that string does. It says nothing
+about the materially equivalent string a different user will send tomorrow, and by
+Section~\ref{sec:canonical-form} there is no bound to appeal to in its place. The
+contrast with adversarial robustness is instructive: there, perturbations live in a
+metric space, so a claim of the form ``behaviour is stable within $\varepsilon$'' is
+both meaningful and sometimes certifiable. Paraphrase admits distance measures---
+embedding cosine, edit distance, entailment scores---but none with the property the
+certification argument needs: that everything within $\varepsilon$ of a request is
+materially equivalent to it, and everything materially equivalent is within
+$\varepsilon$. Semantically identical requests can be far apart in embedding space
+and materially different requests can be adjacent, which is why the corresponding
+guarantee cannot be stated even approximately.
+
+So the requirement is reproducibility plus a characterisation of behaviour over the
+class of inputs that matter. The first is engineering and this paper treats it as
+such. The second is the one with no known general solution, which is why
+Section~\ref{sec:auditable} argues for measuring grounding---a property of the
+individual assertion and its evidence---rather than attempting to certify behaviour
+over a class that cannot be enumerated.
+
+The distinguishing property is worth stating once, because the whole argument turns
+on it: the systems in scope produce, as their primary output, statements that people
+treat as claims about the world, and they produce them by sampling token sequences.
+The first half is why the question of grounding arises at all. The second half,
+developed in Section~\ref{sec:what-computed}, is why it cannot be answered by
+inspecting the model.
+
+Two boundary cases. Multimodal systems are in scope to the extent that their
+text output is produced as in (1)--(4), and out of scope for their image or audio
+output. Retrieval-augmented and tool-using systems built on models in scope are
+squarely in scope---indeed they are the systems this paper is chiefly about, since
+Section~\ref{sec:measurability} argues that only such systems can be measured at
+all.
+
+Later developments---longer contexts, sparse routing, tool use, and
+reinforcement training on verifiable outcomes---change capability substantially and
+change none of the structural properties identified below, a claim I return to in
+Section~\ref{sec:better-models}.
+
+\subsection{What independence implies for a validation programme}
+
+Proposition~\ref{prop:independence} established that accuracy and the grounding
+rate are not linked by any entailment over the feasible region. Read as a statement about
+validation programmes rather than about models, it says something sharper than
+``accuracy is incomplete.'' It says accuracy is \emph{uninformative} about the
+property that governs reliance: a reported accuracy figure is consistent with every
+grounding rate, so no accuracy threshold, however high, constitutes evidence that a
+system asserts within its evidence.
+
+The asymmetry above explains why this is not symmetrical bad news. Both properties
+are worth knowing, and only one of them can be established for the assertion in
+front of you at the moment you need to decide about it.
+
+\subsection{The measurement target}
+
+The quantity to measure is the rate at which assertion outruns applicable
+evidence---which, by Definition~\ref{def:hallucination}, is the hallucination rate:
+\begin{equation}
+  \text{hallucination rate}
+  \;=_{\mathrm{def}}\;
+  \Pr\bigl(\Hall(p \mid c) \;\big|\; \Out_S(p)\bigr)
+  \;=\;
+  \Pr\bigl(\neg\,\Grd_S(p \mid c) \;\big|\; \Out_S(p)\bigr).
+  \label{eq:rate}
+\end{equation}
+
+This is worth pausing on, because it is where the redefinition earns its keep. Under
+the standard truth-conditional definition, a hallucination rate can only be
+estimated against an answer key, offline, on questions whose answers are already
+known. Under Definition~\ref{def:hallucination} it is estimated from the system's own
+execution: what evidence was used, and did it apply. Same word, same intuition, and a
+quantity that can be computed on live traffic and used to stop an assertion. The
+redefinition is what converts a retrospective score into an operable control.
+This is \eqref{eq:hall} turned into a statistic. It is estimated by attribution
+audit rather than comparison against reference answers, and the framework for attributing
+generated statements to identified sources is established
+\citep{rashkin2023}: sample assertions, and for each determine whether it is
+attributable to identified evidence that is applicable at $c$.
+
+One further decomposition is needed, because the ungrounded rate as defined pools
+causes with different owners. An assertion can be ungrounded because no relevant
+evidence exists in the controlled corpus; because it exists and retrieval failed to
+surface it; because it was surfaced and excluded for want of applicability metadata;
+because it was available and the generation path ignored it; or because policy
+correctly excluded it and the system answered anyway. Those are five distinct control
+failures---corpus coverage, retrieval recall, metadata completeness, gating, and policy
+enforcement---and only the last two are properties of the generation path. An audit
+that cannot separate them will attribute a corpus gap to the model.
+
+Report it decomposed, not pooled. The three rows of
+Table~\ref{tab:remedies} have different owners, so a single figure defeats the
+purpose of having measured anything:
+\begin{itemize}
+  \item ungrounded rate---no evidential connection (cells ii, iv);
+  \item misapplied rate---evidence present but inapplicable at $c$ (cell v);
+  \item error rate---grounded and false (cell iii), reported against the corpus
+        rather than the system.
+\end{itemize}
+
+\subsection{Where this can be measured, and where it cannot}
+\label{sec:measurability}
+
+One constraint is essential, and it is the point at which this paper's argument
+becomes an argument about architecture rather than about metrics.
+
+The evidential base has two parts and they are not equally tractable.
+
+For \textbf{retrieval-provided evidence}, condition (G2) is directly testable.
+The evidence is identified, it is present in the context, and you can ablate it,
+contradict it, or perturb it and observe whether the assertion survives. The test
+is cheap, automatable, and runs on live traffic.
+
+For \textbf{parametric evidence}---whatever the training corpus contributed to the
+weights---it is not. ``Had $E$ not supported $p$'' ranges over counterfactual
+training corpora, and evaluating it properly means retraining. Training-data
+attribution methods approximate the counterfactual, and at frontier scale they
+remain a research problem rather than an instrument. The difference between the two
+cases is one of kind, not degree.
+
+So \eqref{eq:rate} is well defined for any system and estimable only for systems
+that make their evidential base explicit at inference time. An unaugmented model's
+ungrounded assertion rate is a perfectly good quantity that nobody can currently
+measure.
+
+This is not a limitation of the definition. It is a requirement on the system, and
+it is the strongest practical conclusion of this paper. If the rate at which a
+system asserts beyond its applicable evidence is the quantity that governs whether
+you may rely on it, then the system has to be built so that the quantity is
+observable: an identified, versioned, context-resolved evidential base at the
+point of assertion, not a training corpus somewhere behind it.
+Section~\ref{sec:architecture} sets out what that requires.

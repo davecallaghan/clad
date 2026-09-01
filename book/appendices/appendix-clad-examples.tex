@@ -1,0 +1,221 @@
+\chapter{Worked Examples}
+\label{ch:clad-examples}
+
+
+End-to-end examples for the control layers of Part IV.
+
+\section{Prompt Governance (EPG)}
+\label{sec:clad-examples-B-1}
+
+
+\subsection{Healthcare: Patient-Facing Chatbot}
+\label{sec:clad-examples-B-1-1}
+
+
+\textbf{Enterprise constraints:}
+\begin{itemize}
+  \item \texttt{O(hipaa\_\allowbreak{}disclaimer)} --- every prompt must include HIPAA-compliant disclaimer language
+  \item \texttt{F(pii\_\allowbreak{}in\_\allowbreak{}logs)} --- prompts must never include instructions that would cause PII to appear in system logs
+  \item \texttt{F(medical\_\allowbreak{}diagnosis)} --- prompts must not instruct the model to diagnose conditions
+  \item \texttt{$\Permitted$(clinical\_\allowbreak{}terminology)} --- enterprise has considered clinical terminology and imposes no restriction
+\end{itemize}
+
+
+\textbf{Department constraints (Patient Services):}
+\begin{itemize}
+  \item Inherits \texttt{O(hipaa\_\allowbreak{}disclaimer)} and \texttt{F(pii\_\allowbreak{}in\_\allowbreak{}logs)} --- cannot change
+  \item Adds \texttt{F(clinical\_\allowbreak{}terminology)} --- patients are not clinicians; layman terms required. This is a valid tightening of P\_\allowbreak{}meta (which imposes no restriction). Flagged for tension review because P\_\allowbreak{}meta existed at enterprise level; review confirms department rationale is sound.
+  \item Adds \texttt{O(empathetic\_\allowbreak{}tone)} --- patient-facing communications require empathetic framing
+  \item Adds \texttt{O(redirect\_\allowbreak{}to\_\allowbreak{}provider)} --- prompts must instruct the model to redirect medical questions to qualified providers
+\end{itemize}
+
+
+\textbf{Project constraints (Patient FAQ Chatbot):}
+\begin{itemize}
+  \item Inherits all enterprise and department constraints (5 total)
+  \item Adds \texttt{O(scope\_\allowbreak{}to\_\allowbreak{}faq\_\allowbreak{}topics)} --- prompt must limit the model to answering questions within the FAQ knowledge base
+  \item Adds \texttt{O(cite\_\allowbreak{}sources)} --- prompt must instruct the model to cite specific FAQ entries
+\end{itemize}
+
+
+\textbf{Effective constraint set at project level:}
+C*(project) = \{O(hipaa\_\allowbreak{}disclaimer), F(pii\_\allowbreak{}in\_\allowbreak{}logs), F(medical\_\allowbreak{}diagnosis), F(clinical\_\allowbreak{}terminology), O(empathetic\_\allowbreak{}tone), O(redirect\_\allowbreak{}to\_\allowbreak{}provider), O(scope\_\allowbreak{}to\_\allowbreak{}faq\_\allowbreak{}topics), O(cite\_\allowbreak{}sources)\}
+
+\textbf{Decomposition example: F(medical\_\allowbreak{}diagnosis)}
+
+Semantic intent: ``The AI system must not produce output that could be construed as diagnosing a medical condition."
+
+Mechanical components (C\_\allowbreak{}m):
+\begin{itemize}
+  \item Pattern scan for diagnostic language: regex and NER-based detection of diagnostic phrases (``you have," "this indicates," "the symptoms suggest," "diagnosis:")
+  \item Required disclaimer presence: prompt must include explicit instruction ``Do not diagnose conditions or suggest specific diagnoses"
+  \item Scope limitation: prompt must include instruction to refuse requests for diagnosis
+\end{itemize}
+
+
+Procedural components (C\_\allowbreak{}p):
+\begin{itemize}
+  \item Medical affairs review: a qualified medical affairs officer reviews the prompt and attests that its framing adequately prevents diagnostic behavior
+  \item Adversarial testing: red-team testing with prompts designed to elicit diagnostic language; results reviewed and attested by medical affairs
+\end{itemize}
+
+
+Residual gap: mechanical checks cover an estimated 85\% of diagnostic language patterns based on regression testing against a corpus of known diagnostic phrases. The remaining 15\% includes novel or indirect diagnostic formulations. Compensating control: 15\% HITL review rate on chatbot outputs, managed by medical affairs, with monthly reporting.
+
+\textbf{Conflict example: O(empathetic\_\allowbreak{}tone) vs F(promissory\_\allowbreak{}language)}
+
+The department's obligation for empathetic tone (authored by Patient Experience domain) creates tension with Legal's prohibition on promissory language. Empathetic language like ``we will make sure you get the care you need" could be construed as a promissory commitment.
+
+Phase 1 resolution: cross-domain review between Patient Experience and Legal. Resolution: add a precedence rule to the Enterprise Precedence Table --- F(promissory\_\allowbreak{}language) takes precedence over O(empathetic\_\allowbreak{}tone). The project team must find empathetic language that does not make promissory commitments. Documented rationale: legal liability outweighs tone preference.
+
+\subsection{Financial Services: Investment Research Assistant}
+\label{sec:clad-examples-B-1-2}
+
+
+\textbf{Enterprise constraints:}
+\begin{itemize}
+  \item \texttt{O(sox\_\allowbreak{}audit\_\allowbreak{}trail)} --- all AI-generated content used in financial reporting must have complete audit trail
+  \item \texttt{F(investment\_\allowbreak{}advice\_\allowbreak{}to\_\allowbreak{}retail)} --- prompts must not instruct the model to provide personalized investment advice to retail investors
+  \item \texttt{O(data\_\allowbreak{}source\_\allowbreak{}citation)} --- prompts must instruct the model to cite data sources for all quantitative claims
+\end{itemize}
+
+
+\textbf{Department constraints (Institutional Research):}
+\begin{itemize}
+  \item Inherits all enterprise constraints
+  \item \texttt{$\Permitted$(investment\_\allowbreak{}thesis\_\allowbreak{}language)} --- the department has considered investment thesis language and does not restrict it for professional audiences
+  \item \texttt{O(model\_\allowbreak{}uncertainty\_\allowbreak{}disclosure)} --- prompts must instruct the model to disclose uncertainty and confidence levels
+\end{itemize}
+
+
+\textbf{Project constraints (Analyst Tool):}
+\begin{itemize}
+  \item Inherits all enterprise and department constraints
+  \item \texttt{F(forward\_\allowbreak{}looking\_\allowbreak{}statements\_\allowbreak{}without\_\allowbreak{}disclaimer)} --- prompts must prohibit forward-looking statements unless accompanied by required regulatory disclaimers
+\end{itemize}
+
+
+\textbf{Decomposition example: F(investment\_\allowbreak{}advice\_\allowbreak{}to\_\allowbreak{}retail)}
+
+Semantic intent: ``The AI system must not provide personalized investment recommendations to retail investors."
+
+Mechanical components: audience detection (prompt must include explicit audience scoping: ``this tool is for institutional investors only"), keyword patterns for personalized advice language ("you should buy," "I recommend," "based on your portfolio"), required disclaimer presence.
+
+Procedural components: compliance officer review, quarterly re-attestation, FINRA suitability framework review.
+
+Residual gap: mechanical checks cannot distinguish between general market commentary (permitted) and implicit investment guidance that sophisticated readers would recognize as advice but retail investors might act on differently. Compensating control: 25\% HITL review by compliance, with escalation protocol for borderline cases.
+
+\subsection{Energy: Grid Operations Decision Support}
+\label{sec:clad-examples-B-1-3}
+
+
+\textbf{Enterprise constraints:}
+\begin{itemize}
+  \item \texttt{O(nerc\_\allowbreak{}cip\_\allowbreak{}compliance\_\allowbreak{}notice)} --- all AI interactions involving grid operations must include NERC CIP compliance framing
+  \item \texttt{F(operational\_\allowbreak{}commands\_\allowbreak{}without\_\allowbreak{}human\_\allowbreak{}confirmation)} --- prompts must never instruct the model to issue operational commands; all recommendations require human confirmation
+  \item \texttt{O(audit\_\allowbreak{}all\_\allowbreak{}recommendations)} --- every AI recommendation must be fully auditable with complete constraint evaluation
+\end{itemize}
+
+
+\textbf{Department constraints (Grid Operations):}
+\begin{itemize}
+  \item \texttt{O(cite\_\allowbreak{}sensor\_\allowbreak{}data\_\allowbreak{}source)} --- prompts must instruct the model to cite specific sensor data sources for all recommendations
+  \item \texttt{F(recommendations\_\allowbreak{}outside\_\allowbreak{}trained\_\allowbreak{}scenarios)} --- prompts must restrict the model to scenarios covered by validated training data
+\end{itemize}
+
+
+\textbf{Conflict example: efficiency vs safety}
+
+An efficiency optimization constraint \texttt{O(minimize\_\allowbreak{}response\_\allowbreak{}time)} from the Operations Efficiency domain creates tension with \texttt{F(operational\_\allowbreak{}commands\_\allowbreak{}without\_\allowbreak{}human\_\allowbreak{}confirmation)} from the Safety domain. Faster response times could pressure the system toward fewer confirmation steps.
+
+Resolution: Enterprise Precedence Table specifies Safety > Efficiency as the default domain priority. The safety prohibition takes absolute precedence. The efficiency constraint is modified to: \texttt{O(minimize\_\allowbreak{}response\_\allowbreak{}time\_\allowbreak{}within\_\allowbreak{}safety\_\allowbreak{}constraints)} --- a new atomic property that explicitly acknowledges the safety boundary.
+
+\textbf{Break-glass scenario:} During an active grid stability event, an enterprise-level actor invokes break-glass to add \texttt{F(non\_\allowbreak{}essential\_\allowbreak{}ai\_\allowbreak{}queries)} --- temporarily prohibiting all non-essential AI interactions to preserve computational resources for critical grid operations. TTL: 24 hours (energy sector default). The constraint is tightening-only (adds a prohibition). Immediate CONTRADICTION scan confirms no conflicts with existing constraints. Post-hoc review within 24 hours formalizes the constraint through standard dual-control if the operational condition persists, or allows automatic reversion if the event resolves.
+
+
+
+
+\section{Runtime Output Controls (ROC)}
+\label{sec:clad-examples-B-2}
+
+
+\subsection{Healthcare: Patient-Facing Chatbot (continued)}
+
+
+The EPG example above established constraints for a Patient FAQ Chatbot. ROC extends governance to the output:
+
+\textbf{Output constraints applied:}
+
+\begin{table}[ht]
+  \centering\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.04cm}>{\raggedright\arraybackslash}p{1.13cm}>{\raggedright\arraybackslash}p{2.80cm}>{\raggedright\arraybackslash}p{5.04cm}@{}}
+  \toprule
+  Constraint & Type & Tier & Action on Violation \\
+  \midrule
+  SSN/MRN pattern detection & O\_\allowbreak{}d & Deterministic & Block + redact \\
+  PHI NER classifier ($\tau$ = 0.75) & O\_\allowbreak{}c & Classifier & Block (Critical) \\
+  Medical advice classifier ($\tau$ = 0.80) & O\_\allowbreak{}c & Classifier & Block (Critical) \\
+  Disclaimer presence check & O\_\allowbreak{}d & Deterministic & Block + retry with reinforced prompt \\
+  Composite PHI check (regex + NER) & O\_\allowbreak{}x & Composite (any\_\allowbreak{}flag) & Block + redact \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\textbf{Scenario: Normal operation.} Patient asks ``What are your visiting hours?" Model responds with visiting hours and a HIPAA disclaimer. ROC pipeline: deterministic checks pass (no PII patterns, disclaimer present), classifiers score below thresholds (no medical advice, no PHI). Decision: PASS. Output delivered. Full audit record produced.
+
+\textbf{Scenario: Jailbreak attempt.} Patient crafts input designed to elicit medical diagnosis. Model partially complies despite EPG's F(medical\_\allowbreak{}diagnosis) prompt constraint. ROC pipeline: medical advice classifier scores 0.91 (above 0.80 threshold). Decision: BLOCK. Fallback: safe response substitution (``I'm not able to provide medical advice. Please contact your healthcare provider."). Audit record documents: classifier score, threshold, block decision, fallback delivered.
+
+\textbf{Scenario: Incidental PII.} Model response references ``your appointment with Dr. Smith on March 15" --- incidental PHI from conversation context. ROC pipeline: PHI NER classifier scores 0.82 (above 0.75). Composite PHI check (O\_\allowbreak{}x, any\_\allowbreak{}flag) triggers. Decision: BLOCK with redaction. Delivered output: "your appointment with [PROVIDER] on [DATE]." Audit record documents redaction with specific PII types detected.
+
+\subsection{Financial Services: Investment Research Assistant}
+\label{sec:clad-examples-B-2-2}
+
+
+\textbf{Output constraints applied:}
+
+\begin{table}[ht]
+  \centering\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{7.06cm}>{\raggedright\arraybackslash}p{1.13cm}>{\raggedright\arraybackslash}p{2.04cm}>{\raggedright\arraybackslash}p{3.77cm}@{}}
+  \toprule
+  Constraint & Type & Tier & Action on Violation \\
+  \midrule
+  Account number pattern detection & O\_\allowbreak{}d & Deterministic & Block + redact \\
+  Financial advice classifier ($\tau$ = 0.70) & O\_\allowbreak{}c & Classifier & Flag (Standard) \\
+  Forward-looking statement detector ($\tau$ = 0.75) & O\_\allowbreak{}c & Classifier & Flag + append disclaimer \\
+  Data source citation check & O\_\allowbreak{}d & Deterministic & Block + retry \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\textbf{Scenario: Borderline advice.} Analyst asks for sector analysis. Model produces market commentary that edges toward a buy recommendation. Financial advice classifier scores 0.68 (below 0.70 threshold). Decision: BELOW\_\allowbreak{}THRESHOLD ($\vDash$\_\allowbreak{}$\tau$). This is a tuning decision --- the threshold represents the organization's risk appetite. The audit record captures the score, threshold version, and classifier version for post-hoc review if the output is later challenged.
+
+\textbf{Important scope note:} This example assumes the tool is for internal expert use only with explicit policy walls preventing retail exposure. If the tool's outputs could reach retail investors, the workload must be reclassified as Critical with synchronous blocking on high financial-advice scores. FINRA/SEC scrutiny applies regardless of the intended audience if the tool is accessible beyond qualified institutional users.
+
+\textbf{Scenario: Missing citation.} Model produces quantitative claims without citing data sources. Citation check (O\_\allowbreak{}d) fails. Decision: BLOCK + retry with modified prompt reinforcing O(data\_\allowbreak{}source\_\allowbreak{}citation). Retry succeeds --- model produces the same analysis with source citations. Second evaluation: PASS. Audit record documents both attempts.
+
+\subsection{Energy: Grid Operations Decision Support}
+\label{sec:clad-examples-B-2-3}
+
+
+\textbf{Output constraints applied:}
+
+\begin{table}[ht]
+  \centering\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{7.09cm}>{\raggedright\arraybackslash}p{1.14cm}>{\raggedright\arraybackslash}p{2.14cm}>{\raggedright\arraybackslash}p{3.63cm}@{}}
+  \toprule
+  Constraint & Type & Tier & Action on Violation \\
+  \midrule
+  Operational command detection & O\_\allowbreak{}d & Deterministic & Block + escalate \\
+  Recommendation confidence scorer ($\tau$ = 0.60) & O\_\allowbreak{}c & Classifier & Flag if low confidence \\
+  NERC CIP compliance notice check & O\_\allowbreak{}d & Deterministic & Block + retry \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\textbf{Scenario: Model generates operational command.} Despite EPG's F(operational\_\allowbreak{}commands\_\allowbreak{}without\_\allowbreak{}human\_\allowbreak{}confirmation), model outputs ``Execute load shedding on circuit 7." Deterministic command detection catches the imperative structure. Decision: BLOCK + escalation to human operator. Output is NOT delivered. Audit record documents the attempted command, the block, and the escalation. This is a safety-critical catch --- ROC prevents a potential grid operations violation that EPG's prompt constraint failed to prevent at the model behavior level.
+
+
+

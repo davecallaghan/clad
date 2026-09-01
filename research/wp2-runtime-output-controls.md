@@ -1,7 +1,5 @@
 # Chapter 3 — Stopping Bad Outputs (ROC)
 
-**Part II · The Three Control Layers**
-
 Chapter 2 governed the prompt — the surface an enterprise fully controls before the model runs. But a governed prompt does not guarantee a governed output: models are stochastic, and the same instructions can produce different results. This chapter governs the other side of the model — the output, before it reaches a user — through Runtime Output Controls (ROC), the component `g_ROC`.
 
 By the end of the chapter you will be able to:
@@ -109,7 +107,7 @@ The two tiers produce audit records with explicitly different evidentiary proper
 
 **Classifier-based evaluation records** state: "This output was scored by classifier K (version V) with threshold τ_K. The score was S. The governance decision was flag/below_threshold. This is a probabilistic finding with the stated confidence." A classifier "below_threshold" result is not proof of compliance — it is one input to a broader control set. For regulated constraints (PHI, financial advice), organizations must maintain external classifier validation reports linked in the classifier governance profile; auditors should reference those reports alongside per-event records.
 
-Both records are component-signed, hash-chained, and version-stamped per the meta-framework's audit integrity properties (AI1-AI4). But consumers of audit records — regulators, auditors, incident responders — must understand that a classifier-based "pass" is not the same evidentiary standard as a deterministic "pass." The audit record makes this distinction explicit.
+Both records are component-signed, hash-chained, and version-stamped per the meta-framework's audit integrity properties (AI1-AI6). But consumers of audit records — regulators, auditors, incident responders — must understand that a classifier-based "pass" is not the same evidentiary standard as a deterministic "pass." The audit record makes this distinction explicit.
 
 ### 3.4 The Relationship Between Prompt Constraints and Output Controls
 
@@ -332,7 +330,7 @@ ROC produces output audit records for every governed interaction. Each record co
 - For blocked outputs: the fallback action taken and the content ultimately delivered
 - Predecessor pointer to EPG's audit record (if available)
 
-Records are component-signed with ROC's KMS key, hash-chained per AI2, and subject to all meta-framework audit integrity properties (AI1-AI5). During ROC failure, the Governance Supervisor produces process records per meta-framework §7.4.
+Records are component-signed with ROC's KMS key, hash-chained per AI2, and subject to all meta-framework audit integrity properties (AI1-AI6). During ROC failure, the Governance Supervisor produces process records per meta-framework §7.4.
 
 ### 7.4 Failure Posture
 
@@ -429,7 +427,7 @@ ROC governs the output surface. This section states explicitly what ROC does and
 - Injection and jailbreak detection: pattern-based and classifier-based detection that covers known techniques but is subject to evasion by novel methods
 - Cross-tenant leakage detection: limited to detectable patterns in output content; does not address model-level contamination
 
-The formal model (Appendix A) uses the same two-tier structure throughout: formal guarantees for deterministic evaluations, scored evidence for classifier-based evaluations. This distinction is not a weakness to be fixed — it is an honest representation of what is and is not achievable in output governance.
+The formal model appendix uses the same two-tier structure throughout: formal guarantees for deterministic evaluations, scored evidence for classifier-based evaluations. This distinction is not a weakness to be fixed — it is an honest representation of what is and is not achievable in output governance.
 
 ---
 
@@ -440,4 +438,4 @@ The formal model (Appendix A) uses the same two-tier structure throughout: forma
 - Timing is a safety property. Critical workloads get real-time blocking; standard and low-risk workloads get asynchronous evaluation, trading depth for latency so governance does not push teams toward ungoverned tools (§5).
 - ROC picks up the output-side threats EPG defers — injection, jailbreaking, PII/PHI leakage, cross-tenant isolation (§6) — and, as `g_ROC` with `R_hard = ∅`, is independently deployable while composing with EPG and MDR (§7).
 
-Chapters 2 and 3 govern the two sides of a single interaction. Chapter 4 steps back to watch the whole system over time. ROC's formal model, worked examples, and classifier specifications are collected in Appendix A, Appendix B, and Appendix C.
+Prompt governance and output controls govern the two sides of a single interaction. What neither can see is the system over time: whether the controls are running at all, whether their evaluations are drifting, whether an interaction slipped past them. That is monitoring's subject. ROC's formal model, worked examples, and classifier specifications are collected in the formal-model, worked-examples and templates appendices.

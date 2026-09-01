@@ -1,0 +1,164 @@
+% =====================================================================
+%  CLAD — Trust by Design
+%
+%  One corpus. The governance framework and its epistemic foundation are the
+%  same body of work, and this is the single document.
+%
+%  Notation lives in notation.tex and nowhere else. See NOTATION-MAP.md for the
+%  collision resolutions and the markdown-conversion table.
+%
+%  MIGRATION STATUS: see MIGRATION.md. Chapters converted from the epistemic
+%  corpus are in chapters/; the governance corpus is still markdown in
+%  ../research/ and converts chapter by chapter.
+% =====================================================================
+\documentclass[11pt,oneside,openany]{book}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1.1in]{geometry}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true, linkcolor=blue!50!black,
+  citecolor=blue!50!black, urlcolor=blue!50!black,
+  pdftitle={CLAD: Trust by Design},
+  pdfauthor={David Callaghan}
+}
+
+\emergencystretch=2em
+
+% Chapter openings: the book class default reserves roughly two inches above the
+% title and drops the text block a further inch. Reasonable in print, wasteful on
+% screen and the main source of the whitespace in earlier drafts.
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]
+  {\normalfont\Large\bfseries}{\thechapter\quad}{0pt}{\Large}
+\titlespacing*{\chapter}{0pt}{0pt}{1.2em}
+\titlespacing*{\section}{0pt}{1.4em}{0.5em}
+\titlespacing*{\subsection}{0pt}{1.0em}{0.35em}
+
+% Float discipline: this is a table-heavy book. Without these a deferred float
+% drifts past the bibliography, which happened before they were added.
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.7}
+\setcounter{topnumber}{3}\setcounter{bottomnumber}{2}\setcounter{totalnumber}{5}
+\usepackage[section]{placeins}
+
+\input{notation}
+
+\theoremstyle{plain}
+\newtheorem{fact}{Fact}[chapter]
+\newtheorem{proposition}{Proposition}[chapter]
+\newtheorem{corollary}{Corollary}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+
+% Formal statements carried in from the CLAD corpus keep their own designations
+% --- Theorem 3b, Definition 3.2, Axiom 5 --- because the text cross-references
+% them by number in nearly two hundred places. amsthm's automatic numbering
+% would renumber them all, so these environments are unnumbered and take the
+% original designation as the optional argument, which the style prints where a
+% number would go. Same head and body treatment as the environments above, so
+% the two halves of the book look alike.
+\newtheoremstyle{cladplain}{\topsep}{\topsep}{\itshape}{}%
+  {\bfseries}{.}{ }{\thmname{#1}\thmnote{ #3}}
+\newtheoremstyle{claddefn}{\topsep}{\topsep}{\normalfont}{}%
+  {\bfseries}{.}{ }{\thmname{#1}\thmnote{ #3}}
+\theoremstyle{cladplain}
+\newtheorem*{cthm}{Theorem}
+\newtheorem*{clem}{Lemma}
+\newtheorem*{ccor}{Corollary}
+\newtheorem*{cprop}{Proposition}
+\theoremstyle{claddefn}
+\newtheorem*{cdef}{Definition}
+\newtheorem*{cprp}{Property}
+\newtheorem*{creq}{Requirement}
+\newtheorem*{cprn}{Principle}
+\newtheorem*{cinv}{Invariant}
+\newtheorem*{caxiom}{Axiom}
+
+% Formal notation inside a statement: keep the alignment the source relies on,
+% and cancel the italics of the plain style so the notation stays legible.
+\newenvironment{cladnote}
+  {\par\vspace{0.3em}\begingroup\upshape\ttfamily\small\raggedright
+   \setlength{\parindent}{0pt}\leftskip=1.2em}
+  {\par\endgroup\vspace{0.3em}}
+
+\title{\textbf{CLAD: Trust by Design}\\[0.4em]
+       \large Governing Language Model Assertion in Regulated Enterprises}
+\author{David Callaghan\\ \texttt{mr.david.callaghan@gmail.com}}
+\date{\today}
+
+\begin{document}
+\frontmatter
+\maketitle
+% Chapters and sections only: subsections ran the contents to nine pages.
+\setcounter{tocdepth}{1}
+\tableofcontents
+
+\mainmatter
+
+% ---- Part I: the governance problem --------------------------------
+\part{The Governance Problem}
+\input{chapters/introduction}
+\input{chapters/architecture-training}
+
+\part{What Goes Wrong}
+\input{chapters/taxonomy}
+\input{chapters/canonical-form}
+
+\part{What a System Must Supply}
+\input{chapters/invariants}
+
+\part{The Target Architecture}
+\input{chapters/traced-case}
+\input{chapters/governed-rag}
+\input{chapters/scale-and-scope}
+
+\part{Governance in Practice}
+\input{chapters/warrant-tiers}
+\input{chapters/evaluation}
+
+\part{The Control Model}
+\input{chapters/meta-framework}
+
+\part{The Control Layers}
+\input{chapters/wp1-prompt-governance}
+\input{chapters/wp2-output-controls}
+\input{chapters/mdr-monitoring}
+\input{chapters/conclusion}
+
+\appendix
+\input{appendices/appendix-clad-examples}
+\input{appendices/appendix-regmap}
+\input{appendices/appendix-benchmark}
+\input{appendices/appendix-theorems}
+\input{appendices/appendix-formal-model}
+\input{appendices/appendix-templates}
+
+\backmatter
+
+% Limitations and related work sit in back matter rather than as numbered
+% chapters: both are short by nature and neither carries the argument forward.
+\input{chapters/limitations}
+\input{chapters/related-work}
+\input{appendices/appendix-glossary}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

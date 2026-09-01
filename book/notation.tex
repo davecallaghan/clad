@@ -1,0 +1,201 @@
+% =====================================================================
+%  CLAD — single authoritative notation module.
+%
+%  One corpus, one symbol table. Every symbol used anywhere in the book is
+%  defined here and nowhere else. If you need a symbol that is not here, add it
+%  here first and check it against the collision list below before using it.
+%
+%  RESOLUTION PRINCIPLE
+%  --------------------
+%  Operators, predicates, and functions get readable multi-letter names.
+%  Single letters are reserved for sets and their elements.
+%
+%  This is not a style preference. The governance corpus and the epistemic
+%  corpus were written independently and collided on ten symbols; most of those
+%  collisions were operator-versus-set, and the principle dissolves them without
+%  anyone having to give up a letter they were using well.
+%
+%  COLLISIONS RESOLVED (see NOTATION-MAP.md for the full table)
+%  ------------------------------------------------------------
+%    O      deontic obligation | assertion operator
+%           -> \Require and \Assert. O is retired entirely.
+%    F      deontic prohibition | material facts f
+%           -> \Forbid. f keeps material facts.
+%    P, p   set of prompts | a proposition
+%           -> prompts become x in X. p, q keep propositions.
+%    C, c   operational constraints | resolved context
+%           -> WITHDRAWN: "constraints become r in R" is unusable. R already
+%              carries compliance risk R(i), the component requirement set
+%              R_hard/R_soft in g = (S, C, E, A, R), and ROC's deterministic
+%              rules r in R. Applying it would trade one collision for three.
+%           -> ACTUAL DECISION: the two senses are chapter-disjoint and stay so.
+%              c is an operational constraint in the governance chapters and
+%              their appendix; c is the resolved context {j, t_v, f, u} in the
+%              grounding chapters. Verified: neither sense appears in the
+%              other's chapters. Capital C is unused outside the governance
+%              material, so C for constraint sets carries no collision at all.
+%              Anything introducing one sense into the other's chapters must
+%              name the dimensions instead of using the symbol -- see the
+%              applicability definition in Appendix A, which does exactly that.
+%    A      agents / audit record | accuracy indicator
+%           -> \Audit (set \AuditSet), agents \Agents. A_i keeps accuracy.
+%    gamma  governability class | target grounding rate
+%           -> \gov. gamma keeps the rate target.
+%    S      control surface | the deployed system
+%           -> surfaces become sigma_x in Sigma. S keeps the system.
+%    V      set of audit records | token vocabulary
+%           -> \AuditSet. V keeps the vocabulary.
+%    D      governance domains | defeater search
+%           -> \Defeaters. D keeps domains.
+%    Phi    property vocabulary | component guarantee
+%           -> \guarantee. Phi keeps the vocabulary. (An internal CLAD
+%              collision, fixed here too.)
+%
+%  \newcommand throughout, never \providecommand: a name clash with a package
+%  should break the build rather than silently resolve to someone else's macro.
+% =====================================================================
+
+% ---------------------------------------------------------------------
+%  1. SETS AND ELEMENTS  (single letters, by the principle above)
+% ---------------------------------------------------------------------
+%   I           interactions
+%   x in X      governed artifact — the assembled prompt or structured request
+%   u           user input at runtime
+%   M           the model: a parameterised generative function
+%   S           the deployed system: M plus decoding, retrieval, policy, control
+%   theta       inference configuration
+%   o, o'       raw model output, delivered output
+%   p, q        propositions / claims
+%   c           resolved context, c = {j, t_v, f, u}
+%   E           an evidentiary basis;  E_S  the system's evidential base
+%   r in R      constraints (governance rules)
+%   L           governance levels (enterprise > department > project)
+%   D           governance domains (legal, security, data privacy, ...)
+%   Phi         controlled vocabulary of atomic property identifiers
+%   K           classifiers
+%   T           time domain;  t_v valid time,  t_k transaction time
+%   V           token vocabulary (V* = token sequences)
+%   Sigma       control surfaces;  sigma_prompt, sigma_output, ...
+%   V_proc      verification procedure
+%   Inst        an institution
+\newcommand{\Vocab}{\mathcal{V}}              % token vocabulary
+\newcommand{\Levels}{L}
+\newcommand{\Domains}{D}
+\newcommand{\Props}{\Phi}                     % atomic property vocabulary
+\newcommand{\Rules}{R}
+\newcommand{\Surfaces}{\Sigma}
+\newcommand{\Agents}{\mathcal{A}}             % was CLAD's A (agents)
+\newcommand{\AuditSet}{\mathbb{A}}            % was CLAD's V (set of audit records)
+\newcommand{\Inst}{I_{\mathrm{nst}}}          % institution; I alone is interactions
+
+% ---------------------------------------------------------------------
+%  2. DEONTIC OPERATORS
+% ---------------------------------------------------------------------
+%  These stay as O and F, reversing an earlier decision to rename them.
+%
+%  Two reasons. First, the collision that motivated the rename is gone: the
+%  epistemic corpus's assertion operator is \Assert, so O is free. Second, and
+%  decisively, the prompt-governance chapter engages the deontic literature
+%  directly -- Ross's paradox, free-choice permission, why P_meta is not the
+%  classical permission operator P, and why restricting to atomic O and F keeps
+%  contradiction detection polynomial rather than NP-hard. That argument is not
+%  decoration and it does not survive a rename: "P_meta is not the classical
+%  deontic permission operator P" is incoherent if the obligation operator has
+%  been renamed to Require.
+%
+%  The restricted two-operator fragment is a stated design decision with a
+%  complexity justification, not an accident of notation.
+%
+%  Note on O: big-O complexity notation also appears (cost analysis in the
+%  governed-retrieval chapter). The two are contextually unambiguous -- deontic O
+%  takes a property identifier from Phi, big-O takes a complexity expression --
+%  and both conventions coexist routinely.
+\newcommand{\Obl}{\mathrm{O}}        % obligation: property must hold
+\newcommand{\Prohib}{\mathrm{F}}     % prohibition: property must not hold
+\newcommand{\Permitted}{\mathrm{P_{meta}}}  % governance annotation, NOT an operator
+\newcommand{\Contradicts}{\operatorname{Contradicts}}
+\newcommand{\Precedence}{\operatorname{precedence}}
+\newcommand{\Tension}{\operatorname{Tension}}
+
+% ---------------------------------------------------------------------
+%  3. ASSERTION AND GROUNDING
+% ---------------------------------------------------------------------
+\newcommand{\Assert}{\operatorname{Assert}}    % was O_S: system asserts p
+\newcommand{\Grd}{\operatorname{Grounded}}     % grounded assertion
+\newcommand{\Grounded}{\operatorname{Grounded}_{E}} % grounded evidence set
+\newcommand{\Sensitive}{\operatorname{Sensitive}}
+% \gen, not \utter: the latter is speech-act notation and the prose never uses
+% the word. Deliberately not \emit -- the Assert definition uses "emits" for the
+% system-level event, and these two must not blur.
+\newcommand{\gen}{\operatorname{gen}}
+
+% --- the seven evidence conditions ---
+\newcommand{\Authentic}{\operatorname{Authentic}}
+\newcommand{\Versioned}{\operatorname{Versioned}}
+\newcommand{\Authoritative}{\operatorname{Authoritative}}
+\newcommand{\Applicable}{\operatorname{Applicable}}
+\newcommand{\Supports}{\operatorname{Supports}}
+\newcommand{\Sufficient}{\operatorname{Sufficient}}
+\newcommand{\Traceable}{\operatorname{Traceable}}
+\newcommand{\Entails}{\operatorname{Entails}}
+\newcommand{\Current}{\operatorname{Current}}
+
+% --- defeat ---
+\newcommand{\NoDefeater}{\operatorname{NoDefeater}}
+\newcommand{\DefeaterSearch}{\operatorname{DefeatSearch}} % was mathcal D; D is domains
+\newcommand{\standing}{\operatorname{standing}}  % NOT alpha: alpha is the rate target
+\newcommand{\GovQuery}{\mathcal{Q}}              % the governed retrieval
+
+% ---------------------------------------------------------------------
+%  4. TRUTH, CONTEXT, WARRANT
+% ---------------------------------------------------------------------
+\newcommand{\True}{\operatorname{True}}
+\newcommand{\Resolved}{\operatorname{Resolved}}
+\newcommand{\Evaluable}{\operatorname{Evaluable}}
+\newcommand{\Verified}{\operatorname{Verified}}
+\newcommand{\Authorized}{\operatorname{Authorized}}
+\newcommand{\Warranted}{\operatorname{Warranted}}
+\newcommand{\TrainedOn}{\operatorname{TrainedOn}}
+
+% ---------------------------------------------------------------------
+%  5. FAILURE CATEGORIES
+% ---------------------------------------------------------------------
+\newcommand{\Hall}{\operatorname{Hallucination}}
+\newcommand{\Err}{\operatorname{Error}}
+\newcommand{\Misapplied}{\operatorname{Misapplied}}
+\newcommand{\Contested}{\operatorname{Contested}}
+\newcommand{\Abstain}{\operatorname{Abstain}}
+
+% ---------------------------------------------------------------------
+%  6. GOVERNANCE STRUCTURE  (from the CLAD meta-framework)
+% ---------------------------------------------------------------------
+\newcommand{\gov}{\operatorname{gov}}          % was gamma(S): governability class
+\newcommand{\guarantee}{\operatorname{guar}}   % was Phi(g): component guarantee
+\newcommand{\Audit}{\operatorname{Audit}}      % was A_g(i,t)
+\newcommand{\chain}{\operatorname{chain}}
+\newcommand{\ver}{\operatorname{ver}}
+\newcommand{\observe}{\operatorname{observe}}
+\newcommand{\identity}{\operatorname{identity}}
+\newcommand{\level}{\operatorname{level}}
+\newcommand{\owner}{\operatorname{owner}}
+\newcommand{\scope}{\operatorname{scope}}
+\newcommand{\domainof}{\operatorname{domain}}
+\newcommand{\decomp}{\operatorname{decomp}}
+\newcommand{\risk}{\rho}                       % was R(i): compliance risk
+
+% ---------------------------------------------------------------------
+%  7. MODEL PERFORMANCE AND MEASUREMENT
+% ---------------------------------------------------------------------
+\newcommand{\Reliable}{\operatorname{Reliable}}
+\newcommand{\LinguisticPlausibility}{\operatorname{LinguisticPlausibility}}
+\newcommand{\SemanticCoherence}{\operatorname{SemanticCoherence}}
+\newcommand{\BenchmarkAccuracy}{\operatorname{BenchmarkAccuracy}}
+\newcommand{\Accuracy}{\operatorname{Accuracy}}
+\newcommand{\GroundingRate}{\operatorname{GroundingRate}}
+
+% ---------------------------------------------------------------------
+%  8. RELATIONS AND SHORTHAND
+% ---------------------------------------------------------------------
+\newcommand{\nentails}{\;\not\Rightarrow\;}
+\newcommand{\governs}{\succ}                   % enterprise > department > project
+\newcommand{\satisfies}{\vDash}

@@ -1,0 +1,585 @@
+\chapter{The EPG and ROC Formal Models}
+\label{ch:formal-model}
+
+
+This appendix collects the formal models underpinning the control layers of
+Part IV: the deontic constraint model of Enterprise Prompt Governance (Chapter \ref{ch:prompt})
+and the output-evaluation model of Runtime Output Controls (Chapter \ref{ch:controls}). The
+chapters draw on these results without requiring the reader to work through them
+in full.
+
+\section{Prompt Governance (EPG)}
+\label{sec:formal-model-A-1}
+
+
+This appendix contains the complete EPG formal model. It uses symbolic logic throughout; \S{}3 gives business-language explanations of the same concepts.
+
+\subsection{Two Layers: Logical Core and Governance Meta-Layer}
+
+
+The model has two layers, and keeping them apart is what makes the results composable. The \textbf{logical core} is the satisfaction relation for a given C*(level) and prompt x, the inheritance rules, and the evaluability classification with its evaluation functions. The \textbf{governance meta-layer} --- \texttt{author}, \texttt{approver}, \texttt{scope}, \texttt{decomp}, \texttt{CONTRADICTION}, \texttt{shared\_\allowbreak{}scope}, \texttt{precedence} --- governs who may create a constraint and how it is checked.
+
+The meta-layer does not reach into the core. It changes neither the satisfaction relation, nor the inheritance rules, nor the evaluability classification. Audit Completeness and No Evaluability Gap are therefore theorems over the core alone, while Contradiction Freedom, Scope Isolation and Decomposition Coverage are theorems over the meta-layer and hold independently of it. A deployment can change its authorship controls without disturbing either set.
+
+The logical core uses a two-operator deontic fragment \{O, F\} over atomic properties (\S{}3.2a). P\_\allowbreak{}meta is a governance annotation outside this fragment. The standard axiom O($\phi$) $\to$ P($\phi$) does not apply because P\_\allowbreak{}meta is not a deontic operator.
+
+\subsection{Primitive Sets and Domains}
+\label{sec:formal-model-A-1-1}
+
+
+\begin{cladnote}
+L = \{enterprise, department, project\}~~~~~\textemdash{} governance levels\\
+C = C\_m $\uplus$ C\_p~~~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} operational constraints (disjoint union)\\
+C\_s~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} semantic constraints (intent records,\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOT part of C, documentation only)\\
+X = set of all prompts~~~~~~~~~~~~~~~~~~~~\textemdash{} the governed artifacts\\
+A = set of all agents~~~~~~~~~~~~~~~~~~~~~\textemdash{} authors/owners of constraints\\
+D = set of all domains~~~~~~~~~~~~~~~~~~~~\textemdash{} legal, security, data\_privacy, etc.\\
+T = totally ordered set of time points~~~~\textemdash{} for versioning and audit\\
+V = set of audit records~~~~~~~~~~~~~~~~~~\textemdash{} evaluation evidence\\
+$\Phi$ = controlled vocabulary of atomic~~~~~~~\textemdash{} enterprise-governed property identifiers\\
+~~~~property identifiers
+\end{cladnote}
+
+
+\subsection{Ordering on Governance Levels}
+\label{sec:formal-model-A-1-2}
+
+
+\begin{cladnote}
+enterprise $\succ$ department $\succ$ project\\
+($\succ$ denotes ``governs over")\\
+(L, $\succ$) is a strict total order.
+\end{cladnote}
+
+
+\subsection{Core Functions}
+\label{sec:formal-model-A-1-3}
+
+
+Base functions:
+\begin{cladnote}
+level~~~: C $\to$ L~~~~~~~~~~~\textemdash{} assigns constraint to governance level\\
+owner~~~: C $\to$ A~~~~~~~~~~~\textemdash{} who authored the constraint\\
+domain~~: C $\to$ D~~~~~~~~~~~\textemdash{} which domain the constraint belongs to\\
+ver~~~~~: C $\times$ T $\to$ C\_t~~~~~\textemdash{} version of constraint c active at time t
+\end{cladnote}
+
+
+RBAC and governance meta-layer:
+\begin{cladnote}
+scope~~~~: A $\to$ $\mathcal{P}$(D)~~~~~~~\textemdash{} domains agent may author constraints for\\
+approve~~: C $\to$ A~~~~~~~~~~~\textemdash{} who approved the constraint\\
+emergency: C $\to$ \{true, false\}~~\textemdash{} break-glass flag
+\par\smallskip
+Dual control invariant:\\
+~~$\forall$ c $\in$ C : $\neg$emergency(c) $\to$ author(c) $\neq$ approver(c)
+\par\smallskip
+Orthogonal approval (Critical tier):\\
+~~$\forall$ c $\in$ C : risk\_tier(c) = critical $\wedge$ $\neg$emergency(c)\\
+~~~~$\to$ org\_unit(author(c)) $\neq$ org\_unit(approver(c))\\
+~~~~$\wedge$ $\exists$ a $\in$ approvers(c) : org\_unit(a) $\in$ \{CISO, central\_risk, compliance\}
+\par\smallskip
+Break-glass bounds:\\
+~~$\forall$ c $\in$ C : emergency(c)\\
+~~~~$\to$ tightening\_only(c) $\wedge$ ttl(c) $\leq$ max\_ttl(industry(c))
+\par\smallskip
+Cross-domain review:\\
+~~cross\_domain\_reviewed : C $\to$ \{true, false\}
+\par\smallskip
+Enterprise Precedence Table:\\
+~~precedence : C $\times$ C $\to$ \{c$_1$\_wins, c$_2$\_wins, unresolved\}
+\end{cladnote}
+
+
+\subsection{Constraint Taxonomy}
+\label{sec:formal-model-A-1-4}
+
+
+Evaluability classes:
+\begin{cladnote}
+C\_m = mechanically evaluable constraints\\
+C\_p = procedurally evidenced constraints\\
+C = C\_m $\uplus$ C\_p~~~~~~~~~~~~~~(operational constraints, disjoint)
+\end{cladnote}
+
+
+Semantic constraints and decomposition mapping:
+\begin{cladnote}
+C\_s = semantic constraints (intent records, NOT part of C)
+\par\smallskip
+decomp : C\_s $\to$ ($\mathcal{P}$(C\_m) $\times$ $\mathcal{P}$(C\_p))\\
+~~Maps each intent record to its operational decomposition.
+\par\smallskip
+$\vDash$\_s : conceptual satisfaction relation for semantic constraints\\
+~~Used in soundness claims only, NOT in evaluation machinery.
+\end{cladnote}
+
+
+\subsection{Hierarchical Inheritance}
+\label{sec:formal-model-A-1-5}
+
+
+\begin{cladnote}
+C*(enterprise) = C(enterprise)\\
+C*(department) = C(enterprise) $\cup$ C(department)\\
+C*(project)~~~~= C(enterprise) $\cup$ C(department) $\cup$ C(project)
+\par\smallskip
+Generally: C*(l) = $\bigcup$\{C(l') | l' $\succeq$ l\}
+\par\smallskip
+Monotonicity (inviolability):\\
+~~$\forall$ l$_1$, l$_2$ $\in$ L : l$_1$ $\succ$ l$_2$ $\to$ C*(l$_1$) $\subseteq$ C*(l$_2$)
+\par\smallskip
+Strengthening rules:\\
+~~$\forall$ l$_1$ $\succ$ l$_2$ :\\
+~~~~O($\phi$) $\in$ C*(l$_1$)~~$\to$~~O($\phi$) $\in$ C*(l$_2$)~~~~~\textemdash{} obligations propagate\\
+~~~~F($\phi$) $\in$ C*(l$_1$)~~$\to$~~F($\phi$) $\in$ C*(l$_2$)~~~~~\textemdash{} prohibitions propagate\\
+~~~~$\neg$$\exists$ c $\in$ C(l$_2$) that negates any c' $\in$ C*(l$_1$)
+\par\smallskip
+Only O and F constraints participate in inheritance.\\
+P\_meta annotations are NOT part of C*(level).
+\end{cladnote}
+
+
+\subsection{Permission Semantics}
+\label{sec:formal-model-A-1-6}
+
+
+\begin{cladnote}
+P\_meta($\phi$) is a governance annotation, NOT a deontic operator.
+\par\smallskip
+Properties:\\
+~~- NO inheritance effect\\
+~~- NO evaluation effect\\
+~~- NO role in CONTRADICTION detection\\
+~~- For satisfaction and inheritance: equivalent to absence\\
+~~- For meta-governance (audit, review triggers): NOT equivalent\\
+~~~~to absence \textemdash{} signals ``considered"
+\par\smallskip
+The system is NOT permissive-by-default:\\
+~~$\neg$F($\phi$) does NOT entail P\_meta($\phi$) or any form of permission.
+\end{cladnote}
+
+
+\subsection{Lateral Authority Scoping}
+\label{sec:formal-model-A-1-7}
+
+
+\begin{cladnote}
+Authorship constraint:\\
+~~$\forall$ c $\in$ C : domain(c) $\in$ scope(owner(c))
+\par\smallskip
+Direct overlap:\\
+~~shared\_scope(D$_1$, D$_2$) = scope(D$_1$) $\cap$ scope(D$_2$)
+\par\smallskip
+Joint authorship for shared scope:\\
+~~$\forall$ c : property(c) $\in$ shared\_scope(D$_1$, D$_2$)\\
+~~~~$\to$ approved\_by(c, D$_1$) $\wedge$ approved\_by(c, D$_2$)
+\par\smallskip
+Indirect interaction (advisory, not formal):\\
+~~affects(D$_1$, D$_2$) \textemdash{} captures known systemic couplings\\
+~~Detected via impact analysis (\S{}7.3), NOT by scope intersection
+\end{cladnote}
+
+
+\subsection{Conflict Detection and Resolution}
+\label{sec:formal-model-A-1-8}
+
+
+\begin{cladnote}
+CONTRADICTION predicate (formal, complete for atomic fragment):\\
+~~CONTRADICTION(c$_1$, c$_2$) $\equiv$ c$_1$ = O($\phi$) $\wedge$ c$_2$ = F($\phi$)\\
+~~~~for some atomic $\phi$ $\in$ $\Phi$
+\par\smallskip
+~~Completeness: pairwise check is sufficient for independent\\
+~~atomic properties. Joint satisfiability of the full set follows\\
+~~from pairwise satisfiability in this fragment.
+\par\smallskip
+TENSION classification (advisory, NOT formal):\\
+~~Heuristic, not sound or complete.\\
+~~No theorem depends on TENSION.
+\par\smallskip
+Enterprise Precedence Table:\\
+~~precedence : C $\times$ C $\to$ \{c$_1$\_wins, c$_2$\_wins, unresolved\}\\
+~~default\_priority : D $\to$ $\mathbb{N}$~~(domain priority ordering)
+\par\smallskip
+Resolution protocol:\\
+~~Phase 1: authoring-time prevention (CONTRADICTION blocks,\\
+~~~~~~~~~~~TENSION triggers review)\\
+~~Phase 2: automated precedence $\to$ default priority $\to$ arbiter\\
+~~Anti-circularity: arbiter resolutions must produce permanent\\
+~~~~~~~~~~~structural fixes
+\end{cladnote}
+
+
+\subsection{Decomposition Soundness}
+\label{sec:formal-model-A-1-9}
+
+
+\begin{cladnote}
+Soundness relationship (goal, not guarantee):\\
+~~Soundness(c\_s) $\Leftrightarrow$ $\forall$p, evidence :\\
+~~~~($\forall$c\_m $\in$ decomp\_m(c\_s) : p $\vDash$\_m c\_m) $\wedge$\\
+~~~~($\forall$c\_p $\in$ decomp\_p(c\_s) : evidence $\vDash$\_p c\_p)\\
+~~~~$\to$ p $\vDash$\_s c\_s
+\par\smallskip
+Operational approximation:\\
+~~No\_counterexample\_found(c\_s) \textemdash{} from tests and reviews.\\
+~~NOT equated with logical soundness.
+\par\smallskip
+Completeness NOT claimed:\\
+~~Over-tight decomposition may reject compliant prompts\\
+~~(conservative failure mode).
+\par\smallskip
+Residual gap controls:\\
+~~Coverage requirements, maximum gap thresholds,\\
+~~compensating control mandates, HITL trigger (\S{}5.6).
+\par\smallskip
+Decomposition change triggers:\\
+~~Any change to decomp(c\_s) reruns CONTRADICTION detection\\
+~~on affected levels.
+\end{cladnote}
+
+
+\subsection{Satisfaction Relations}
+\label{sec:formal-model-A-1-10}
+
+
+\begin{cladnote}
+$\vDash$\_m : X $\times$ C\_m $\to$ \{$\top$, $\bot$\}~~~~~~~~~~~\textemdash{} automated, deterministic\\
+$\vDash$\_p : Evidence $\times$ C\_p $\to$ \{$\top$, $\bot$\}~~~~\textemdash{} human-attested, deterministic\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~given evidence
+\par\smallskip
+Deontic satisfaction:\\
+~~x $\vDash$ O($\phi$)~~iff~~$\phi$ holds in x\\
+~~x $\vDash$ F($\phi$)~~iff~~$\phi$ does not hold in x
+\end{cladnote}
+
+
+\subsection{Core Principles (Formal)}
+\label{sec:formal-model-A-1-11}
+
+
+\begin{cladnote}
+Principle 1 (Constraint, not prescription):\\
+~~$\forall$ c $\in$ C : c $\in$ (X $\to$ \{$\top$, $\bot$\})
+\par\smallskip
+Principle 2 (Execution is local):\\
+~~$\forall$ x $\in$ X\_executed : level(x) = project
+\par\smallskip
+Principle 3 (Risk management):\\
+~~System guarantees: $\forall$ x $\in$ X\_executed : audit(x, t) is COMPLETE $\wedge$ IMMUTABLE\\
+~~System does NOT guarantee: $\forall$ x $\in$ X\_executed : $\forall$ c $\in$ C*(project) : x $\vDash$ c
+\par\smallskip
+Principle 4 (Audit the artifact):\\
+~~$\forall$ x $\in$ X\_executed, $\forall$ t $\in$ T :\\
+~~~~$\exists$ audit(x, t) = \{(c, ver(c,t), eval(c,p)) | c $\in$ C*(project)\}
+\par\smallskip
+Principle 5 (Downward inheritance, lateral scoping):\\
+~~Inheritance: C*(l) = $\bigcup$\{C(l') | l' $\succeq$ l\}\\
+~~Scoping: $\forall$ c $\in$ C : domain(c) $\in$ scope(owner(c))
+\end{cladnote}
+
+
+\subsection{Audit Record}
+\label{sec:formal-model-A-1-12}
+
+
+\begin{cladnote}
+audit(x, t) =\\
+~~\{ (c, ver(c,t), $\vDash$\_m(x, c))~~~~~~~~~~~~~~~~~~~~~~~| c $\in$ C*\_m(project) \}\\
+$\cup$ \{ (c, ver(c,t), $\vDash$\_p(evidence(x, c),c), attestor) | c $\in$ C*\_p(project) \}
+\par\smallskip
+Extended fields:\\
+~~- conflict\_detection\_results : CONTRADICTION scan outcome\\
+~~- precedence\_rule\_applied : reference to precedence table entry (if any)\\
+~~- decomposition\_version : ver(decomp(c\_s), t) for each c derived from C\_s\\
+~~- emergency\_flag : emergency(c) for any break-glass constraints
+\end{cladnote}
+
+
+\subsection{Theorems}
+\label{sec:formal-model-A-1-13}
+
+
+Theorems over the logical core:
+
+\begin{cthm}[(Audit Completeness)]
+\begin{cladnote}
+$\forall$ x $\in$ X\_executed : audit(x, t) is total over C*(project)\\
+$\wedge$ audit(x, t) is deterministic\\
+$\wedge$ audit(x, t) is immutable\\
+\end{cladnote}
+\end{cthm}
+
+\begin{cthm}[(No Evaluability Gap)]
+\begin{cladnote}
+$\forall$ c $\in$ C*(project) : c $\in$ C\_m $\vee$ c $\in$ C\_p\\
+\end{cladnote}
+\end{cthm}
+
+
+Theorems over the governance meta-layer, with explicit preconditions and scope:
+
+\begin{cthm}[(Contradiction Freedom --- Pairwise, Atomic Fragment)]
+After Phase 1 authoring review, no pair of constraints in
+C*(level) is contradictory per the CONTRADICTION predicate over atomic properties $\phi$ $\in$ $\Phi$.
+
+\begin{cladnote}
+Scope: complete for the atomic fragment. Multi-constraint\\
+and semantic interactions are handled by governance process\\
+(tension detection, cross-domain review), not formal guarantee.\\
+\end{cladnote}
+\end{cthm}
+
+\begin{cthm}[(Scope Isolation --- Direct, Under Fixed Definitions)]
+No agent can create, modify, or delete constraints outside their authorized domain scope, given fixed domain definitions.
+
+Scope: does NOT cover indirect effects (addressed by impact analysis \S{}7.3), scope redefinition by the cross-domain governance body, or constraints authored via break-glass.
+
+\end{cthm}
+
+\begin{cthm}[(Decomposition Coverage --- Existence, Not Quality)]
+\begin{cladnote}
+Every semantic intent in C\_s has a registered decomposition\\
+in decomp(c\_s).\\
+\end{cladnote}
+Scope: guarantees existence, not soundness or adequacy.
+Soundness is approximated empirically (\S{}5.7). Coverage
+quality for Critical-tier constraints is governed by
+residual gap controls (\S{}5.6).
+
+\end{cthm}
+
+
+\subsection{Limitations of the Formal Model}
+\label{sec:formal-model-A-1-14}
+
+
+The formal model guarantees properties of the governance process: who can author what, contradictions are detected, audit is complete, scope is isolated. It does not guarantee properties of the governed artifacts beyond what the constraints specify --- content correctness, semantic completeness, or model behavior are outside scope.
+
+Mechanisms that are governance-process tools --- tension detection, impact analysis, residual gap review, collusion detection --- are operationally valuable but not mathematically proven. They are best-effort controls, not formal guarantees.
+
+This distinction is critical for the target audience: formal guarantees are hard commitments that can be verified and audited. Governance-process tools are organizational controls that improve outcomes but cannot be reduced to logical proofs.
+
+
+
+
+\section{Runtime Output Controls (ROC)}
+\label{sec:formal-model-A-2}
+
+
+\subsection{Primitive Sets}
+\label{sec:formal-model-A-2-1}
+
+
+\begin{cladnote}
+O\_raw = set of all raw model outputs~~~~~~~~\textemdash{} generated by model, before filtering\\
+O\_del = set of all delivered outputs~~~~~~~~~\textemdash{} after ROC processing\\
+K~~~~~= set of all classifiers~~~~~~~~~~~~~~\textemdash{} versioned ML models for output scoring\\
+R~~~~~= set of all deterministic rules~~~~~~\textemdash{} pattern, blocklist, structural checks\\
+$\tau$~~~~~= K $\to$ [0, 1]~~~~~~~~~~~~~~~~~~~~~~~~~~\textemdash{} threshold function mapping classifiers\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~to their governance thresholds
+\end{cladnote}
+
+
+ROC also uses the shared sets from the meta-framework: I (interactions), T (time), V (audit records), $\Phi$ (property vocabulary).
+
+\subsubsection{Applicability}
+
+
+\texttt{applicable} is used in the pipeline definition and in the Output Evaluation
+Completeness theorem, and it carries more weight than its notation suggests. The
+theorem states that the audit record is \emph{total over} \texttt{applicable(C\_\allowbreak{}ROC, i)}. Left
+undefined, that claim is vacuous: an implementation could define \texttt{applicable} to
+return $\emptyset$ for every interaction and satisfy the theorem while evaluating nothing.
+The definition is therefore part of the guarantee, not a detail beneath it.
+
+\begin{cladnote}
+scope~~~~: C\_ROC $\to$ (I $\to$ \{true, false\})~~~\textemdash{} each constraint declares the\\
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~interactions it governs\\
+applicable : $\mathcal{P}$(C\_ROC) $\times$ I $\to$ $\mathcal{P}$(C\_ROC)\\
+applicable(X, i) = \{ c $\in$ X | scope(c)(i) \}
+\par\smallskip
+Resolved against the interaction's context \textemdash{} the same four dimensions the\\
+grounding chapters index evidence to, named here rather than symbolized, because\\
+in this appendix `c` is a constraint:\\
+~~jurisdiction\\
+~~valid time (which version of the rule was in force)\\
+~~data classification / regulated form\\
+~~the requesting role
+\end{cladnote}
+
+
+Three requirements make the definition load-bearing rather than decorative:
+
+\begin{itemize}
+  \item \textbf{Totality.} \texttt{scope(c)} is total over I. There is no interaction for which a constraint's applicability is undefined; a constraint either governs an interaction or it does not.
+  \item \textbf{Recorded exclusion.} \texttt{A\_\allowbreak{}ROC(i, t)} records \texttt{C\_\allowbreak{}ROC \textbackslash\{\} applicable(C\_\allowbreak{}ROC, i)} together with the \texttt{scope} predicate version that excluded each constraint. A constraint deemed inapplicable is an auditable decision, not an absence. This is what closes the vacuity: narrowing applicability does not shrink the audit record, it changes what the record must justify.
+  \item \textbf{Governed change.} \texttt{scope} is a versioned governed artifact under the same dual-control and version-stamping rules as \texttt{$\tau$} (\S{}Section~\ref{sec:formal-model-A-2-6}). Narrowing a constraint's applicability is a governance action with an author, an approver, and a timestamp.
+\end{itemize}
+
+
+Without recorded exclusion, evaluation completeness and evaluation avoidance are
+indistinguishable in the audit record --- the failure mode the meta-framework's
+evidence-surface discussion identifies, where a control that is never invoked
+looks identical to a control that always passes.
+
+\subsection{Output Constraint Taxonomy}
+\label{sec:formal-model-A-2-2}
+
+
+\begin{cladnote}
+C\_ROC = O\_d $\uplus$ O\_c $\uplus$ O\_x~~~~~(disjoint union)
+\par\smallskip
+O\_d = deterministic output constraints\\
+~~eval\_d : O\_raw $\times$ R $\to$ \{pass, fail\}\\
+~~Properties: total, deterministic, repeatable
+\par\smallskip
+O\_c = classifier-based output constraints\\
+~~eval\_c : O\_raw $\times$ K $\to$ [0, 1]\\
+~~Governance decision: eval\_c(o, k) $\geq$ $\tau$(k) $\to$ flag ; else $\to$ below\_threshold\\
+~~Quantized satisfaction: o $\vDash$\_$\tau$ c~~(weaker than deterministic o $\vDash$ c)\\
+~~Properties: total, probabilistic, threshold-dependent
+\par\smallskip
+Threshold monotonicity invariant:\\
+~~$\forall$ l$_2$ $\prec$ l$_1$ : $\tau$(k, l$_2$) $\leq$ $\tau$(k, l$_1$)\\
+~~Lower levels can only tighten (lower) thresholds, never loosen.
+\par\smallskip
+Threshold policy bounds (Critical tier):\\
+~~$\forall$ k, risk\_tier = critical : $\tau$(k) $\leq$ $\tau$\_max(k)\\
+~~where $\tau$\_max is policy-defined and cannot be exceeded without\\
+~~exceptional process.
+\par\smallskip
+O\_x = composite output constraints\\
+~~eval\_x : O\_raw $\times$ ($\mathcal{P}$(O\_d) $\times$ $\mathcal{P}$(O\_c)) $\times$ logic $\to$ \{pass, flag, block\}\\
+~~where logic $\in$ \{any\_flag, all\_flag, weighted\}\\
+~~Properties: deterministic given component evaluations
+\end{cladnote}
+
+
+\subsection{Pipeline Stages}
+\label{sec:formal-model-A-2-3}
+
+
+\begin{cdef}[(ROC Pipeline)]
+For interaction i with raw output o $\in$ O\_\allowbreak{}raw:
+
+Stage 1: D\_\allowbreak{}results = \{ (r, eval\_\allowbreak{}d(o, r)) | r $\in$ applicable(O\_\allowbreak{}d, i) \} Stage 2: C\_\allowbreak{}results = \{ (k, eval\_\allowbreak{}c(o, k), $\tau$(k)) | k $\in$ applicable(O\_\allowbreak{}c, i) \} Stage 3: X\_\allowbreak{}results = \{ (x, eval\_\allowbreak{}x(o, x, D\_\allowbreak{}results, C\_\allowbreak{}results)) | x $\in$ applicable(O\_\allowbreak{}x, i) \}
+
+Short-circuit (Critical tier): if $\exists$ r $\in$ D\_\allowbreak{}results : eval\_\allowbreak{}d = fail $\to$ Decision = BLOCK immediately (do not await Stage 2/3)
+
+\begin{cladnote}
+Decision(o) =\\
+~~BLOCK~~if $\exists$ r $\in$ D\_results : eval\_d = fail $\wedge$ risk\_tier = critical\\
+~~~~~~~~~$\vee$ $\exists$ x $\in$ X\_results : eval\_x = block\\
+~~~~~~~~~$\vee$ risk\_tier = critical $\wedge$ classifier\_timeout\\
+~~FLAG~~~if $\exists$ k $\in$ C\_results : eval\_c $\geq$ $\tau$(k)\\
+~~~~~~~~~$\vee$ $\exists$ x $\in$ X\_results : eval\_x = flag\\
+~~BELOW\_THRESHOLD~~otherwise\\
+~~(Note: BELOW\_THRESHOLD, not PASS \textemdash{} for classifier-evaluated outputs)\\
+\end{cladnote}
+Delivery(o) = Critical: atomic buffered --- o' emitted only after Decision is terminal Standard: o' = o delivered immediately; evaluation async Low: o' = o delivered; evaluation sampled async
+
+\begin{cladnote}
+if BLOCK: o' = fallback(o, decision\_reason)\\
+if FLAG (Critical): o' = fallback or human review\\
+if FLAG (Standard/Low): o' = o (delivered, flag in audit)\\
+\end{cladnote}
+\end{cdef}
+
+
+\subsection{Audit Record}
+\label{sec:formal-model-A-2-4}
+
+
+\begin{cladnote}\footnotesize
+Audit\_ROC(i, t) = \{\\
+~~interaction\_id~~~~: identifier(i)\\
+~~timestamp~~~~~~~~~: t\\
+~~raw\_output\_hash~~~: hash(o)\\
+~~delivered\_hash~~~~: hash(o')~~~~~~~~\textemdash{} differs from raw if redaction occurred\\
+~~d\_evaluations~~~~~: D\_results~~~~~~~\textemdash{} deterministic: (rule, pass/fail)\\
+~~c\_evaluations~~~~~: C\_results~~~~~~~\textemdash{} classifier: (classifier\_ver, score, $\tau$, decision)\\
+~~x\_evaluations~~~~~: X\_results~~~~~~~\textemdash{} composite: (constraint, decision, logic\_applied)\\
+~~pipeline\_decision : \{PASS, FLAG, BLOCK\}\\
+~~fallback\_action~~~: action taken if BLOCK (substitution, redaction, retry, escalation)\\
+~~timing\_mode~~~~~~~: \{synchronous, asynchronous, sampled\}\\
+~~epg\_context~~~~~~~: pointer(Audit\_EPG(i, t)) | $\bot$\\
+~~predecessor~~~~~~~: pointer(Audit\_EPG(i, t)) | $\bot$\\
+\}
+\end{cladnote}
+
+
+\subsection{Formal Properties}
+\label{sec:formal-model-A-2-5}
+
+
+\begin{cthm}[(Output Evaluation Completeness --- Critical and Standard Tiers)]
+\begin{cladnote}
+$\forall$ i $\in$ I\_governed where timing\_mode $\in$ \{synchronous, asynchronous\} :\\
+~~Audit\_ROC(i, t) is total over applicable(C\_ROC, i)\\
+~~$\wedge$ Audit\_ROC(i, t) is immutable\\
+~~$\wedge$ Audit\_ROC(i, t) contains interaction\_id\\
+\end{cladnote}
+Scope: applies to Critical and Standard tier interactions within ROC's enforcement boundary. Low-tier sampled interactions have evaluation records only when sampled. Outputs that bypass ROC entirely are detected via GIL.
+
+\end{cthm}
+
+\begin{cthm}[(Deterministic Evaluation Reliability)]
+\begin{cladnote}
+$\forall$ o, r : eval\_d(o, r, t$_1$) = eval\_d(o, r, t$_2$)\\
+~~given ver(r, t$_1$) = ver(r, t$_2$)\\
+\end{cladnote}
+\begin{cladnote}
+Deterministic evaluations produce identical results for\\
+identical inputs and rule versions. This is the same\\
+evidentiary standard as EPG's mechanical evaluation.\\
+\end{cladnote}
+\end{cthm}
+
+\begin{cprp}[(Classifier-Based Evaluation --- Scored, Not Guaranteed)]
+eval\_\allowbreak{}c is probabilistic. The following are NOT theorems:
+\begin{itemize}
+  \item eval\_\allowbreak{}c is deterministic (it is not --- classifier non-determinism)
+  \item eval\_\allowbreak{}c has zero false negatives (it does not at any threshold)
+  \item eval\_\allowbreak{}c captures all violations (novel patterns evade classifiers)
+\end{itemize}
+
+Classifier evaluations are SCORED EVIDENCE, not formal guarantees.
+The audit record captures the score, threshold, and classifier version, enabling post-hoc assessment of evaluation quality.
+
+\end{cprp}
+
+
+\subsection{Threshold Governance}
+\label{sec:formal-model-A-2-6}
+
+
+\begin{cladnote}
+Thresholds are governed artifacts:\\
+~~$\forall$ k $\in$ K : $\tau$(k) is subject to:\\
+~~~~- Dual-control modification (author $\neq$ approver)\\
+~~~~- Version tracking: ver($\tau$(k), t) recorded in audit\\
+~~~~- Risk-tier defaults: $\tau$\_critical < $\tau$\_standard < $\tau$\_low\\
+~~~~~~(lower threshold = more conservative = more flags)
+\end{cladnote}
+
+
+\subsection{Limitations}
+\label{sec:formal-model-A-2-7}
+
+
+The formal model provides guarantees for the deterministic tier and scored evidence for the classifier tier. It does not provide:
+
+\begin{itemize}
+  \item Soundness or completeness guarantees for classifiers
+  \item Coverage guarantees for novel threat patterns
+  \item Guarantees about model behavior (only about output evaluation)
+\end{itemize}
+
+
+This two-tier evidentiary structure is intentional. Merging probabilistic evaluations with deterministic ones would either overstate classifier reliability or understate deterministic reliability. Keeping them separate enables honest, tier-appropriate audit.
+
+
+

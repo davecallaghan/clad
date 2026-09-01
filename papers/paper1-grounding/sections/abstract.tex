@@ -1,0 +1,33 @@
+% !TEX root = ../main.tex
+\begin{abstract}
+% arXiv reproduces this as plain text in the listing: no macros, no \cite.
+Language model deployments in regulated environments are commonly validated by
+comparing outputs against reference answers. This paper argues that the practice cannot
+deliver what sign-off requires, and identifies the property that can.
+
+The first of two connected claims is a redefinition of hallucination, indexed to a
+decision context. Existing definitions ask whether an assertion is supported by a
+supplied source; this one asks the prior question of whether that source governs the
+case, by requiring support to be applicable at a resolved context of jurisdiction, valid
+time, material facts, and intended use, and by requiring the assertion to have been
+produced because of the evidence rather than merely to agree with it. The consequence is
+a failure class---authentic, authoritative, correctly cited evidence that does not govern
+the decision---which faithfulness and attribution metrics score as clean by construction,
+since the entailment genuinely holds. Unlike the truth-conditional definition, this one
+can be evaluated at the point of assertion without an answer key, and so functions as a
+gate rather than only as a score.
+
+The second claim is that the same architecture makes accuracy uncertifiable. The system
+computes a distribution over token sequences conditioned on token sequences and applies
+no canonical form, so a correct answer observed once carries no guarantee that a
+materially equivalent request will be answered the same way. Accuracy is a property of a
+sample and the sample does not generalise. I prove that accuracy places no bound whatever
+on the grounding rate---the two vary over the whole unit square, so that neither identifies the other---so no
+amount of reference-based evaluation constrains how often a system asserts beyond its
+evidence.
+
+The constructive half derives a measurement protocol, nineteen system invariants, a
+reference architecture for governed retrieval, and an account of why the division of
+ownership across data, policy, platform, validation, and records functions is itself a
+principal source of failure.
+\end{abstract}

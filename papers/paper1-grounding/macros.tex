@@ -1,0 +1,57 @@
+% Operator macros.
+%
+% Two operators carry the whole paper.  Both are defined over observable
+% behaviour, so that every claim made with them is checkable against a running
+% system rather than against an interpretation of one.
+%
+% \newcommand rather than \providecommand: a name collision with a package
+% should break the build, not silently resolve to someone else's definition.
+
+% --- The two operators ----------------------------------------------------
+% Upright, because they are operators rather than variables.
+\newcommand{\Out}{\mathrm{O}}          % O_S(phi)      : system S asserts phi
+\newcommand{\Grd}{\mathrm{G}}          % G_S(phi | c)  : phi is grounded at c
+
+% --- Defined predicates --------------------------------------------------
+\newcommand{\Hall}{\operatorname{Hallucination}}
+\newcommand{\Err}{\operatorname{Error}}
+\newcommand{\Misapplied}{\operatorname{Misapplied}}
+\newcommand{\Abstain}{\operatorname{Abstain}}
+
+% --- Evidence and context ------------------------------------------------
+\newcommand{\Supports}{\operatorname{Supports}}
+\newcommand{\Applicable}{\operatorname{Applicable}}
+\newcommand{\Current}{\operatorname{Current}}
+\newcommand{\Authentic}{\operatorname{Authentic}}
+\newcommand{\Traceable}{\operatorname{Traceable}}
+\newcommand{\Resolved}{\operatorname{Resolved}}
+\newcommand{\TrainedOn}{\operatorname{TrainedOn}}
+
+% --- Non-entailment ------------------------------------------------------
+\newcommand{\nentails}{\;\not\Rightarrow\;}
+
+% --- Grounding dimensions (Definition of grounded evidence) --------------
+\newcommand{\Grounded}{\operatorname{Grounded}}
+\newcommand{\Versioned}{\operatorname{Versioned}}
+\newcommand{\Authoritative}{\operatorname{Authoritative}}
+\newcommand{\Entails}{\operatorname{Entails}}
+\newcommand{\Sensitive}{\operatorname{Sensitive}}
+
+% --- Institutional warrant -----------------------------------------------
+\newcommand{\Warranted}{\operatorname{Warranted}}
+\newcommand{\Verified}{\operatorname{Verified}}
+\newcommand{\Authorized}{\operatorname{Authorized}}
+\newcommand{\True}{\operatorname{True}}
+
+% --- Added: sufficiency and the no-defeater condition -------------------
+\newcommand{\Sufficient}{\operatorname{Sufficient}}
+\newcommand{\NoDefeater}{\operatorname{NoDefeater}}
+\newcommand{\Contested}{\operatorname{Contested}}
+
+% --- Added: standing level and the governed defeater search ---------------
+% Authority is an ordering, not a predicate: precedence resolves most conflicts,
+% and only incomparable or equal standing produces a genuine contest.
+% Standing must NOT be \alpha: the non-identification proposition already uses
+% \alpha for the target accuracy rate, and the two would collide.
+\newcommand{\standing}{\operatorname{standing}}
+\newcommand{\DefeaterSearch}{\mathcal{D}}

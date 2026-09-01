@@ -1,0 +1,96 @@
+% =====================================================================
+%  Paper 1 of three.  arXiv-ready preprint.
+%
+%  Build:  make          (or just save -- LaTeX Workshop builds on save)
+%  Ship:   make arxiv    (produces arxiv-main.tar.gz)
+%
+%  This directory is self-contained: it shares no files with paper 2 or
+%  paper 3.  Notation is kept in step with them by hand, via macros.tex.
+%
+%  arXiv constraints that shape this file:
+%    * ship main.bbl (the .bbl name must match this file's name)
+%    * figures must already be .pdf/.png/.jpg -- no on-the-fly conversion
+%    * do NOT use \pdfoutput; use the ifpdf package if you need branching
+%    * no minted / shell-escape, no embedded JavaScript or animation
+%    * any .sty not in TeX Live must be included in the upload.  macros.tex
+%      is \input rather than packaged as a .sty precisely to sidestep this.
+% =====================================================================
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{booktabs}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}           % before hyperref: the blue!50!black mixing
+                              % syntax below is xcolor-only, and hyperref
+                              % otherwise loads the older color package.
+\usepackage{hyperref}         % load last
+\hypersetup{
+  colorlinks=true, linkcolor=blue!50!black,
+  citecolor=blue!50!black, urlcolor=blue!50!black,
+  pdftitle={Assertion Without Belief: Large Language Models as Sub-Doxastic Systems},
+  pdfauthor={David Callaghan}
+}
+
+% A last-resort stretch pass for paragraphs that would otherwise put text in
+% the margin.  An overfull box is a real defect on arXiv; a slightly loose line
+% is not.  Do not raise this above 2em -- past that, extra paragraphs go loose
+% for no further benefit.
+\emergencystretch=2em
+
+\input{macros}
+
+% --- Theorem environments ---------------------------------------------
+% 'fact' is for results cited from the literature; 'proposition' for the one
+% result proved here.  Keeping them typographically distinct matters: a reader
+% should never have to guess which claims this paper is responsible for.
+\theoremstyle{plain}
+\newtheorem{fact}{Fact}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\title{Assertion Without Belief:\\
+       Large Language Models as Sub-Doxastic Systems}
+\author{%
+  David Callaghan\\
+  \texttt{mr.david.callaghan@gmail.com}
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\input{sections/abstract}
+
+\input{sections/introduction}
+\input{sections/preliminaries}
+\input{sections/output-operator}
+\input{sections/hyperintensionality}
+\input{sections/contextual-truth}
+\input{sections/grounding}
+\input{sections/hallucination}
+\input{sections/world-access}
+\input{sections/subdoxastic}
+\input{sections/internal-representations}
+\input{sections/objections}
+\input{sections/evaluation}
+\input{sections/institutional-warrant}
+\input{sections/conclusion}
+
+% --- Bibliography ----------------------------------------------------
+% bibtex + natbib.  `make arxiv` copies build/main.bbl next to main.tex,
+% which is the file arXiv actually reads.
+%
+% Every entry in refs.bib carries a [V]/[H]/[?] verification marker in a
+% comment.  Check the [?] entries before submitting.
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,97 @@
+% !TEX root = ../main.tex
+\section{Internal Representations and What the Argument Actually Needs}
+\label{sec:internal}
+
+\subsection{The premise at issue}
+
+Section~\ref{sec:structural-argument} identified the premise that carries the
+argument from a claim about the output operator to a claim about the system:
+that there is no prompt-invariant state \emph{governing} assertion for the
+prompt-form to elicit. I flagged there that the premise is weaker than the
+denial of any prompt-invariant state whatever. This section explains why the
+weaker premise is the right one, and why the stronger one should not be
+attempted.
+
+The stronger premise is contested by a substantial body of work. Unsupervised
+methods identify directions in activation space that behave like truth-values
+across a range of contents \citep{burns2023}. Classifiers trained on internal
+activations can distinguish assertions the model will make that are true from
+those that are false, and can do so before the assertion is produced
+\citep{azaria2023}. If a direction in activation space tracks truth across
+paraphrases, then there is something prompt-invariant in there, and a flat denial
+is simply false.
+% TODO(cite): the geometry-of-truth line of work belongs here. I could not verify
+% venue and year for Marks & Tegmark; check before citing.
+
+I do not want to deny it, for two reasons. The first is that the evidence points
+the other way and a philosophical argument that requires an empirical claim to be
+false is a bad bet. The second is better: the evidence, read carefully, supports
+the premise I need.
+
+\subsection{Representation without governance}
+\label{sec:dissociation}
+
+Consider what the strongest result in this literature actually reports. A
+classifier on internal activations can tell that the model is about to assert
+something false. The model asserts it anyway. That is not evidence that assertion
+expresses an internal attitude. It is evidence of a \emph{dissociation}: the
+internal state registers one thing and the assertion mechanism does another.
+
+This is exactly the structure the account of Section~\ref{sec:subdoxastic}
+predicts. A state that carries information about truth but does not govern what
+the system asserts is a state that fails the constitutive-aim condition on
+belief. Belief aims at truth in the sense that recognising a candidate as false
+is, for a believer, sufficient reason not to hold it and not to assert it. A
+system in which the recognition and the assertion come apart---in which the first
+can be read off the activations while the second proceeds regardless---is a system
+where nothing plays the functional role that makes closure and consistency norms
+rather than accidents.
+
+So the premise to state is not that the model has no prompt-invariant states. It
+is that no prompt-invariant state is \emph{accountable} for what the model
+asserts. There is no mechanism whose function is to make assertion answer to
+whatever the activations represent. Put in the vocabulary of
+Section~\ref{sec:grounding}: the missing thing is precisely condition (2) of
+Definition~\ref{def:grounding}, generalised from evidence to internal state.
+Grounding is a demand for accountability of assertion to something; the finding
+that a truth-correlated representation exists and is not that something is the
+sharpest available statement of what these systems lack.
+
+There is an irony worth noting. The research programme that looks most like
+evidence for machine belief---probing for internal truth representations---is
+also the programme that has documented most precisely the gap between what the
+system represents and what it says. If the representations are real, the
+dissociation is real, and the dissociation is the phenomenon.
+
+\subsection{What would have to be shown}
+\label{sec:probing-limits}
+
+The weaker premise is not free either, and honesty requires noting how far the
+probing literature is from settling matters in any direction. The empirical and
+conceptual obstacles to reading probe results as belief attributions are
+substantial: probes may track features correlated with truth rather than truth,
+may be artefacts of the training distribution used to fit them, and may not
+generalise across content domains in the way a belief-representation claim
+requires \citep{levinstein2024}. Standards for what would count as a genuine
+belief representation---rather than a decodable correlate---have been set out
+explicitly \citep{herrmann2024}, and they are demanding.
+
+I take the state of play to be this. Whether these systems have
+belief-\emph{representations} is open, and I do not need to close it. Whether
+those representations govern assertion is not open in the same way: the observed
+dissociation is direct evidence that they do not. My thesis needs only the second
+claim, and it is the second claim that the practical consequences follow from. A
+system whose assertions are not accountable to its own best internal estimate of
+truth is a system whose assertions must be made accountable to something
+external---an identified, applicable evidential base---if they are to be relied
+upon at all. That is the argument of
+Sections~\ref{sec:measurement} and~\ref{sec:warrant}, and it survives whatever the
+probing literature eventually concludes about representation.
+
+One consequence for the objections that follow. If the premise is the weaker one,
+then the interpretationist of Section~\ref{sec:interpretationism} cannot
+be answered by denying that there is anything inside; the answer must be about
+predictive projectibility, which is where I take it. And the human-parallel
+objection of Section~\ref{sec:human-parallel} becomes sharper rather than
+weaker, because the human case is precisely one in which recognising a claim as
+false does govern whether one asserts it.

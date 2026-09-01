@@ -1,0 +1,104 @@
+% !TEX root = ../main.tex
+\section{Formal Preliminaries}
+\label{sec:preliminaries}
+
+I assume familiarity with propositional modal logic; this section fixes notation
+and records the facts I need.
+
+Let $\mathcal{L}$ be a propositional language with the usual Boolean connectives
+and a unary operator $X$, to be interpreted variously as $K$ for knowledge, $B$
+for belief, or $\Out_M$ for model assertion. The relevant rules and schemata:
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+RE (congruentiality) & from $\models \phi \leftrightarrow \psi$, infer $\models X\phi \leftrightarrow X\psi$ \\
+RM (monotonicity rule) & from $\models \phi \rightarrow \psi$, infer $\models X\phi \rightarrow X\psi$ \\
+N (necessitation) & from $\models \phi$, infer $\models X\phi$ \\
+K (distribution) & $X(\phi \rightarrow \psi) \rightarrow (X\phi \rightarrow X\psi)$ \\
+M (simplification) & $X(\phi \wedge \psi) \rightarrow (X\phi \wedge X\psi)$ \\
+C (agglomeration) & $(X\phi \wedge X\psi) \rightarrow X(\phi \wedge \psi)$ \\
+D (consistency) & $X\phi \rightarrow \neg X \neg \phi$ \\
+T (factivity) & $X\phi \rightarrow \phi$ \\
+4 (positive introspection) & $X\phi \rightarrow XX\phi$ \\
+5 (negative introspection) & $\neg X\phi \rightarrow X \neg X\phi$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A modal logic is \emph{normal} iff it contains K and is closed under N and
+uniform substitution; RE then follows. Following \citet{chellas1980}, a logic is
+\emph{classical} iff closed under RE, \emph{monotonic} iff closed under RM, and
+\emph{regular} iff monotonic and containing C. The hierarchy matters because RE
+is the weakest of these conditions. A logic that fails RE is not merely
+non-normal; it falls below the weakest rung of the classical hierarchy, and is
+standardly called \emph{hyperintensional}.
+
+Semantically, in Kripke semantics $X\phi$ is true at world $w$ iff $\phi$ is
+true at every world accessible from $w$. Every Kripke frame, whatever its
+accessibility conditions, validates RE, N, and K. Frame conditions---reflexivity,
+transitivity, euclideanness, seriality---add axioms on top of the normal base;
+they never subtract. Hence:
+
+\begin{fact}
+\label{fact:kripke}
+If an operator fails RE, K, or N as a matter of its intended interpretation, it
+has no Kripke semantics, for any accessibility relation whatever.
+\end{fact}
+
+Two weaker frameworks accommodate non-normal operators. In \emph{neighborhood}
+(minimal) semantics \citep{scott1970,montague1970,chellas1980}, each world $w$ is
+assigned a set $N(w)$ of sets of worlds, and $X\phi$ is true at $w$ iff the
+truth set $\lVert \phi \rVert$ is a member of $N(w)$. Further axioms correspond
+to closure conditions on $N(w)$: closure under supersets for RM, containing the
+unit for N, and so on. In \emph{impossible-worlds} semantics
+\citep{rantala1982,nolan1997,priest2005,berto2019}, the model contains, alongside
+possible worlds, non-normal worlds at which truth is assigned to formulas
+directly, unconstrained by logical closure.
+
+The difference between the two will matter in
+Section~\ref{sec:hyperintensionality}, so it is worth recording now. Bare
+neighborhood semantics validates RE, and validates it in every frame: since
+neighborhoods are sets of \emph{truth sets}, and logically equivalent formulas
+have the same truth set, $X\phi \leftrightarrow X\psi$ follows automatically
+whenever $\phi$ and $\psi$ are equivalent. Neighborhood semantics is thus the
+semantics \emph{for} classical logics---the right tool for dropping K and N, and
+the wrong tool, without modification, for dropping RE. Impossible worlds do
+better on this score, because logically equivalent formulas can differ in truth
+value at an impossible world.
+
+\begin{fact}
+\label{fact:neighborhood}
+Every neighborhood frame validates RE. To model an operator that fails RE, the
+framework must be hyperintensionalised---neighborhoods taken over formulations or
+other finer-grained content surrogates rather than over sets of worlds---or
+impossible worlds must be invoked.
+\end{fact}
+
+Finally, the received idealisations. Epistemic logic since \citet{hintikka1962}
+standardly models knowledge as a normal factive operator, and belief as KD45.
+I will not lean on the specific choice of axioms for knowledge, and should note
+that the frequent shorthand ``knowledge is S5'' overstates the consensus: axiom
+5 for knowledge, which delivers negative introspection, is widely rejected, and
+Hintikka's own system was S4 \citep{lenzen1978}. Nothing in my argument requires
+more than \emph{normality}, which is common to the whole family.
+
+These idealisations are, notoriously, idealisations; the logical omniscience
+problem is as old as the framework \citep{fagin1995}. But the tradition's
+response has been to treat closure failures in humans as deviations from a
+normal-operator competence---a point that bears weight in
+Section~\ref{sec:human-parallel}. What the tradition has never countenanced as
+knowledge or belief is an attitude whose constitutive profile is non-classical:
+an attitude that is not even congruential in principle.
+
+One omission is deliberate. I do not claim that $\Out_M$ fails C. Any
+threshold-based account of assertion or belief fails agglomeration, for the
+familiar lottery and preface reasons \citep{makinson1965}: contents may each
+clear a threshold while their conjunction does not. That failure is generic to
+thresholds, applies equally to threshold accounts of human belief, and is
+therefore no evidence of anything distinctive about machines. I also do not rest
+anything on N. There are infinitely many validities and finitely many outputs,
+and the interesting question---whether models endorse feasibly checkable
+tautologies under unfamiliar syntactic dress---is one on which I am not aware of
+evidence clean enough to carry argumentative weight. Both principles are listed
+above for completeness and then set aside.

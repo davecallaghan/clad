@@ -1,0 +1,266 @@
+% !TEX root = ../main.tex
+\section{Hallucination as Unwarranted Assertion}
+\label{sec:hallucination}
+
+\subsection{The definitions}
+
+\begin{definition}[Hallucination and error]
+\label{def:hallucination}
+\begin{align}
+  \Hall(\phi \mid c) &\;=_{\mathrm{def}}\; \Out_M \phi \wedge \neg\,\Grd_M(\phi \mid c),
+    \label{eq:hallucination}\\
+  \Err(\phi \mid c)  &\;=_{\mathrm{def}}\; \Out_M \phi \wedge \Grd_M(\phi \mid c) \wedge \neg \phi.
+    \label{eq:error}
+\end{align}
+\end{definition}
+
+Observe what \eqref{eq:hallucination} omits: any truth-value condition.
+Hallucination is unwarranted assertion---assertion unsupported by evidence
+applicable to the context of use---and that is all. Truth and falsity classify
+errors and successes; they do not classify hallucinations. The argument for this
+regimentation runs through the off-diagonal cells and the applicability
+distinction.
+
+Before making it, I should place the account. The distinction between consistency
+with a source and correspondence with the world is not new to the technical
+literature, where it appears as \emph{faithfulness} against \emph{factuality}
+\citep{maynez2020,ji2023}. My grounded/true grid is recognisably that
+distinction, and I claim no priority for it. What I claim is threefold: that the
+normative asymmetry runs one way---only ungroundedness constitutes
+hallucination---that the defect in the ungrounded-but-true case admits a precise
+modal analysis, and that the distinction follows from a theory of warranted
+assertion rather than from engineering convenience. The account is also close
+kin to the argument that these systems produce assertion without regard for
+truth in Frankfurt's sense \citep{hicks2024}; \eqref{eq:hallucination} may fairly
+be read as a formalisation of that claim, with the difference that it is
+indexed, measurable, and yields a metric.
+
+\subsection{Faithful transmission of a bad source is error, not hallucination}
+\label{sec:error}
+
+Suppose $M$'s corpus contains, pervasively and consistently, a claim that a
+treaty was signed in 1748 when it was signed in 1749---a common error propagated
+across reference works. $M$ asserts the 1748 date, and attribution analysis
+confirms the assertion is driven by exactly those contents. On the
+truth-conditional definition this is a hallucination: false output. But that
+classification obliterates a distinction we need. $M$ has done everything a
+testimonial transmitter can do: it reported what its evidence says, through a
+mechanism sensitive to that evidence. The failure lies in the evidence, not in
+the assertion mechanism.
+
+The distinction is not pedantic; it is intervention-relevant, and that is the
+form the argument should take for anyone who has to allocate engineering effort.
+Errors are corrected by fixing the evidential base: better data, retrieval from
+authoritative sources, corpus curation. Hallucinations are corrected by fixing
+the assertion mechanism: making generation conditional on evidential support, and
+abstaining when support is absent. A metric that pools cells (iii) and (iv) as
+``hallucination rate'' tells an engineer nothing about which intervention is
+needed, and in my experience the two are handled by different teams on different
+budgets. Normatively, too: we do not say that a scrupulous newspaper
+hallucinated when it accurately reported a source that turned out to be wrong.
+We say it erred, or was misled. The same discipline should govern machine
+assertion.
+
+\subsection{Ungrounded truth is a safety failure, not a Gettier case}
+\label{sec:veridical}
+
+Now the converse. $M$ is asked for the population of a small town absent from its
+corpus. The generation mechanism, running on formulation-level
+statistics---towns with names of this shape, in sentences of this genre, get
+populations of this magnitude---produces ``8,200.'' By luck, that is correct. On
+the truth-conditional definition nothing has gone wrong. But everything
+distinctive of hallucination has occurred. The mechanism was disconnected from
+evidence about the town, and the truth of the output is an accident.
+
+The precise nature of the defect is modal. Had the world been
+different---had the population been 3,400---the very same process would have
+produced the very same output. An assertion with that profile does not track the
+fact it concerns; it is unsafe, in the sense of \citet{sosa1999}, and the
+correct label for the case is \emph{veritic luck} \citep{pritchard2005}. An
+assertion so produced is defective as an assertion regardless of its truth value.
+I will call it a \emph{veridical hallucination}, and the terminology should mark
+that the defect in cell (ii) and cell (iv) is one and the same defect, differing
+only in worldly luck.
+
+It is tempting to call this a Gettier structure, and I want to resist the
+temptation precisely because something Gettier-like is going on nearby.
+\citet{gettier1963} showed that \emph{justified} true belief can fall short of
+knowledge when luck severs the connection between the justification and the
+truth. In cell (ii) the justification is not severed but absent: there is no
+grounding at all, only truth. That is the pre-Gettier case---true belief without
+justification---and the lesson it teaches was already learned when justification
+was added to the analysis.
+
+The genuine Gettier structure appears one step downstream, in the recipient. A
+user receives a fluent, well-formed, contextually apt assertion. That fluency
+functions, reasonably enough, as apparent justification: it is the signal humans
+have always used to calibrate trust in testimony. The content is true. So the
+user forms a belief that is true and, by her lights, justified---and it is not
+knowledge, because what justified it stands in no connection to what made it
+true. Cell (ii) is a Gettier-case generator, and this is why it matters
+practically rather than taxonomically. A user who receives a cell-(ii) output and
+verifies it acquires no reason to trust the system's next output, though
+truth-conditional evaluation will have scored the system a success. Lucky truths
+are not repeatable performances. Grounding is.
+
+I note that condition (2) of Definition~\ref{def:grounding} and the analysis just
+given are the same condition applied twice. Both demand that the assertion event
+be counterfactually sensitive to something---to the evidence in the first case,
+to the fact in the second. The account is accordingly more unified than the
+section headings suggest: hallucination is assertion that fails a sensitivity
+condition on its evidential base, and veridical hallucination is that failure
+masked by luck.
+
+\subsection{Misapplied grounding: the third failure class}
+\label{sec:misapplied}
+
+The context index makes visible a failure that neither cell (iii) nor cell (iv)
+captures, and it is the one that dominates regulated deployment.
+
+A model asserts that a compound is approved for an indication. The assertion is
+driven by documents in $E$ that say exactly that, and it is counterfactually
+sensitive to them: remove them and the assertion goes away. But the approval was
+withdrawn in 2024, and the decision at hand is being taken now. Or the documents
+describe one jurisdiction's regime and the decision falls under another's. Or the
+evidence concerns an adult population and the intended use is paediatric.
+
+On the unindexed definition these are all cell (iii): grounded, false, therefore
+error, therefore charged to a defective evidential base. That verdict is wrong
+twice over. The evidential base was not defective---the 2019 documents were
+accurate in 2019, and the foreign regime is correctly described. And the remedy
+implied is wrong: curating the corpus will not help, because nothing in it is
+incorrect. What failed is applicability, and the remedy is
+resolution---establishing $c$ before answering, checking currency at $\tau$,
+checking jurisdiction $j$ and intended use $u$, and abstaining or qualifying when
+the applicable evidence has not been identified.
+
+On Definition~\ref{def:grounding} these cases are ungrounded relative to $c$, and
+so fall on the hallucination side. I take that to be the right result: evidence
+that does not bear on the decision at hand provides no support for a claim
+advanced for that decision, however authentic it was in its own context. The
+practical upshot is a three-way partition of defective assertion, with three
+distinct remedies:
+
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Failure & Diagnosis & Remedy \\
+\midrule
+Error & applicable evidence, but wrong & corpus and source curation \\
+Misapplied grounding & evidence inapplicable at $c$ & currency and scope resolution \\
+Fabrication or veridical luck & no evidential connection & abstention, grounding gates \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A hallucination metric that cannot separate these three tells you which of three
+budgets to spend nothing about.
+
+\subsection{Accuracy places no bound on grounding}
+\label{sec:independence}
+
+The off-diagonal arguments jointly indict the dominant evaluation methodology.
+Truth-matching benchmarks misclassify cell (iii) as hallucination, penalising
+faithful transmission and thereby rewarding systems that override their evidence
+when the evidence is unfashionable; and they misclassify cell (ii) as success,
+rewarding lucky fabrication and thereby favouring confident guessing over
+abstention. The misclassifications are not symmetric noise. Both push
+optimisation pressure the same way---toward assertion mechanisms decoupled from
+evidential support and tuned to the benchmark's answer distribution.
+
+The relationship can be stated exactly. Let
+\[
+  a = \Pr\bigl(\phi \mid \Out_M \phi\bigr), \qquad
+  g = \Pr\bigl(\Grd_M(\phi \mid c) \mid \Out_M \phi\bigr)
+\]
+be the accuracy and the grounding rate of a system's assertions.
+
+\begin{proposition}
+\label{prop:independence}
+Every pair $(a, g) \in [0,1]^2$ is realisable.
+\end{proposition}
+
+\begin{proof}
+Let the cells of Table~\ref{tab:taxonomy} carry masses
+$m_{\mathrm{GT}}, m_{\mathrm{GF}}, m_{\mathrm{UT}}, m_{\mathrm{UF}}$ summing to
+$1$, so that $a = m_{\mathrm{GT}} + m_{\mathrm{UT}}$ and
+$g = m_{\mathrm{GT}} + m_{\mathrm{GF}}$. Given a target $(a,g)$, choose
+\[
+  m_{\mathrm{GT}} \in \bigl[\max(0,\, a + g - 1),\ \min(a, g)\bigr],
+\]
+an interval that is non-empty for every $(a,g)$ in the unit square. Set
+$m_{\mathrm{GF}} = g - m_{\mathrm{GT}}$,
+$m_{\mathrm{UT}} = a - m_{\mathrm{GT}}$, and
+$m_{\mathrm{UF}} = 1 - a - g + m_{\mathrm{GT}}$. Each is non-negative by the
+choice of interval, and the four sum to $1$.
+\end{proof}
+
+The construction requires that grounding not entail truth, which cell (iii)
+grants: an assertion may be grounded in applicable evidence and false. Given
+that, accuracy and grounding vary independently.
+
+\begin{corollary}
+\label{cor:no-bound}
+No truth-matching metric bounds the hallucination rate $1 - g$. A benchmark
+reporting accuracy alone is consistent with any hallucination rate whatever.
+\end{corollary}
+
+The result is elementary, and I state it because the elementary version is what
+the field's practice currently violates. A second consequence is worth drawing:
+since $a$ and $g$ are free to move independently, accuracy can improve while the
+hallucination rate worsens. That is a plausible reading of what optimising
+against answer keys does, and it is not a hypothetical concern for anyone
+choosing between checkpoints on a leaderboard.
+
+\subsection{The measurement target, and where it can be measured}
+\label{sec:measurement}
+
+The correct target is the conditional probability that an assertion is
+ungrounded given that it is made:
+\begin{equation}
+  \text{hallucination rate} \;=_{\mathrm{def}}\;
+  \Pr\bigl(\neg\,\Grd_M(\phi \mid c) \;\big|\; \Out_M \phi\bigr).
+  \label{eq:rate}
+\end{equation}
+This is estimated by attribution audit rather than answer-key comparison, and
+the framework for doing so already exists in the work on attributing generated
+statements to identified sources \citep{rashkin2023}.
+
+One caveat is essential, and it is the point at which this paper's argument
+begins to bear on system design rather than only on measurement. The two halves
+of $E$ are not equally tractable. For retrieval-provided context, condition (2)
+of Definition~\ref{def:grounding} is directly testable: ablate or contradict the
+retrieved evidence and observe whether the assertion survives. For parametric
+encodings it is not. ``Had $E$ not supported $\phi$'' ranges over counterfactual
+training corpora, and evaluating it properly means retraining.
+Training-data attribution methods approximate the counterfactual, but at
+frontier scale they remain an open problem, and the difference between the two
+cases is one of kind rather than degree.
+
+So \eqref{eq:rate} is well defined for any system and estimable only for systems
+that make their evidential base explicit at inference time. An unaugmented
+model's hallucination rate is a perfectly good quantity that nobody can currently
+measure. This is not a defect in the definition; it is an argument about
+architecture, and it is the strongest one this paper has. If the rate at which a
+system asserts beyond its applicable evidence is the quantity that matters for
+consequential use, then systems must be built so that the quantity can be
+observed---with an identified, versioned, context-resolved evidential base at the
+point of assertion, not merely a training corpus somewhere behind it.
+
+\subsection{Why the two contributions are one}
+\label{sec:unity}
+
+The two halves of this paper are not independent. Why do these systems
+hallucinate in the defined sense? Because $\Out_M$ is hyperintensional in the way
+Section~\ref{sec:re-failure} diagnosed. Assertion probability is computed over
+formulations, and a formulation can be made probable by surface statistics with
+no route through evidential support for its content. There is also a statistical floor here that no amount of architectural
+care removes: \citet{kalai2024} show that a calibrated model must hallucinate at
+some positive rate on facts appearing rarely in its evidence, which is a formal
+reason to expect the ungrounded cells to be non-empty rather than merely badly
+managed. Cells (ii) and (iv) are the
+behavioural face of RE-failure: cases where the string-level machinery runs free
+of the content-level relation $\Grd_M$ tracks. Conversely, a system whose
+assertions were closed under the right relations to its applicable evidence
+would, to that extent, approximate normality. The formal diagnosis and the
+redefinition of hallucination are two descriptions of one architecture.

@@ -1,0 +1,133 @@
+% !TEX root = ../main.tex
+\section{Hyperintensionality and Its Semantic Consequences}
+\label{sec:hyperintensionality}
+
+\subsection{From RE-failure to hyperintensionality}
+
+An operator is \emph{hyperintensional} iff it can distinguish between logically
+equivalent contents. Section~\ref{sec:re-failure} establishes that $\Out_M$ is
+hyperintensional in exactly this sense. Via Fact~\ref{fact:kripke}, the
+consequence is worth stating baldly:
+
+\begin{fact}
+\label{fact:no-kripke}
+$\Out_M$ has no Kripke semantics. There is no accessibility relation
+$R$---however gerrymandered, however computationally interpreted---such that
+$\Out_M \phi$ holds iff $\phi$ is true at all $R$-accessible worlds.
+\end{fact}
+
+This forecloses a tempting research programme: modelling machine ``belief'' by
+weakening frame conditions on a Kripke structure, dropping factivity to get
+belief rather than knowledge, dropping introspection, and so on. No such
+weakening helps, because RE, N, and K are frame-independent. The failure is not
+at the level of \emph{which} normal logic $\Out_M$ satisfies. It is at the level
+of normality itself, and indeed of classicality.
+
+By Fact~\ref{fact:neighborhood}, it also forecloses the obvious next move. Bare
+neighborhood semantics is the standard home for non-normal operators, and it is
+frequently reached for on that basis, but it validates RE in every frame. An
+operator that fails RE cannot be modelled in it without modification. This is
+worth emphasising because the two claims---non-normality and
+hyperintensionality---are easily run together, and only the first is what
+neighborhood semantics was built to accommodate.
+
+Two frameworks remain.
+
+\subsection{Hyperintensionalised neighborhood semantics}
+\label{sec:neighborhood}
+
+In a minimal model, $\Out_M \phi$ holds at a point $w$ iff
+$\lVert \phi \rVert \in N(w)$. Reading points as prompt-contexts rather than
+worlds gives the neighborhood function a natural interpretation: $N(\pi)$ is the
+set of contents the model is disposed to assert in context $\pi$, and the
+framework imposes no closure conditions whatever on that set---no supersets, no
+intersections, no unit. That models the failures of K, M, and D neatly. The
+asserted set is whatever the forward pass delivers: a bare list.
+
+To model RE-failure the framework must be hyperintensionalised. Let
+neighborhoods be sets of \emph{formulations}---or of other finer-grained content
+surrogates: structured propositions, guises, strings-under-interpretation---rather
+than sets of worlds. This is a disciplined and well-precedented move; the
+awareness structures of \citet{fagin1987} are a special case, and were introduced
+for precisely the resource-bounded, presentation-sensitive phenomena at issue
+here. It is, I suggest, the formally honest picture: the model's assertion state
+at a context is a set of formulations, closed under nothing.
+
+\subsection{Impossible-worlds semantics}
+
+Alternatively \citep{rantala1982,nolan1997}, enrich the model with impossible
+worlds at which formulas are evaluated by direct assignment, free of logical
+closure. $\Out_M \phi$ holds at $w$ iff $\phi$ is true at all worlds in the
+relevant accessibility class, where that class includes impossible worlds. Since
+equivalent formulas can diverge at impossible worlds, RE fails; since an
+impossible world can verify a conditional and its antecedent without its
+consequent, K fails; and so on. Rantala's original motivation was logical
+omniscience---modelling an agent that fails to see the consequences of what it
+accepts.
+
+Two caveats. The approach is not a free lunch: \citet{bjerring2011} proves an
+impossibility result for impossible-worlds models of non-omniscient agents, and
+anyone adopting the framework for this purpose owes a response to it. And the
+frameworks are, for present purposes, intertranslatable; the choice is one of
+illumination rather than expressive power.
+
+I favour the hyperintensional neighborhood picture, for a reason that is
+philosophical rather than technical. Impossible-worlds semantics retains the
+\emph{shape} of an intentional attitude: the agent is still depicted as ruling
+worlds in and out, with a coarser sieve that admits logically impossible
+scenarios. That is apt for a bounded reasoner---a system trying to rule out
+possibilities but lacking the resources to rule out all the impossible ones. It
+subtly flatters $\Out_M$ by depicting $M$ as a possibility-manager. The
+neighborhood-of-formulations picture makes no such concession. It depicts the
+assertion state as what it is: a closure-free set of endorsed strings indexed to
+a context, with nothing in the semantics suggesting that $M$ is representing ways
+the world might be. Since my thesis is precisely that $\Out_M$ is not an
+attitude toward ways the world might be, the neighborhood formulation is the
+perspicuous one. Readers who prefer impossible worlds may translate throughout;
+nothing downstream depends on the choice, only on the shared fact that both
+frameworks are non-normal and the operator hyperintensional.
+
+\subsection{The structural argument}
+\label{sec:structural-argument}
+
+The pieces assemble:
+
+\begin{enumerate}
+  \item Knowledge, in the received formal sense, is a normal and factive
+        operator; belief, in the received formal sense, is a normal operator
+        (standardly KD45). In particular both validate RE, N, and K at the level
+        of competence.
+  \item $\Out_M$ fails RE, K, M, D, 4, and 5 constitutively---as consequences of
+        the architecture, not as performance deviations from a closure-respecting
+        competence (Sections~\ref{sec:k-failure}--\ref{sec:re-failure}; the
+        competence/performance premise is defended in
+        Section~\ref{sec:human-parallel}).
+  \item Therefore $\Out_M$ is neither a knowledge operator nor a belief operator
+        in the received formal sense.
+\end{enumerate}
+
+The step from (3) to the system-level claim---that language models are neither
+epistemic nor doxastic systems---requires one further premise, and it is
+important not to let it pass unnoticed. $\Out_M$ is an operator over
+\emph{outputs}; $K$ and $B$ are operators over \emph{attitudes}. Showing that a
+system's output logic is non-classical does not by itself show that the system
+has no attitudes, and the inference would prove far too much if it did: human
+assertion fails RE, K, M, D, 4, and 5 just as thoroughly, and humans have
+beliefs.
+
+What licenses the step is the claim flagged in Section~\ref{sec:defining-o}:
+that there is no $\pi$-invariant state governing assertion for the prompt-form
+to elicit. If that holds, then $\Out_M$ is not the noisy expression of an
+underlying attitude---there is no underlying attitude for it to express---and the
+system-level conclusion follows. If it fails, the conclusion is confined to the
+logic of machine assertion, which is a weaker but still substantive result.
+Section~\ref{sec:internal} argues for the premise, and does so against the
+literature most directly opposed to it.
+
+The argument is deliberately conditional on the received formalisms, and
+Section~\ref{sec:deflationism} confronts the resulting deflationary worry. But
+the conditional conclusion already has teeth. Whatever machine assertion is, the
+modelling apparatus built for knowledge and belief---Kripke structures,
+partition models, Bayesian refinements presupposing propositional
+contents---does not apply to it. Something else is needed, and
+Sections~\ref{sec:grounding}--\ref{sec:subdoxastic} supply it.

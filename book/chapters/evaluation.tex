@@ -1,0 +1,325 @@
+% !TEX root = ../main.tex
+\chapter{An Evaluation Protocol}
+\label{ch:evaluation}
+\label{sec:evaluation}
+
+The preceding sections argued for a property and described an architecture that makes it
+observable. This section is the operational residue: what to run, in what order, and what
+the numbers mean.
+
+Four measurements, in the order I would add them to an existing evaluation
+pipeline. None replaces accuracy; all of them answer questions accuracy cannot.
+
+\section{Methodological commitments}
+\label{sec:method}
+
+Before the measurements, the decisions that determine whether any of them are
+comparable. A protocol that leaves these implicit produces numbers that cannot be read
+across systems or across time.
+
+\paragraph{Unit of analysis.} The \emph{atomic consequential claim}, not the response
+and not the sentence. A response containing four claims yields four observations, and a
+sentence carrying two claims yields two. This choice follows from I12: if evidence links
+at claim granularity then measurement must too, or the metric will average a supported
+claim against an unsupported one in the same sentence.
+
+\paragraph{Decomposition and its validation.} Claim decomposition is itself a fallible
+step and must not be assumed correct. Validate it on a held-out sample against human
+decomposition, report agreement, and report the rate at which decomposition merges or
+splits claims wrongly, because those errors propagate into every downstream measure.
+
+\paragraph{Labeling and adjudication.} Authenticity and versioning can be determined
+mechanically from metadata. Authority, applicability, support, sufficiency, and defeat
+require judgment, and therefore require raters with domain competence, a written
+adjudication procedure for disagreement, and a reported agreement statistic. State which
+measure of agreement and on what sample; a grounding rate without it is one rater's
+opinion at scale.
+
+\paragraph{The instrument has its own error rate.} If applicability is labeled by a
+model or an entailment classifier rather than by people, the error rate of that
+instrument bounds the precision of every rate it produces, and must be reported
+alongside. A grounding rate cannot be more accurate than the process that assigned it.
+
+\paragraph{Sampling and strata.} Sample from deployment-representative traffic, stratified
+by reliance tier, decision class, source class, and user population, with strata
+reported. Uniform sampling over traffic will under-represent exactly the
+high-consequence low-volume cases the framework exists to catch.
+
+\paragraph{Correlated observations.} Claims within one response share a context, a
+retrieval, and a resolved $c$, so they are not independent. Confidence intervals must
+account for clustering by response; treating claims as independent observations will
+overstate precision, often substantially.
+
+\paragraph{Costs of over-control.} Report false refusals and unnecessary escalations
+alongside the grounding rate, together with human-review load and latency. A system that
+improves its grounding rate by declining more has not necessarily improved, and
+Section~\ref{sec:abstention} makes the same point about abstention: the pair is the
+measurement.
+
+\paragraph{Baselines.} Report against at least three configurations --- generation
+without retrieval, retrieval by similarity alone, and governed retrieval --- on identical
+cases. A single system's grounding rate is uninterpretable; the framework's claim is
+about the \emph{separation} between configurations, which is what
+Appendix~\ref{sec:benchmark} is designed to measure.
+
+\section{Attribution audit: the ungrounded assertion rate}
+\label{sec:measure-rate}
+
+\textbf{What it measures.} Equation~\eqref{eq:rate}, decomposed by the three rows
+of Table~\ref{tab:remedies}.
+
+\textbf{Procedure.} Sample assertions from deployment-representative traffic---not
+from a curated question set, since the point is to measure behavior on the
+distribution you actually serve. For each sampled assertion:
+
+\begin{enumerate}
+  \item Identify the evidence the system had available, from the execution trace.
+  \item \textbf{(G1)} Determine whether any of it supports the assertion and is
+        applicable at $c$: authentic, current at $t$, right jurisdiction and
+        intended use. Failure here with support present is the misapplied rate.
+  \item \textbf{(G2)} Perturb: remove the putatively supporting evidence, or
+        replace it with evidence for a contrary claim, and re-run. If the
+        assertion survives unchanged, it was not resting on that evidence.
+        Failure here is the ungrounded rate.
+  \item Where the assertion is grounded and false, record it against the
+        \emph{corpus}, not the system.
+\end{enumerate}
+
+\textbf{Honest limits.} Step 2 requires judgment about applicability, which means
+human raters or a well-validated entailment model, and agreement on attribution is
+imperfect. Report the rate with its inter-rater agreement, not as a point estimate.
+And per Section~\ref{sec:measurability}, step 3 works for retrieval-provided
+evidence and does not work for parametric evidence: say which you measured.
+
+\section{Estimating evidence dependence, and why naive ablation fails}
+\label{sec:sensitivity-protocol}
+
+The sensitivity condition of Definition~\ref{def:grounding} is the one measurement in
+this book that requires a designed intervention rather than an inspection, and the
+obvious design does not work. Stating why is necessary, because the obvious design is
+what a reader will otherwise implement.
+
+\paragraph{The confound.} The natural test is ablation: remove the putatively
+supporting evidence and see whether the assertion survives. But removing a passage
+changes the token sequence, and Section~\ref{sec:canonical-form} argued at length that
+behavior moves under semantically inert input variation. So a changed assertion after
+ablation cannot be attributed to the loss of evidential support rather than to the
+perturbation itself. An unchanged assertion is no cleaner: it is consistent with
+dependence on the evidence and equally consistent with reproduction from parametric
+memory, which is the case the condition exists to exclude. Naive ablation is confounded
+in both directions by the book's own central argument.
+
+\paragraph{The controlled design.} Four requirements, and none is optional.
+
+\begin{enumerate}
+  \item \textbf{Substitute, do not delete.} Replace the passage with a length-matched,
+        structurally similar passage on an unrelated topic, so that the input is
+        perturbed comparably without the evidence being present.
+  \item \textbf{Run an evidence-preserving control.} Substitute a \emph{differently
+        worded but equally supporting} passage. If the assertion changes under that
+        too, the item has no measurement power and should be discarded rather than
+        scored.
+  \item \textbf{Report the contrast.} The quantity of interest is the difference
+        between the change rate under evidence-removing substitution and the change
+        rate under the evidence-preserving control. A raw flip rate without the
+        control is uninterpretable.
+  \item \textbf{Prefer contradiction where the case allows it.} Substituting a passage
+        that asserts the contrary holds length and structure closest to the original
+        while inverting the evidential content, and it additionally exercises the
+        defeater path of I19.
+\end{enumerate}
+
+\paragraph{What the protocol yields, and what it does not.} It yields a graded
+\emph{dependence estimate} under fixed model, decoding, context, and request
+conditions, not a proof of causal dependence. Redundant supporting evidence in the
+retrieved set will mask dependence on any single passage, so the unit of intervention
+should be the supporting \emph{set} rather than the individual document. Stochastic
+decoding requires repetition and a stated decision rule for what counts as a changed
+assertion. And the error properties of the protocol itself --- false positives from
+residual form sensitivity, false negatives from redundancy --- must be reported
+alongside the estimate.
+
+This is more expensive than the earlier framing in
+Section~\ref{sec:measurability} suggested, and the correction matters: grounding is
+measurable at runtime for the evidence-applicability conditions, which are inspections,
+and measurable only by designed intervention for the dependence condition. A program
+that treats the second as cheap will produce a number that does not mean what it says.
+
+\section{Abstention items: catching the lucky cell}
+\label{sec:abstention}
+
+This is the single most useful addition to an existing suite, and the one that
+most directly changes what the suite selects for.
+
+\textbf{What it measures.} Whether the system asserts in the absence of evidence.
+
+\textbf{Procedure.} Construct items whose answers are \emph{absent from the
+accessible evidence}, where the only correct behavior is abstention or an explicit
+statement that the basis has not been established. Then---and this is the
+part that inverts normal practice---\textbf{penalize correct answers on these
+items}. A system that answers such an item correctly has demonstrated only that
+its guessing distribution happened to align with the world, which is cell (ii),
+and rewarding it selects for exactly the decoupling of assertion from evidence
+that Section~\ref{sec:architecture} identified as the root defect.
+
+\textbf{Construction.} Straightforward where you control the retrieval corpus:
+hold out documents and ask about their contents. Harder for parametric knowledge,
+where establishing absence is the same intractable problem as before. Practical
+approach: build abstention items over a controlled corpus, and treat the resulting
+abstention rate as a property of the retrieval-grounded configuration rather than
+of the model.
+
+\textbf{The coverage constraint, which is not optional.} Penalizing true answers on
+abstention items creates an obvious incentive: abstain more. Measured alone, the
+statistic is maximized by a system that never answers anything. So it must be reported
+\emph{jointly with coverage}---the proportion of answerable items the system does
+answer---and read as a curve rather than a point, exactly as risk and coverage are
+traded off in selective prediction. A system that improves its abstention score while
+its coverage falls has not improved; it has become more cautious, which may or may not
+be what was wanted. The pair is the measurement. Either number alone is gameable in
+opposite directions.
+
+\textbf{Why it matters more than it looks.} Most suites contain no items whose
+correct answer is silence. A system therefore never encounters a case where
+answering is penalized, and no optimization pressure toward abstention exists
+anywhere in the development loop. Adding these items is the cheapest available
+change to what the process selects for.
+
+\section{Form-invariance audit: measuring I1 directly}
+\label{sec:form-audit}
+
+\textbf{What it measures.} How far the system is from invariant I1---a number for
+the property Section~\ref{sec:canonical-form} says invalidates test suites.
+
+\textbf{Procedure.} Build a battery of formulation pairs that are semantically
+equivalent and syntactically distinct: contraposed conditionals, negation duals
+(``no $A$ are $B$'' / ``all $A$ are non-$B$''), quantities in words against digits,
+active against passive, reordered conjunctions, identity statements in both
+directions. For each pair, measure divergence in assertion behavior at matched
+output probability. Aggregate to a single \emph{form divergence} statistic---in the terms of the NLP
+evaluation literature, a measure of paraphrase robustness.
+
+\textbf{Two cautions.} Matching output probability across paraphrases is not
+trivial, since the probability is itself formulation-sensitive; state the matching
+method. And control for the possibility that a paraphrase is harder for reasons of
+tokenization rather than logical form, or the statistic will measure the wrong
+thing.
+
+\textbf{The use that matters.} Run the battery across model checkpoints,
+post-training stages, and inference-compute budgets. This answers a question the
+field currently assumes an answer to: whether additional scale, training, or
+inference-time computation moves systems toward form invariance, or merely broadens
+the
+set of formulations handled well. Falling divergence is genuine progress on I1.
+Rising accuracy with flat divergence is broader coverage, which does not restore
+the validation inference of
+Section~\ref{sec:validation-consequence}. I am not aware of a systematic published
+measurement of this, which is itself worth noting given how much rests on the
+assumption.
+
+\section{Repeatability audit: measuring I7}
+
+\textbf{What it measures.} Whether a verified answer is a verified behavior.
+
+\textbf{Procedure.} Re-issue identical inputs at multiple points within a session,
+across sessions, and after intervening turns of unrelated content. Report the proportion
+of inputs whose assertion changes, and report it separately for the three conditions,
+because they fail for different reasons: within-session drift indicates context
+accumulation, cross-session variation indicates a serving or version problem, and
+sensitivity to intervening unrelated turns indicates that conversational state is
+influencing content it should not touch.
+
+\textbf{Why it belongs alongside the form-invariance audit.} I1 and I7 are the two
+invariants that invalidate a test suite, and they do so in complementary ways.
+Form-invariance failure means a passing test does not extend to the paraphrase;
+repeatability failure means it does not securely cover even the string that was tested.
+Measuring the first without the second gives a misleading reassurance, because a low form
+divergence over inputs that are individually unstable is not evidence of anything.
+
+\textbf{What is acceptable.} Unlike the other three measurements, this one has a defensible
+target: for a system intended to reach Tier~3, repeatability under fixed version and
+pinned decoding should be effectively total, because the conditions of
+Section~\ref{sec:determinism} make it achievable. A non-trivial repeatability failure at
+that tier is not a tolerance to be negotiated; it is a sign that one of those conditions is
+not actually in place, and the audit's real value is in finding out which.
+
+The measurement is cheap---no raters, no reference answers---and it directly quantifies how much
+a passing test case is worth.
+
+\section{What number is acceptable}
+\label{sec:thresholds}
+
+A measurement regime without thresholds is not a control regime, and the objection is
+fair. There is no universal threshold, and I will not invent one; but the method for
+deriving a local threshold is available and it does not require new data.
+
+The threshold is set by two things: the consequence tier of
+Section~\ref{sec:tiers}, and what control sits downstream of the assertion. Those two
+bound the answer from opposite directions.
+
+Where a competent reviewer examines every assertion before it is relied upon, a high
+ungrounded rate is tolerable and the metric is not a safety measure at all---it is a
+\emph{workload} measure, predicting how much reviewer time the system will consume and
+whether the review is a rubber stamp. A system whose ungrounded rate exceeds what
+reviewers can actually check has silently converted a control into a formality, and the
+grounding rate is how that is detected.
+
+Where the assertion is relied upon directly, the tolerable rate is bounded by something
+the institution already knows. Every regulated firm has an accepted error rate for the
+equivalent manual process: a sampling standard for file reviews, a tolerance for
+unevidenced decisions found in quality assurance, an internal audit threshold that
+triggers a finding. Those numbers exist, they were negotiated with a regulator or set by
+policy, and they are the right anchor---because the question a supervisor will ask is not
+whether the system is good in the abstract but whether it is at least as well evidenced
+as the process it replaced. Anchoring to the incumbent standard also makes the comparison
+honest in the direction that usually favors the system: manual processes frequently
+cannot produce the evidence trail this book requires either.
+
+Two cautions. Do not set a threshold on pooled accuracy and infer a grounding threshold
+from it, which Corollary~\ref{cor:no-bound} forbids. And set the abstention and coverage
+pair jointly, per Section~\ref{sec:abstention}, or the threshold will be met by a system
+that declines to answer.
+
+Collecting the four measurements with the two framing questions, a validation report
+that supports sign-off contains, at minimum:
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}p{5.4cm}@{}}
+    \toprule
+    Statistic & Answers & Caveat to state \\
+    \midrule
+    Ungrounded assertion rate
+      & how often it asserts without support
+      & retrieval-grounded or parametric; rater agreement \\
+    \addlinespace
+    Misapplied rate
+      & how often support is inapplicable at $c$
+      & which components of $c$ were checked \\
+    \addlinespace
+    Error rate (grounded, false)
+      & corpus quality
+      & attributed to sources, not the system \\
+    \addlinespace
+    Abstention rate on held-out items
+      & whether silence is available
+      & corpus-controlled configuration only \\
+    \addlinespace
+    Form divergence
+      & what a passing test is worth
+      & probability-matching method \\
+    \addlinespace
+    Repeatability
+      & whether verification persists
+      & within- and cross-session \\
+    \addlinespace
+    Accuracy
+      & performance on this sample
+      & does not bound any of the above (Cor.~\ref{cor:no-bound}) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Accuracy stays on the report. It moves from the headline to a line item
+    with a stated scope, which is what Corollary~\ref{cor:no-bound} licenses.}
+  \label{tab:report}
+\end{table}

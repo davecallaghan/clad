@@ -1,0 +1,108 @@
+% !TEX root = ../main.tex
+\section{Introduction}
+\label{sec:intro}
+
+When a language model outputs the sentence ``The Eiffel Tower is in Paris,''
+what has happened, epistemically speaking? The question sounds naive, and the
+answers pull in incompatible directions in a way that matters for anyone who
+has to build, evaluate, or sign off on one of these systems. On one answer, now
+standard in both technical and popular discourse, the model knows---or at least
+believes---that the Eiffel Tower is in Paris; its output expresses that
+attitude; and when its outputs go wrong the model is mistaken, or lying, or
+\emph{hallucinating}, in the term of art that has colonised the field. On
+another answer, favoured by deflationary critics, the model believes nothing
+whatever: it is a stochastic text generator, and epistemic vocabulary applied to
+it is metaphor at best.
+
+Both answers are underdescribed, because neither engages the formal structure of
+the attitudes being ascribed or withheld. The received tradition in formal
+epistemology does not treat \emph{knowledge} and \emph{belief} as labels to be
+applied wherever behaviour looks apt. It treats them as operators with
+characteristic logical profiles. Knowledge, on the standard idealisation, is
+factive and normal; belief is normal, consistent, and introspective. Both
+validate the rule of congruentiality (RE), which requires that logically
+equivalent contents be treated alike. That requirement is not decoration. It
+encodes what it is, structurally, for a state to be a belief-like attitude at
+all: that the attitude is directed at a \emph{proposition}---an entity
+individuated no more finely than logical equivalence---and that it stands in at
+least idealised rational relations to the system's other attitudes.
+
+My first thesis is that model assertion, regimented as an operator $\Out_M$,
+fails these conditions, and fails them constitutively rather than marginally.
+$\Out_M$ fails K, M, D, 4, and 5. Critically, it fails RE: a model may assert
+$\phi$ under one formulation and deny it under a logically equivalent
+formulation, as a matter of architecture rather than noise. RE-failure is the
+signature of hyperintensionality, and a hyperintensional operator admits no
+Kripke semantics---no adjustment of frame conditions helps, because every Kripke
+frame validates RE. Nor, as I show in Section~\ref{sec:hyperintensionality},
+does bare neighborhood semantics suffice, since neighborhoods are sets of truth
+sets and logically equivalent formulas share a truth set. What remains is a
+hyperintensionalised neighborhood model or an impossible-worlds semantics. Since
+knowledge and belief in the received sense are normal, and $\Out_M$ is not even
+classical, language models are neither epistemic nor doxastic systems in that
+sense. The best available characterisation is that they are \emph{sub-doxastic}
+systems in a sense descended from \citet{stich1978}---though the descent
+involves a mutation I state rather than elide.
+
+It is worth being clear about which half of that conclusion is hard-won. That
+model output is not \emph{knowledge} follows from factivity alone: models assert
+falsehoods, so $\Out_M \phi \rightarrow \phi$ is invalid, and no modal
+sophistication is required to see it. The apparatus earns its keep on the
+doxastic claim, which is the contested one.
+
+My second thesis concerns hallucination. The term is standardly defined
+truth-conditionally: a hallucination is a false or fabricated output. This gets
+the phenomenon wrong in both directions. Define a grounding operator
+$\Grd_M(\phi \mid c)$: $\phi$ is supported by the model's evidential base,
+relative to a practical context $c$ fixing jurisdiction, time, and intended use.
+Then hallucination is ungrounded assertion, and error is grounded false
+assertion, with no truth condition appearing in the first definition. An
+assertion faithfully transmitted from an erroneous source is an error, not a
+hallucination. An ungrounded assertion that happens to be true is a
+hallucination regardless---a failure of safety, in the sense familiar from
+\citet{sosa1999}, masked by luck. The 2$\times$2 taxonomy that results shows
+that truth-matching benchmarks misclassify both off-diagonal cells, and
+Proposition~\ref{prop:independence} shows this is not a matter of degree:
+accuracy places no bound whatever on the grounding rate.
+
+The context index on $\Grd_M$ is not decoration either, and it is where the
+philosophical apparatus meets the problem as it actually presents itself in
+regulated work. A claim grounded in a source that was authoritative in 2019 and
+superseded in 2024 is not thereby grounded for a decision taken now. A claim
+grounded in European regulation is not grounded for a decision taken under
+another jurisdiction. Without the index, both cases collapse into ``error'' and
+get charged to a defective evidential base---when the base was not defective but
+inapplicable, and the remedy is currency and applicability checking rather than
+corpus correction.
+
+\paragraph{Plan.} Section~\ref{sec:preliminaries} compresses the formal
+preliminaries. Section~\ref{sec:output-operator} defines $\Out_M$ and
+demonstrates the axiom failures. Section~\ref{sec:hyperintensionality} develops
+the hyperintensionality result and its semantic consequences.
+Section~\ref{sec:contextual-truth} introduces contextual truth and the failure
+mode I call illicit universalization, which motivates the context index.
+Section~\ref{sec:grounding} defines $\Grd_M$ and the taxonomy.
+Section~\ref{sec:hallucination} develops hallucination as unwarranted assertion
+and proves the independence result. Section~\ref{sec:world-access} addresses
+what training exposure does and does not supply.
+Section~\ref{sec:subdoxastic} argues for the sub-doxastic characterisation and
+states the limits of the analogy. Section~\ref{sec:internal} confronts the
+literature on internal truth representations, which bears directly on the
+argument's central premise. Section~\ref{sec:objections} considers objections.
+Section~\ref{sec:evaluation} draws out implications for evaluation, and
+Section~\ref{sec:warrant} sketches the transition to institutional warrant.
+
+\paragraph{Scope.} Two notes. First, my claims concern current autoregressive
+transformer models as deployed, including instruction-tuned, preference-optimised,
+and outcome-reinforcement-trained reasoning variants. The last of these deserve
+particular attention, because they are the systems most plausibly moving toward
+inferential closure, and I take up the question they raise in
+Section~\ref{sec:reasoning}. Nothing here rules out future architectures whose
+assertion operators are normal, or nearly so; the framework says precisely what
+such an architecture would have to achieve, and
+Section~\ref{sec:evaluation} states it as a checklist. Second, the argument is
+not that these systems are epistemically worthless. Sub-doxastic systems can be
+extraordinarily useful, and I build them for a living. The argument is that
+their usefulness must be theorised, and their failures measured, under the
+correct formal description---and that the description currently in use produces
+metrics that reward the wrong behaviour.

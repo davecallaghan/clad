@@ -1,0 +1,137 @@
+% !TEX root = ../main.tex
+\section{Institutional Warrant and Tiered Reliance}
+\label{sec:tiers}
+
+The architecture of Section~\ref{sec:governed-rag} serves a condition I have so far
+used without defining. This section defines it and makes the controls proportional
+to consequence.
+
+\subsection{Warrant}
+
+Grounding is necessary for reliance and not sufficient. An assertion can rest on
+authentic, applicable, authoritative evidence, be traceable to it, and still be
+something the institution is not entitled to act on---because nobody checked it, or
+because nobody with the standing to authorise reliance did so.
+
+\begin{definition}[Institutional warrant]
+\label{def:warrant}
+\begin{equation}
+  \begin{aligned}
+  \Warranted_I(p \mid c) \;\leftrightarrow\;
+    &\Resolved(c) \wedge \Grd_S(p \mid c)\\
+    &\wedge\ \Verified(V, p, c) \wedge \Authorized(I, p, c).
+  \end{aligned}
+  \label{eq:warrant}
+\end{equation}
+\end{definition}
+
+where
+
+\begin{itemize}
+  \item $\Resolved(c)$: the material context variables of \eqref{eq:context} are
+        explicit rather than assumed or inferred without validation;
+  \item $\Grd_S(p \mid c)$: Definition~\ref{def:grounding}---which unpacks to the
+        six evidence conditions of \eqref{eq:grounded} plus $\Sensitive$, so
+        authenticity, versioning, authority, and applicability are preconditions of
+        valid support rather than separate requirements;
+  \item $\Verified(V, p, c)$: an appropriate procedure has checked the assertion,
+        its evidence relation, and the controls the decision class requires;
+  \item $\Authorized(I, p, c)$: the institution permits reliance at the relevant
+        risk tier, possibly subject to human review or approval.
+\end{itemize}
+
+Three properties of \eqref{eq:warrant} matter for how it is used.
+
+It is a conjunction, not a score. There is no aggregation of the four conjuncts into
+a confidence figure, and an assertion satisfying three of them is not
+three-quarters warranted. This is the same point as the flow in
+Section~\ref{sec:governed-rag}: these are distinct conditions with distinct owners
+and distinct failure records.
+
+It is a property of a process, not of a model. Nothing in \eqref{eq:warrant} is a
+property of model weights, a benchmark score, or a generated response.
+$\Authorized$ in particular is a fact about an institution's governing rules and
+delegations, and no improvement to $M$ can supply it. This is why warrant cannot be
+procured: a vendor can sell you a component that makes grounding measurable, and
+cannot sell you an authorization.
+
+It is revocable and context-relative. \eqref{eq:warrant} is not a claim that $p$ is
+certain, or even that $p$ is true. It is the condition under which an institution
+may responsibly act on $p$ for a defined purpose, knowing that it may be wrong and
+that the record will show what was relied upon and why. That is the standard
+ordinary institutional decision-making already meets, and the standard machine
+assertion currently does not.
+
+\subsection{Reliance tiers}
+
+Controls should be proportional to the consequence of reliance. The table below is
+deliberately compact: its purpose is to show that permissible reliance is set by
+consequence rather than by model quality, and that argument does not require a
+fully specified control catalogue. Any real programme will need its own tiering,
+calibrated to its regulator and its risk appetite.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
+    \toprule
+    Tier & Use & Required & Invariants engaged \\
+    \midrule
+    0 & Unwarranted generative assistance: brainstorming, drafting
+      & Clear framing as unverified; no reliance claim
+      & none \\
+    \addlinespace
+    1 & Informational assistance
+      & Visible uncertainty; no reliance claim
+      & I17 \\
+    \addlinespace
+    2 & Evidence-linked assistance
+      & Sources visible; user retains verification duty
+      & I8, I9, I12 \\
+    \addlinespace
+    3 & Governed decision support
+      & Context-bound evidence, verification controls, audit trail, authorized
+        human reliance
+      & I8--I19 \\
+    \addlinespace
+    4 & Constrained execution
+      & Deterministic guardrails, approvals, reversibility, monitoring, full
+        records
+      & I8--I19 plus action controls \\
+    \addlinespace
+    5 & Autonomous consequential action
+      & Narrowly specified settings, stringent formal controls, continuing
+        assurance, explicit authority to act
+      & all, plus independent assurance \\
+    \bottomrule
+  \end{tabular}
+  \caption{Reliance tiers. The tier is set by the consequence of reliance, not by
+    model quality. Tier~5 is included for completeness and should be approached
+    with considerable caution in regulated settings; nothing in this paper argues
+    that current systems are ready for it.}
+  \label{tab:tiers}
+\end{table}
+
+Assignment to a tier needs criteria, and while a full consequence taxonomy is out of
+scope, the dimensions are nameable: \emph{reversibility} of the action the assertion
+supports; \emph{magnitude} of the exposure if it is wrong; \emph{breadth}, meaning how
+many parties are affected and whether they consented; \emph{detectability}, whether an
+error would surface before harm; and \emph{availability of a competent human check} in
+the time the decision allows. A use case scoring badly on reversibility and
+detectability belongs at a higher tier than its nominal risk rating suggests, because
+those two dimensions determine whether anything can be done after the fact.
+
+The principle the table exists to enforce is a negative one. Permissible reliance
+does not rise because the model got better. It rises when evidence, verification,
+constraints, authorization, and accountability rise together and in proportion to
+what is at stake. A system that improves its benchmark score has not thereby earned
+a higher tier, and a system that has implemented I8--I19 has not thereby earned
+Tier~5.
+
+Two boundaries are worth marking explicitly, because they are where programmes
+drift. The step from Tier~2 to Tier~3 is the step at which the institution rather
+than the user assumes the verification duty, and it requires everything in
+Table~\ref{tab:invariants-system}; systems are frequently described as Tier~3 while
+implementing Tier~2. And the step from Tier~3 to Tier~4 is the step from assertion
+to action, at which reversibility and blast radius become first-order design
+questions rather than operational details.

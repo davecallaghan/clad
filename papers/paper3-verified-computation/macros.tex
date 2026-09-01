@@ -1,0 +1,34 @@
+% Operator macros for Paper 3.
+%
+% INDEPENDENT COPY.  Papers 1-3 each carry their own macros.tex; nothing is
+% shared.  If you rename an operator, grep the sibling paper directories.
+%
+% \newcommand (not \providecommand) is deliberate: a name collision with a
+% package should fail the build loudly, not resolve to someone else's macro.
+
+% --- Computation ---------------------------------------------------------
+\newcommand{\CorrectlyComputed}      {\operatorname{CorrectlyComputed}}
+\newcommand{\EfficientlyComputable}  {\operatorname{EfficientlyComputable}}
+\newcommand{\Explicit}               {\operatorname{Explicit}}
+\newcommand{\Result}                 {\operatorname{Result}}
+\newcommand{\Specifies}              {\operatorname{Specifies}}
+\newcommand{\VerifiedExecution}      {\operatorname{VerifiedExecution}}
+
+% --- Warrant -------------------------------------------------------------
+\newcommand{\Authorized}     {\operatorname{Authorized}}
+\newcommand{\CompWarranted}  {\operatorname{CompWarranted}}
+\newcommand{\Warranted}      {\operatorname{Warranted}}
+
+% --- Evidence ------------------------------------------------------------
+\newcommand{\Authentic}  {\operatorname{Authentic}}
+\newcommand{\Supports}   {\operatorname{Supports}}
+\newcommand{\Traceable}  {\operatorname{Traceable}}
+
+% --- Validity ------------------------------------------------------------
+\newcommand{\AdequateModel}        {\operatorname{AdequateModel}}
+\newcommand{\AuthenticInputs}      {\operatorname{AuthenticInputs}}
+\newcommand{\ValidInterpretation}  {\operatorname{ValidInterpretation}}
+
+% --- Context -------------------------------------------------------------
+\newcommand{\Resolved}  {\operatorname{Resolved}}
+\newcommand{\True}      {\operatorname{True}}

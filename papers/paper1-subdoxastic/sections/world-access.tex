@@ -1,0 +1,47 @@
+% !TEX root = ../main.tex
+\section{World Access and the Limits of Training Exposure}
+\label{sec:world-access}
+
+Condition (2) of Definition~\ref{def:grounding} may look like an unnecessary
+strengthening. If a claim appears in the training corpus, is that not already
+grounding enough? It is not, and the reason is worth stating separately, because
+the assumption that it is underwrites a good deal of confident practice.
+
+Knowledge of contingent facts depends on an appropriate relation to evidence. A
+model contains statistical traces of reports about the world, but training
+exposure is not present evidentiary access. Writing $\TrainedOn(M, E)$ for the
+relation that $M$ was trained on $E$, the following entailments all fail:
+\begin{align}
+  \TrainedOn(M, E) &\nentails \Authentic(E), \label{eq:not-authentic}\\
+  \TrainedOn(M, E) &\nentails \Current(E, \tau), \label{eq:not-current}\\
+  \TrainedOn(M, E) &\nentails \Applicable(E, j, u), \label{eq:not-applicable}\\
+  \TrainedOn(M, E) &\nentails \Supports(E, \phi, c), \label{eq:not-supports}\\
+  \TrainedOn(M, E) &\nentails \Traceable(E). \label{eq:not-traceable}
+\end{align}
+
+The first three are the substance of Section~\ref{sec:misapplied} restated at the
+level of the corpus: a corpus is a snapshot, and a snapshot has a date, a
+provenance, and a scope. The fourth is the point of
+Section~\ref{sec:grounding-operator}: containing text that mentions $\phi$ is not
+the same as containing evidence that favours $\phi$ for the decision at hand.
+
+The fifth deserves emphasis, because it is where the engineering consequence
+bites hardest. Training data influences parameter values. Parameter influence is
+not an audit trail. It does not identify the particular source, edition,
+jurisdiction, or effective date on which a given output should be relied
+upon---and in a regulated setting, that identification is not a nice-to-have but
+the thing being asked for. When a decision is questioned two years later, the
+question is not whether the model was trained on good data. It is which document,
+in which version, as of which date, supported this specific claim. A model that
+has absorbed excellent sources and cannot say which one it used has not supplied
+the answer.
+
+This is the second and independent route to the conclusion of
+Section~\ref{sec:measurement}. There, the argument was that the hallucination
+rate is estimable only where the evidential base is explicit at inference time.
+Here, the argument is that reconstructability requires the same thing, for
+reasons that have nothing to do with measurement and everything to do with
+accountability. Both converge on an architecture in which the evidence supporting
+a claim is identified, versioned, and resolved to a context at the point of
+assertion. Section~\ref{sec:warrant} sketches what that architecture has to
+deliver; developing it is the business of a companion paper.

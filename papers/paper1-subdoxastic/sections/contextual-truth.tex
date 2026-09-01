@@ -1,0 +1,71 @@
+% !TEX root = ../main.tex
+\section{Contextual Truth and Illicit Universalization}
+\label{sec:contextual-truth}
+
+Before defining the grounding operator I need one more piece of apparatus, and
+it is the piece that practitioners in regulated domains will recognise first. It
+concerns truth rather than assertion, and it is what forces the context index
+that Section~\ref{sec:grounding} builds into $\Grd_M$.
+
+Many propositions that look simple in natural language are incomplete until
+their governing context is fixed. In regulated, clinical, legal, and financial
+settings, truth is routinely relative to jurisdiction, time, purpose, and the
+facts of a particular matter. Accordingly the truth condition for a practical
+proposition should be indexed:
+\[
+  \True(\phi \mid j, \tau, u, f),
+\]
+where $j$ is jurisdiction, $\tau$ time, $u$ intended use, and $f$ the relevant
+facts. I will write $c = (j, \tau, u, f)$ for the resulting practical context and
+use $\True(\phi \mid c)$ where the components need not be displayed.
+
+A proposition concerning legal permissibility, clinical appropriateness,
+accounting treatment, or standard of care can change truth value when any
+component changes. A claim about an approved indication may be true in one
+jurisdiction and false in another. A claim true under a prior regulation may be
+false after amendment. A claim appropriate for one patient population may be
+inappropriate for another. Nothing here is exotic; it is the ordinary condition
+of consequential work.
+
+The failure mode this creates is not primarily factual inaccuracy. It is
+\emph{unresolved reference}. A system may produce a sentence with apparent
+propositional form while leaving its decisive parameters unspecified. Ask whether
+something is approved, or compliant, or permitted, and the question as posed
+typically leaves open the jurisdiction, the effective date, the population, the
+governing rule, the intended action, and the risk tolerance. Let
+\[
+  \Resolved(\phi, c)
+\]
+mean that the material context required to interpret $\phi$ has been fixed. Then
+a consequential claim should not be treated as fully evaluable unless its context
+is resolved:
+\[
+  \Evaluable(\phi, c) \Rightarrow \Resolved(\phi, c).
+\]
+
+Failure to resolve creates what I will call \emph{illicit universalization}: the
+error of treating a proposition conditionally true in one context as true
+simpliciter. Formally, the entailment that fails is
+\[
+  \True(\phi \mid j, \tau, u, f)
+  \nentails
+  \forall j' \forall \tau' \forall u' \forall f'\,
+  \True(\phi \mid j', \tau', u', f').
+\]
+In prose: the truth of a proposition under one specified context does not entail
+its truth across all contexts. Note the direction of the claim. It is not that
+differing contexts \emph{guarantee} differing truth values---a proposition may
+well be true under both---but that context-relative truth licenses no
+generalisation. The weaker claim is the one that does the work, and the stronger
+one is false.
+
+This bears on the argument of Sections~\ref{sec:output-operator}
+and~\ref{sec:hyperintensionality} in a way worth making explicit. Illicit
+universalization is what one should expect from a hyperintensional operator
+computed over formulations. A formulation carries no index; the practical context
+that would make its content evaluable is not part of the string, and there is no
+mechanism whose function is to notice that it is missing. A system that
+represented propositions would face the question of which proposition an
+underspecified query expresses. A system that operates on formulations does not
+face it, and so produces a confident answer to a question that has not yet been
+asked.

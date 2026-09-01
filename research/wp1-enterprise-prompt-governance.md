@@ -1,8 +1,6 @@
 # Chapter 2 — Responsible Prompting (EPG)
 
-**Part II · The Three Control Layers**
-
-Chapter 1 built the model: five control surfaces, a governance component as the tuple `g = (S, C, E, A, R)`, and an algebra for composing components. Part II instantiates that model one surface at a time. We begin where an enterprise has the most control — the prompt, the instructions sent to a model before it ever runs. This is the surface governed by Enterprise Prompt Governance (EPG), the component `g_EPG`.
+Chapter 1 built the model: five control surfaces, a governance component as the tuple `g = (S, C, E, A, R)`, and an algebra for composing components. Part IV instantiates that model one surface at a time. We begin where an enterprise has the most control — the prompt, the instructions sent to a model before it ever runs. This is the surface governed by Enterprise Prompt Governance (EPG), the component `g_EPG`.
 
 By the end of the chapter you will be able to:
 
@@ -49,9 +47,9 @@ EPG is one component of the Clad framework, a multi-layered framework for govern
 
 **S_prompt (EPG, this chapter):** The instructions, context, and guidance provided to AI models that shape their behavior. Prompt governance establishes what an AI system should do before it acts.
 
-**S_output (ROC, Chapter 3):** The content produced by AI models before delivery to end users or downstream systems. Output governance ensures what an AI system produces meets quality, safety, and compliance requirements.
+**S_output (ROC):** The content produced by AI models before delivery to end users or downstream systems. Output governance ensures what an AI system produces meets quality, safety, and compliance requirements.
 
-**S_input and S_config (MDR, Chapter 4):** User input validation and model selection/configuration governance, plus cross-component monitoring that detects when AI systems deviate from expected behavior patterns. (Chapter 1 decomposes this into two formal surfaces — S_input for user input and S_config for model selection and inference parameters — but operationally they are managed by a single component.)
+**S_input and S_config (MDR):** User input validation and model selection/configuration governance, plus cross-component monitoring that detects when AI systems deviate from expected behavior patterns. (Chapter 1 decomposes this into two formal surfaces — S_input for user input and S_config for model selection and inference parameters — but operationally they are managed by a single component.)
 
 These components interact but remain independently valuable. An enterprise may deploy EPG to govern prompt development while output controls remain under construction. A financial services firm might implement runtime output controls immediately to prevent unauthorized trading recommendations while building out comprehensive prompt governance over subsequent quarters. This independence-with-integration property is formally proven in the meta-framework: each component provides local guarantees that compose into system-wide guarantees when multiple components are deployed together.
 
@@ -89,9 +87,9 @@ This principle reflects operational reality. When a customer service representat
 
 EPG's three-level hierarchy—enterprise, department, project—reflects this execution model. The hierarchy exists for governance composition, not execution routing. Constraints flow downward through the hierarchy during prompt development. Execution flows upward through the hierarchy during audit reporting. But the actual execution event occurs at project level.
 
-Formally, for any prompt p that executes in production:
+Formally, for any prompt x that executes in production:
 
-    ∀ p ∈ P_executed : level(p) = project
+    ∀ x ∈ X_executed : level(x) = project
 
 This property has significant architectural implications. EPG does not maintain enterprise-level or department-level execution environments. Those levels exist as constraint definition layers, not execution layers. When a project team deploys a prompt to production, they deploy a project-level artifact that has been validated against the complete constraint set inherited from department and enterprise levels. But the deployment itself is scoped to the project.
 
@@ -115,7 +113,7 @@ EPG provides equivalent capabilities for prompt governance:
 
 Formally, EPG guarantees audit completeness, not universal compliance:
 
-    ∀ p ∈ P_executed : ∃ evaluation_record(p, C_effective, timestamp, result)
+    ∀ x ∈ X_executed : ∃ evaluation_record(x, C_effective, timestamp, result)
 
 Every executed prompt has a corresponding evaluation record showing which constraints were in effect, when the evaluation occurred, and whether the prompt satisfied those constraints. The system does not guarantee that result = true for all prompts. It guarantees that the evaluation occurred and the result is recorded.
 
@@ -752,7 +750,7 @@ Responsibilities:
 - Approve changes to domain definitions and scope boundaries
 - Review and approve residual gaps for Critical-tier decompositions (§5.6)
 
-**Governance risk.** The cross-domain governance body can centrally override domain isolation by redefining domain scopes. This concentration of authority is itself a governance risk. Compensating controls include: scope redefinition requires notification to all affected domains plus a minimum 5-business-day review period; scope changes are subject to audit integrity properties (AI1-AI4); the body's composition must include diversity across reporting lines with no single business unit holding a majority.
+**Governance risk.** The cross-domain governance body can centrally override domain isolation by redefining domain scopes. This concentration of authority is itself a governance risk. Compensating controls include: scope redefinition requires notification to all affected domains plus a minimum 5-business-day review period; scope changes are subject to audit integrity properties (AI1-AI6); the body's composition must include diversity across reporting lines with no single business unit holding a majority.
 
 The Scope Isolation theorem in Appendix A.1.13 holds relative to fixed domain definitions and explicitly does not limit the governance body's scope-redefinition authority.
 
@@ -885,7 +883,7 @@ EPG provides governance of the prompt surface. This section states explicitly wh
 
 **What EPG does not guarantee:**
 
-- Output correctness: EPG governs prompts, not model outputs. A governed prompt can still produce non-compliant output due to model behavior, user input, or inference configuration. Output governance requires ROC (Chapter 3).
+- Output correctness: EPG governs prompts, not model outputs. A governed prompt can still produce non-compliant output due to model behavior, user input, or inference configuration. Output governance requires runtime output controls.
 - Content accuracy: EPG ensures prompts include required elements and exclude prohibited elements. It does not ensure the model's response is factually correct.
 - Model behavior: EPG cannot prevent hallucination, jailbreaking, or emergent model behavior. These require model-level and output-level controls.
 
@@ -898,7 +896,7 @@ EPG provides governance of the prompt surface. This section states explicitly wh
 
 The formal model uses a restricted deontic fragment — atomic properties with two operators (O and F) — that does not capture all real-world governance complexity. This is a deliberate design choice for tractability, not an oversight. The restricted fragment enables complete contradiction detection, a property that would be undecidable in a richer logic.
 
-EPG is one component of a complete governance solution. It must be complemented by runtime output controls (ROC, Chapter 3), monitoring and response (MDR, Chapter 4), and organizational controls (training, role-based access management, change management processes) to achieve comprehensive AI governance.
+EPG is one component of a complete governance solution. It must be complemented by runtime output controls (ROC), monitoring and response (MDR), and organizational controls (training, role-based access management, change management processes) to achieve comprehensive AI governance.
 
 ---
 
@@ -907,6 +905,6 @@ EPG is one component of a complete governance solution. It must be complemented 
 - EPG governs S_prompt by defining the *boundaries* teams build within, not the prompts themselves. Constraints flow enterprise ≻ department ≻ project, each level tightening but never loosening what upstream established (§3).
 - Semantic constraints become auditable by mandatory decomposition into mechanical checks plus procedural attestation (§5); conflicts resolve by a defined precedence (§6); authority is bounded laterally so no domain can weaken another's protections (§7).
 - As a component, EPG is `g_EPG` with hard requirements `R_hard = ∅` — it is independently deployable and delivers its full guarantees alone, while composing cleanly with ROC and MDR (§8).
-- EPG governs the prompt, not the output. A compliant prompt can still yield a non-compliant output, because models are stochastic. That gap is exactly what Chapter 3 addresses.
+- EPG governs the prompt, not the output. A compliant prompt can still yield a non-compliant output, because models are stochastic. That gap is exactly what runtime output controls address.
 
-The formal model, worked examples, and constraint-library template for EPG are collected in Appendix A, Appendix B, and Appendix C.
+The formal model, worked examples, and constraint-library template for EPG are collected in the formal-model appendix, the worked-examples appendix, and the templates appendix.

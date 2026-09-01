@@ -1,0 +1,102 @@
+% !TEX root = ../main.tex
+\chapter{A Validation Benchmark: Corpus and Case Design}
+\label{sec:benchmark}
+
+The chapter on limitations concedes that the framework's claims are unmeasured. This
+appendix specifies the corpus and case design that would measure them, at the level of
+detail needed for someone else to build it. The sources below were checked for the
+properties the design requires; the design has not been run, and no results are reported
+anywhere in this book.
+
+\section{Why a real corpus rather than a synthetic one}
+
+A synthetic corpus would let the author construct both the cases and the notion of
+applicability they test, which is precisely the circularity that would make the results
+worthless. The design therefore uses public regulatory sources that supply the ground
+truth independently: supersession flagged by the issuing authority, version histories
+published by the registry, and divergent indications recorded by two regulators.
+
+\section{Sources}
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{5.4cm}>{\raggedright\arraybackslash}p{5.6cm}@{}}
+\toprule
+Source & Supplies & Verified property \\
+\midrule
+openFDA drug label API
+  & Current US labels: indications, dosage, population sections, with
+    \texttt{set\_id}, \texttt{version}, \texttt{effective\_time}
+  & Serves \emph{only} the current version per \texttt{set\_id}; superseded versions are
+    not retrievable \\
+\addlinespace
+DailyMed SPL services
+  & Per-label version history and superseded label text
+  & History endpoint returns all versions with publication dates; superseded text is
+    retrievable by version \\
+\addlinespace
+EMA medicines register
+  & EU authorized medicines: therapeutic indication, active substance, revision number,
+    authorization, withdrawal, suspension dates
+  & Register is of \emph{centrally} authorized medicines, so coverage skews toward
+    biologics and specialist products \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The division of labor between the first two is forced rather than chosen: openFDA
+supplies structured current metadata and cannot supply history, so the valid-time and
+supersession families depend on DailyMed.
+
+\section{Case families}
+
+\begin{enumerate}
+  \item \textbf{Valid time.} A question whose correct answer differs by effective date,
+        against a label with multiple versions. Ground truth is the version history.
+  \item \textbf{Supersession.} A question answerable from a superseded label version,
+        where the superseding version differs. Ground truth is the registry's own
+        supersession record; the EU side additionally supplies withdrawal, revocation,
+        and suspension dates.
+  \item \textbf{Transaction versus valid time.} Cases where the SPL effective time and
+        the publication date differ, so that a corpus current to one is not current to
+        the other. This family exists because the two are separate recorded fields
+        rather than a distinction the author imposed.
+  \item \textbf{Population.} A question about a paediatric case answered from adult
+        dosing or indication text. Ground truth is the label's own age-based
+        distinction.
+  \item \textbf{Indication applicability.} A question about an indication the label does
+        not carry --- off-label use. Authentic, authoritative, correctly citable
+        evidence that does not govern the case, which is
+        \textsc{Misapplied} in the sense of Section~\ref{sec:cell-v}.
+  \item \textbf{Jurisdiction.} A question answered from a US label where the EU
+        authorization for the same active substance carries a different indication, or
+        the reverse. Neither source governs the other's territory.
+\end{enumerate}
+
+\paragraph{A seventh family that may not be sourceable.} Conflicting authority of equal
+standing requires two sources that diverge and that the institution's precedence order
+does not separate. Same-substance labels from different manufacturers do diverge
+substantially, but the divergence appears to track prescription versus
+over-the-counter status --- a distinction precedence \emph{can} resolve, which makes it
+the resolved case rather than the contested one. Whether genuine equal-standing conflict
+is available within a single regulatory class is an open question, and if the data does
+not supply it the family should be reported as unsourceable rather than constructed.
+
+\section{Configurations and measures}
+
+Three configurations over the same corpus: generation without retrieval; retrieval by
+semantic similarity alone; and governed retrieval with applicability filtering, coverage
+checking, and the defeater search of Section~\ref{sec:governed-rag}. Measures as
+specified in Section~\ref{sec:evaluation}: accuracy, citation faithfulness, the
+ungrounded assertion rate decomposed by cause, the misapplied rate, abstention rate with
+coverage, form divergence, and repeatability. The prediction the framework makes is
+specific and falsifiable: the three configurations should separate sharply on the
+ungrounded and misapplied rates while separating much less, or not at all, on accuracy
+and citation faithfulness.
+
+\section{Reuse conditions}
+
+US federal sources are public domain as works of the United States government. The EMA
+download page states no license or reuse terms, and that should be resolved before
+publishing derived data. Both APIs are rate-limited; the fetchers written for this design
+cache every response and throttle below the documented limits.

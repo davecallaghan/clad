@@ -1,0 +1,85 @@
+% !TEX root = ../main.tex
+\chapter{Conclusion}
+\label{ch:conclusion}
+\label{sec:conclusion}
+
+The book makes two connected claims and draws one practical conclusion.
+
+The first claim is a redefinition. Hallucination, as ordinarily defined, is a false
+or fabricated output, and that definition is wrong in both directions. It convicts a
+system that faithfully reports an applicable source which happens to be
+wrong---an error, whose fault lies in the evidence---and it acquits a system that
+asserts something true while resting on nothing, which is the same defect as
+fabrication with a luckier outcome. Defined instead as ungrounded assertion, with no
+truth condition, hallucination becomes a property of the relation between an
+assertion and an evidential base. That is not a terminological preference. The
+truth-conditional definition can only be evaluated against reference answers, offline,
+on questions already answered; the redefinition can be evaluated from the system's
+own execution trace, at the point of assertion, and therefore used as a gate.
+
+From the redefinition, what a system can assert falls into five categories, not two. Crossing
+grounding against truth separates a right answer reached for a reason from a right
+answer reached for none, and a faithful report of a bad source from a fabrication.
+Requiring grounding to be applicable at a resolved context $c = \{j, t_v, f, u\}$
+separates a third case from both: an assertion resting on evidence that is
+authentic, versioned, and authoritative, and that does not govern the decision at
+hand. These five categories reduce to three remedies with three different owners,
+and a pooled hallucination rate identifies none of them.
+
+The failures are structural. The architecture maps token sequences to
+distributions over token sequences, with no stage at which two encodings of one
+claim are brought to a common form. The pretraining objective contains no term that
+is a function of truth, evidence, provenance, or context, and none minimized by
+declining to answer. In-context learning makes the prompt the entire control
+surface, and the prompt is a string. Preference optimization fits a reward to
+comparisons between outputs, so grounding is not visible to it, and the pressure
+runs toward assertion and away from abstention. And there is a statistical floor: a
+calibrated model must assert some rare facts incorrectly, and enterprise questions
+live where facts are rare.
+
+The second claim---and it is the step that decides what to measure---is that there
+is no canonical form. Nothing constructs the map to be constant on classes of materially equivalent
+requests, and nothing in the objective penalizes divergence between them. So a
+passing test case establishes that one string produced an acceptable output on one
+occasion, and not that a materially equivalent string will, nor that the same string
+will later in the same session. The equivalence classes are unbounded, so coverage
+is not a remedy; the failures are silent, so nothing alerts; and repeatability fails
+too, so the guarantee does not securely cover even the tested case. Semantic
+normalization is not the fix, because material equivalence is context-sensitive,
+depends on domain ontology, and turns on distinctions that regulated language uses
+deliberately. Accuracy is a property of a sample, and the sample does not generalize
+in the direction validation needs of it. A model's latent representation is
+therefore not a candidate system of record: it has no stable identity, no
+inspectable normalized form, no declared dependencies, and no reproducible
+derivation.
+
+Grounding does not have this defect. Checking correctness requires knowing
+the answer, so it can happen only offline, on questions nobody needed to ask.
+Checking grounding requires knowing what evidence the system used and whether it
+governs the case---both properties of the system's own execution, available at
+runtime, per assertion, on live traffic. That is the difference between a metric and
+a gate, and blocking, escalating, qualifying, and logging a reconstructable basis all
+require a gate. Proposition~\ref{prop:independence} shows that neither figure identifies the other: no accuracy figure constrains the rate at which a
+system asserts beyond its evidence, and an intervention that raises accuracy by
+encouraging confident guessing lowers that rate while improving the headline number.
+
+The practical conclusion is a requirement on architecture rather than a
+recommendation about metrics. The grounding rate is well defined for any system and
+measurable only where the evidential base is explicit at inference
+time---identified, versioned, scope-filtered, and resolved to a context, at claim
+granularity, with verification of the support relation and an abstention path that
+is a branch rather than a sentence. The nineteen invariants of
+Section~\ref{sec:invariants} separate what the model will not supply from what the
+system must, and the division of that work across data, policy, and platform
+functions is itself a principal cause of failure: the operational unit of failure is
+the ungoverned handoff, and the grounding rate is the right cross-functional metric
+precisely because no single function can move it alone.
+
+None of this is an argument against using these systems. I build them, and they
+work. It is an argument about what to measure, in what order, and what a passing
+test entitles an organization to conclude. A language model may be useful, fluent,
+and often accurate. But in a regulated enterprise, a proposition becomes fit for
+consequential reliance only when its context is resolved, its evidence is authentic
+and applicable, its support relation is verified, its production path is
+reconstructable, and its use is authorized within an accountable institutional
+process.

@@ -1,0 +1,73 @@
+% =====================================================================
+%  Paper 3 of three.  arXiv-ready preprint.  SCAFFOLD -- not yet drafted.
+%
+%  Build:  make          (or just save -- LaTeX Workshop builds on save)
+%  Ship:   make arxiv    (produces arxiv-main.tar.gz)
+%
+%  This directory is self-contained: it shares no files with the other two
+%  papers.  macros.tex is an independent copy, so notation is kept in step
+%  across the three papers BY HAND.  If you rename an operator here, grep the
+%  sibling directories for it.
+% =====================================================================
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\graphicspath{{figs/}}
+\usepackage{booktabs}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}          % before hyperref: the blue!50!black mixing
+                              % syntax below is xcolor-only, and hyperref
+                              % otherwise loads the older color package.
+\usepackage{hyperref}        % load last
+\hypersetup{
+  colorlinks=true, linkcolor=blue!50!black,
+  citecolor=blue!50!black, urlcolor=blue!50!black,
+  pdftitle={Verified Computation and Computational Warrant},
+  pdfauthor={David Callaghan}
+}
+
+\emergencystretch=2em
+
+\input{macros}
+
+\title{Verified Computation and Computational Warrant:\\ Assurance Cases for
+       Classical and Quantum Decision Systems}
+\author{%
+  David Callaghan\\
+  \texttt{mr.david.callaghan@gmail.com}
+}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO(abstract): four to six sentences -- problem, contribution, result.
+% arXiv reproduces this as plain text in the listing, so avoid custom macros
+% and \cite here even though they would compile.
+\textbf{Draft scaffold.} Abstract not yet written.
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/notation}
+\input{sections/correctness-truth-warrant}
+\input{sections/warrant-schema}
+\input{sections/layers}
+\input{sections/quantum}
+\input{sections/auditability}
+\input{sections/relation-paper2}
+\input{sections/conclusion}
+
+% --- Bibliography ----------------------------------------------------
+% Not enabled yet: bibtex errors on a document with zero \cite commands.
+% refs.bib carries six verified entries forward from the earlier draft.
+%
+% \bibliographystyle{plainnat}
+% \bibliography{refs}
+
+\end{document}

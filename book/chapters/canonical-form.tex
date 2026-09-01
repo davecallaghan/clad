@@ -1,0 +1,306 @@
+% !TEX root = ../main.tex
+\chapter{Form Invariance and Repeatability Both Fail}
+\label{ch:canonical-form}
+\label{sec:canonical-form}
+
+One qualification belongs in the first paragraph, because the heading is stronger than
+what follows and the difference is the point. Training on paraphrase-rich text does
+apply pressure toward treating equivalent formulations alike, and embeddings do place
+many paraphrases near one another. What is absent is not similarity; it is a
+\emph{guarantee}---an enforced, inspectable, versionable canonical form of the kind
+every other component in the stack supplies. A learned tendency and an enforced
+invariant differ in exactly the way that matters for validation, and the rest of this
+section is about that difference.
+
+One property does most of the damage, and it is worth naming before it is formalized.
+Call it \emph{form invariance}: materially equivalent requests should produce equivalent
+decision-relevant outcomes. It is the property every other component in an enterprise
+stack supplies without being asked, it is the property this architecture does not supply,
+and its absence is what breaks validation. It is stated as
+invariant I1 in Chapter~\ref{ch:invariants}, where the full set is tabulated and
+where the numbering used throughout is defined; this section explains why it fails, what follows for a
+validation program, and why the obvious remedy does not work. The failure has a
+one-sentence statement: the system is keyed on the surface form of its input, not on the
+content.
+
+\section{The map and what it does not respect}
+
+Section~\ref{sec:what-computed} established the signature: $S$ maps
+$\mathcal{V}^{*}$ to distributions over $\mathcal{V}^{*}$. The domain is token
+sequences.
+
+Now consider the equivalence relation that validation cares about. Write
+$x \sim_c x'$ when $x$ and $x'$ encode \emph{materially equivalent} requests under
+the same resolved context $c$---same question, same governing frame, same material
+facts, same intended use. This relation partitions the input space. What a test
+suite needs is that decision-relevant behavior be constant on those classes:
+\begin{equation}
+  x \sim_c x' \;\Longrightarrow\; \text{EquivalentDecisionRelevantOutcome}(x, x', c).
+  \label{eq:form-invariance}
+\end{equation}
+
+Two things about \eqref{eq:form-invariance} are deliberate. It is stated over
+\emph{material} equivalence under a resolved context, not over semantic
+equivalence in the abstract, because the equivalence that matters is domain- and
+context-relative. And it requires equivalent decision-relevant \emph{outcomes},
+not identical text. Nobody needs the system to produce the same sentence twice.
+What an institution needs is that materially equivalent requests not yield
+incompatible assertions, incompatible evidence bases, or incompatible
+decision-relevant conclusions without an identifiable reason.
+
+Nothing in the architecture delivers \eqref{eq:form-invariance}. There is no
+normalization pass, no canonical form, no quotient map. By
+Section~\ref{sec:what-computed} the tokenizer is lexical, the embedding is of
+tokens, and no later stage brings two encodings of one claim to a common form. Two
+members of a $\sim_c$ class are two different points in $\mathbb{R}^{n \times d}$
+with different distributional histories, and \eqref{eq:objective} contains no term
+penalizing divergence between them. The map is free to send them anywhere, and
+sometimes does.
+
+\section{Every other component in the stack does better}
+
+The failure is easy to overlook because it is unlike anything else in an enterprise
+architecture.
+
+\begin{itemize}
+  \item A database normalizes before it compares. Results do not depend on whether
+        a predicate was written \texttt{NOT (a OR b)} or \texttt{(NOT a) AND (NOT
+        b)}; the planner canonicalizes, and equivalence is decidable in the
+        algebra. The comparison should not be overdrawn: equivalence for the full
+        query language is not decidable either, and floating-point aggregation can
+        differ across parallel plans. What a database supplies is a canonical form
+        for the fragment that matters and a documented statement of where determinism
+        is and is not guaranteed. Neither is available here.
+  \item A compiler canonicalizes before it optimizes. \texttt{x*2} and
+        \texttt{x+x} converge.
+  \item A cache keyed correctly hashes normalized content, not raw bytes. Keying a
+        cache on the unnormalized string is a familiar bug, and its symptom is
+        familiar too: identical requests, different answers, no error anywhere.
+\end{itemize}
+
+The last case is the closest, and it is barely an analogy. The system behaves like a
+cache keyed on the raw string: materially identical requests are distinct keys, and
+nothing in the pipeline would notice.
+
+The deeper version of the point is architectural, and it is the one that should
+concern anyone who has built a system of record. A canonical record requires stable
+identity, a normalized or governed representation, declared dependencies, lineage,
+and reproducible derivation. A model's latent representation has none of these
+properties: it has no stable identity for an entity across paraphrases, no
+inspectable normalized form, no declared dependency on a source, and no reproducible
+derivation path from evidence to output. It is therefore not a candidate system of
+record, whatever its accuracy. Few architects would assert that it is; the error is
+subtler and commoner, and consists in treating model \emph{output} as authoritative
+without requiring the lineage that any other authoritative source in the enterprise
+would have to supply.
+
+Insofar as materially equivalent formulations \emph{are} treated alike---and often
+they are---that is a contingent achievement of training coverage. The training
+distribution contained many paraphrase pairs, so the map is approximately constant
+on well-covered classes. This degrades exactly where prediction says it should: as
+formulations become rarer, longer, more domain-specific, more like the queries a
+specialist actually asks. The behavior is best where the guarantee is needed
+least.
+
+\section{What the measurements show}
+
+The prediction is testable and has been tested.
+
+The cleanest case is format sensitivity. Holding semantic content fixed
+and varying only formatting choices---separators, casing, spacing, the shape of an
+enumeration---produces large spreads in task performance \citep{sclar2024}. This is
+the result to show a sceptical colleague: the content of the request is unchanged by
+construction, the variations are choices a prompt author makes arbitrarily and does
+not record, and behavior moves anyway. Aggregate performance cannot shift unless
+individual answers changed, so a spread across formats is a lower bound on the rate
+at which materially equivalent requests receive different treatment.
+
+Framing sensitivity gives the direction, and is the second clean case. When a prompt signals what the user
+would prefer to hear, assertion shifts toward it \citep{sharma2024}. The content
+of the question is unchanged; the assertion is not.
+
+Consistency under paraphrase, measured directly, falls well below what a
+content-directed process would produce \citep{elazar2021}, and models will
+contradict themselves within a single generation \citep{mundler2024}. The second
+of these bears on repeatability as well as on form invariance: the instability is not only across sessions
+and phrasings but inside one continuous output, where any notion of a maintained
+position would have to apply if it applied anywhere.
+
+\section{Why ``train a normalizer'' is not the answer}
+\label{sec:normalizer}
+
+The natural engineering response is to canonicalize the input: put a normalizer in
+front of the model and the problem goes away. It does not, for five reasons that
+compound.
+
+\paragraph{Material equivalence is context-sensitive.} Whether two requests are
+equivalent depends on $c$. ``Is this reportable?'' asked of two transactions
+identical but for jurisdiction are not materially equivalent requests, and no
+context-free normalizer can know that.
+
+\paragraph{It depends on domain ontology.} Deciding that two phrasings pick out the
+same product class, the same patient population, or the same instrument type
+requires the domain's own identity conditions. That is ontology work, not string
+work.
+
+\paragraph{Paraphrases carry material distinctions.} In regulated language, surface
+differences are frequently the point. ``Indicated for'' and ``may be used in'' are
+not paraphrases. ``Shall'' and ``should'' are not paraphrases. A normalizer
+aggressive enough to collapse genuine paraphrases will collapse these too, and the
+failure will be silent and consequential.
+
+\paragraph{General semantic equivalence is not reliably decidable.} Unlike
+relational algebra, natural language offers no decision procedure for equivalence,
+and any learned approximation inherits the properties of the thing it approximates,
+including sensitivity to form.
+
+\paragraph{A latent representation is not an inspectable canonical record.} Even a
+normalizer that worked would produce an internal representation that no reviewer
+can read, version, or diff---which fails the requirement it was introduced to
+satisfy.
+
+The conclusion is not that normalization is useless. Structured intake, controlled
+vocabularies, and typed request objects all help, substantially, and belong in the
+architecture. The conclusion is that the remedy is not \emph{semantic}
+normalization of free text. It is explicit context binding, structured domain
+representations where they can be built, governed source corpora, deterministic or
+inspectable policy controls where the decision permits them, and a preserved
+evidence-and-policy path for every consequential assertion. That is what governed
+retrieval is for.
+
+\section{The validation consequence}
+\label{sec:validation-consequence}
+
+Now the argument this book exists to make. State the validation inference
+explicitly and it fails visibly.
+
+Let $T = \{(x_1, a_1), \ldots, (x_n, a_n)\}$ be a test suite: inputs paired with
+acceptable outputs. Suppose $S$ passes---for each $i$, $S(x_i)$ is acceptable. The
+inference validation needs is:
+
+\begin{quote}
+For every $x$ that a user might actually send, if $x \sim x_i$ for some tested
+$x_i$, then $S(x)$ is acceptable.
+\end{quote}
+
+That inference is valid only if \eqref{eq:signature} is constant on $\sim$-classes,
+which is form
+invariance. Form invariance fails. So the inference is invalid, and the test suite
+does not license the conclusion drawn from it.
+
+Three aggravating features, each of which an engineer will recognize as worse than
+the bare failure.
+
+\paragraph{The classes are unbounded.} You cannot enumerate the paraphrases of a
+question, so you cannot fix the problem by testing more members of each class.
+Coverage is not a strategy against an infinite equivalence class; the best you can
+do is sample it, which returns you to sampling.
+
+\paragraph{The failures are silent.} A form-invariance violation raises nothing. There is no
+exception, no warning, no anomaly in the logs. The system returns a fluent,
+well-formed, differently-wrong answer with the same confidence as the right one.
+Contrast a schema violation or a type error, which announce themselves.
+
+\section{The same failure, on a single input held fixed}
+\label{sec:repeatability-fails}
+
+Everything so far concerns \emph{different} inputs that mean the same thing. The
+second failure is worse, because it does not need two inputs.
+
+Repeatability --- invariant I7 --- is the property that the same request, in the same
+session, yields the same assertion. It does not hold, and by
+Section~\ref{sec:sampling} it cannot be assumed to: the output is a draw, and the
+sequence conditioned on grows as the session does, so the request that was tested and
+the request as it later arrives are not the same point in input space even when the
+characters are identical.
+
+The consequence is worth stating separately from the paraphrase argument, because it
+is a strictly stronger claim. Form invariance failing means a passing test does not
+\emph{extend} to materially identical requests --- the guarantee has a boundary, and
+the boundary is narrower than anyone assumed. Repeatability failing means the
+guarantee does not securely cover \emph{the string that was tested}. There is no
+boundary to find, because the test result was a statement about one draw and the
+next draw is a different event.
+
+For a validation program these compose badly. Enumerate more paraphrases and you
+address form invariance without touching repeatability. Re-run the same case a
+hundred times and you estimate a per-input distribution without learning anything
+about the neighboring inputs real users will send. Neither remedy reaches the other
+failure, and no amount of either produces the thing a deployment decision wants,
+which is a claim about behavior rather than about a sample of it.
+
+\section{Why this makes accuracy the wrong thing to certify}
+
+Put the two halves together.
+
+Accuracy is estimated by sampling: draw inputs, compare outputs to expected
+answers, report the proportion correct. The estimate is a statement about the
+distribution the inputs were drawn from. Using it to certify deployment requires
+that the estimate transfer to the inputs that will actually arrive---and the
+failure of form invariance is precisely the claim that it does not transfer across
+semantic
+equivalence, which is the dimension along which real inputs differ from test
+inputs.
+
+The conclusion should be stated carefully, because the strong form is indefensible and
+invites dismissal. Reference-based accuracy is not worthless and it does not establish
+nothing. It provides evidence \emph{conditional on} a specified evaluation
+distribution, task operationalization, prompt representation, model version, and serving
+configuration. Every empirical validation regime generalizes from finite samples under
+such conditions, and a classifier is in the same position with respect to distribution
+shift unless its input domain and robustness properties are bounded.
+
+The claim is narrower and it is about which conditions can be specified. In free-form
+consequential interaction, the prompt representation is chosen by the user and is not
+recorded; the equivalence class of materially identical requests is unbounded and cannot
+be enumerated; and the map is not constant on that class. So the conditions under which
+the accuracy estimate would transfer are not merely unmet but unstateable, and the
+generalization that broad consequential reliance requires is unavailable --- not because
+the measurement is wrong, but because what it is conditional on cannot be pinned down.
+The number is a correct measurement of how the system performed on those strings, and
+that is a smaller thing than it is usually taken for.
+
+Notice, finally, what this does to the cell-(ii) case of
+Section~\ref{sec:cell-ii}. A lucky assertion is one that would have been produced
+whatever the fact had been. Verifying it tells you about the draw, not the
+process. The failure of form invariance generalizes that observation from lucky assertions to
+\emph{all} assertions: any verified output tells you about the draw. Cell (ii) was
+the special case where the disconnection is total; form-invariance failure is the
+same disconnection showing up as instability across the input space, and
+non-repeatability is it showing up on a single input held fixed.
+
+That is the link between the two halves of this book. The taxonomy of
+Section~\ref{sec:taxonomy} says that a correct answer can be produced for no
+reason. This section says that even a correct answer produced for a good reason
+carries no guarantee of recurrence, because nothing holds the system to the
+content rather than the string. Both point at the same missing property, and the
+next section names it.
+
+\section{Why the two claims are one}
+\label{sec:unity}
+
+Section~\ref{sec:taxonomy} redefined hallucination as ungrounded assertion. This
+section argued that there is no canonical form, so a passing test establishes
+nothing about a materially equivalent input. The two are the same architectural
+fact seen from two sides, and it is worth saying how, because each makes the other
+consequential.
+
+Why do these systems hallucinate in the redefined sense? Because assertion
+probability is computed over formulations. A string can be made probable by surface
+statistics with no route through evidential support for its content, so assertion
+and evidence come apart---which is exactly $\neg\,\Grd_S(p \mid c)$ while
+$\Assert_S(p)$ holds. Ungrounded assertion is what the absence of a content-level
+representation looks like from the output side.
+
+And why does the absence of a canonical form matter, rather than being an
+interesting curiosity about paraphrase robustness? Because of what
+Section~\ref{sec:cell-ii} showed about a lucky assertion: verifying it tells you
+about the draw, not the process. Form-invariance failure generalizes that from
+lucky assertions to \emph{all} assertions. Any verified output tells you about the
+draw, because nothing holds the system to the content rather than the string. The
+lucky cell was the special case where the disconnection is total; form-invariance
+failure is the same disconnection showing up as instability across the input space.
+
+So the redefinition identifies the defect and the canonical-form argument explains
+why you cannot test your way out of it. Together they force one conclusion: the property to measure is not whether assertions turn
+out right, but whether they were grounded when made.

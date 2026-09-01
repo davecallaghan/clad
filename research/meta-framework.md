@@ -1,9 +1,16 @@
 # Chapter 1 — The Architecture of Assurance
 
-**Part I · Foundations**
-
 Every later chapter of this book is an instance of one idea developed here: that
-AI governance can be made *provable*. This chapter builds the foundation — the
+the *evidence* an AI system produces about its own governance can be made
+provable, even though its outputs cannot. The distinction is the whole point, and
+it is easy to lose. What follows proves properties of the audit record — that it
+is complete over the governed surfaces, that it is tamper-evident, that a missing
+interaction is detectable — conditional on a set of assumptions enumerated at the
+end of this chapter. It proves nothing about whether any particular output is
+compliant; the chapters on ungrounded assertion and canonical form explain why no
+such proof is available.
+
+This chapter builds the foundation — the
 axioms Clad rests on, the surfaces at which an interaction can be governed, the
 model of a governance component, and the algebra by which components compose.
 
@@ -22,7 +29,7 @@ Clad formalizes a governance boundary that makes risk, responsibility, and evide
 
 Clad’s architecture combines enforcement points, a Global Interaction Log to prevent undetectable bypasses, and tamper‑evident audit chains with independent signing and Supervisor‑mediated degraded records. Together these elements ensure that failures and deviations are visible and investigable, enabling traceability, root‑cause analysis, and remediation. The framework formalizes the residual‑risk reality: governance reduces but does not eliminate risk from stochastic model behavior and external unknowns, which must be documented, monitored, and mitigated with companion controls.
 
-This meta‑framework is the normative baseline for the component chapters that follow: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. The three components developed in Part II — prompt governance (Chapter 2), runtime output controls (Chapter 3), and monitoring, detection, and response (Chapter 4) — are each independently rigorous but derive their scope, interfaces, and composability properties from the model built here.
+This meta‑framework is the normative baseline for the component chapters that follow: implementers must map controls to the specified control surfaces, satisfy the architectural preconditions for composability, and adopt evidence formats that support independent verification and regulatory review. The three components developed in Part IV — Enterprise Prompt Governance (EPG), Runtime Output Controls (ROC), and Monitoring, Detection and Response (MDR) — are each independently rigorous but derive their scope, interfaces, and composability properties from the model built here. Those three abbreviations are used throughout the rest of the book: EPG governs the prompt before the model runs, ROC governs the output before it is delivered, and MDR watches the whole system over time.
 
 ---
 
@@ -35,13 +42,13 @@ The following axioms are accepted as true about the world in which this governan
 An AI interaction is described by the tuple:
 
 ```
-∀ i ∈ I : i = (p, u, m, θ, o)
+∀ i ∈ I : i = (x, u, M, θ, o)
 
 where:
-  p ∈ P   — the assembled prompt, including any retrieved context,
+  x ∈ X   — the assembled prompt, including any retrieved context,
              conversation history, and system instructions
   u ∈ U   — the user input that triggered the interaction
-  m ∈ M   — the model identifier and version (a specific artifact, not
+  M ∈ 𝓜   — the model identifier and version (a specific artifact, not
              an endpoint or family name)
   θ ∈ Θ   — the inference configuration: temperature, top-p, top-k,
              sampling parameters, tool availability, and any other
@@ -51,7 +58,7 @@ where:
 
 **Scope limitation:** This axiom models a single, non-agentic interaction turn. Multi-turn conversations are modeled as ordered sequences of interactions where each p_k includes relevant prior context from interactions i_1 through i_{k-1}. Agentic workflows (tool use, multi-model chains) are modeled as directed acyclic graphs of interactions where one interaction's output feeds into another's prompt. These extensions preserve the per-interaction governance properties but introduce additional composition concerns addressed in §12.
 
-**Governance scope claim (replaces prior "completeness claim" after adversarial review):** This tuple captures the elements within the governance scope of this framework. Elements outside this tuple — such as retrieval index state, external tool behavior, system-level routing, agent orchestration logic, and infrastructure configuration — may influence outputs but are classified as external factors per the three-tier model below. The framework does not claim that (p, u, m, θ, o) is a complete causal description of the output; it claims that these are the elements the governance system observes, constrains, and audits.
+**Governance scope claim:** This tuple captures the elements within the governance scope of this framework. Elements outside this tuple — such as retrieval index state, external tool behavior, system-level routing, agent orchestration logic, and infrastructure configuration — may influence outputs but are classified as external factors per the three-tier model below. The framework does not claim that (x, u, M, θ, o) is a complete causal description of the output; it claims that these are the elements the governance system observes, constrains, and audits.
 
 **Three-tier element classification:**
 
@@ -62,7 +69,7 @@ All factors that may influence an AI interaction's output are
 classified into exactly one of three tiers:
 
 Tier 1 — Modeled and Observable:
-  Elements in the interaction tuple (p, u, m, θ, o).
+  Elements in the interaction tuple (x, u, M, θ, o).
   These are within governance scope: constrainable, evaluable, auditable.
 
 Tier 2 — Known but Unmodeled:
@@ -73,7 +80,7 @@ Tier 2 — Known but Unmodeled:
     - System-level routing, caching, and load balancing
     - Agent orchestration logic and internal scratchpads
     - Infrastructure differences across replicas
-  These contribute documented ungoverned risk (see §7, Theorem 4).
+  These contribute documented ungoverned risk (Theorem 4, in the theorems appendix).
   Each deployment must enumerate its Tier 2 elements.
 
 Tier 3 — Unknown / Emergent:
@@ -83,7 +90,7 @@ Tier 3 — Unknown / Emergent:
   definition, but it must acknowledge their possible existence.
 ```
 
-**What "prompt" includes:** The assembled prompt p is the complete input to the model at inference time. In RAG architectures, p includes retrieved documents (though the retrieval process itself is Tier 2). In multi-turn conversations, p includes conversation history. In systems with tool-use definitions, p includes tool schemas. The governance system governs p as assembled — the assembly process itself is within prompt governance scope insofar as it determines the content of p, but upstream factors that influence assembly (index state, retrieval ranking) are Tier 2.
+**What "prompt" includes:** The assembled prompt x is the complete input to the model at inference time. In RAG architectures, p includes retrieved documents (though the retrieval process itself is Tier 2). In multi-turn conversations, p includes conversation history. In systems with tool-use definitions, p includes tool schemas. The governance system governs p as assembled — the assembly process itself is within prompt governance scope insofar as it determines the content of p, but upstream factors that influence assembly (index state, retrieval ranking) are Tier 2.
 
 **Statelessness assumption:** This axiom assumes stateless conditional generation: the model's output distribution is fully determined by (p, u, θ) with no hidden internal state. Models with persistent memory, non-reset hidden states, or recurrent reasoning chains that carry state across invocations violate this assumption. For such models, the internal state must be captured in p or θ, or the model must be classified as having reduced auditability on the temporal dimension (Axiom 5).
 
@@ -92,13 +99,13 @@ Tier 3 — Unknown / Emergent:
 Governance systems must not assume deterministic model output. The output is sampled from a conditional distribution parameterized by the prompt, user input, model, and inference configuration.
 
 ```
-m : P × U × Θ → Dist(O)
-o ~ m(p, u, θ)
+M : X × U × Θ → Dist(O)
+o ~ M(x, u, θ)
 
 Formally: governance must be correct under the assumption that
-  ¬∀ (p, u, m, θ) : |support(m(p, u, θ))| = 1
+  ¬∀ (x, u, M, θ) : |support(M(x, u, θ))| = 1
 
-The output distribution m(p, u, θ) may have non-singleton support,
+The output distribution M(x, u, θ) may have non-singleton support,
 meaning different outputs are possible for identical inputs. The
 degree of non-determinism is influenced by θ but cannot be assumed
 to be zero for any configuration.
@@ -252,72 +259,11 @@ the property.
 
 This requirement addresses the "Ghost Chain" problem: Theorem 3a proves that existing records cannot be tampered with, but it does not prove that every interaction *has* a record. A bypassed or failed enforcement point could leave an interaction completely unrecorded — indistinguishable from "no interaction occurred."
 
-```
-REQUIREMENT (Global Interaction Log — GIL):
+Together these four properties make every interaction that enters the pipeline
+either fully governed, governed with degraded records, or detectable as a gap.
+The Ghost Detection theorem states this precisely, and states what it does not
+cover.
 
-A Global Interaction Log records the existence of every AI interaction
-BEFORE any governance component processes it. The GIL is independent
-of all governance components.
-
-Properties:
-  GIL1 (Pre-Component Registration):
-    Every interaction i receives an interaction_id that is registered
-    in the GIL before the interaction enters the governance pipeline.
-    This registration occurs at the enforcement chokepoint (EA1),
-    not within any governance component.
-
-    ∀ i ∈ I_governed : ∃ gil_entry(i) with timestamp t_registered
-      where t_registered < t_first_component_evaluation
-
-  GIL2 (Independent Operation):
-    The GIL operates independently of EPG, ROC, and MDR. A failure
-    in any governance component does not affect GIL availability.
-    The GIL has its own fail-closed posture: if the GIL is
-    unavailable, no interaction proceeds.
-
-  GIL3 (Completeness Verification):
-    For any time window [t₁, t₂], it is possible to compare:
-      - The set of interaction_ids registered in the GIL
-      - The set of interaction_ids present in chain records
-    Any GIL entry without a corresponding chain is a "ghost" —
-    an interaction that was initiated but not fully governed.
-    Ghosts MUST be investigated and classified as either:
-      (a) component failure (degraded record should exist)
-      (b) enforcement bypass (security incident — T4)
-      (c) in-flight interaction (not yet completed)
-
-  GIL4 (Integrity):
-    The GIL is subject to the same integrity properties as audit
-    records (AI1-AI4): immutable storage, signed entries,
-    independent verification.
-
-THEOREM 3b (Ghost Detection):
-
-Given GIL properties GIL1-GIL4 and Audit Integrity AI1-AI4:
-
-  Every interaction that enters the governance pipeline is either:
-    (a) fully governed with a complete audit chain, OR
-    (b) partially governed with degraded records in the chain, OR
-    (c) detectable as a "ghost" via GIL completeness verification
-
-  No interaction can be silently ungoverned.
-
-Proof:
-  By GIL1, every governed interaction is registered before processing.
-  By GIL2, registration is independent of component health.
-  Case (a): All components operational → full chain (Theorem 3).
-  Case (b): Component failure → degraded records (§7.2) in chain.
-  Case (c): Neither full nor degraded records exist → GIL entry
-    without chain match → ghost detected by GIL3.
-  By GIL4, the GIL itself is tamper-evident.
-  Therefore, silent ungoverned processing is impossible given
-  GIL availability.  ∎
-
-Note: If the GIL itself is unavailable, GIL2 mandates fail-closed:
-no interactions proceed. This makes the GIL a critical-path
-dependency — a deliberate architectural choice that prioritizes
-governance completeness over availability for governed workloads.
-```
 
 ---
 
@@ -379,7 +325,7 @@ T3 — Constraint Authoring Abuse (Insider — A2):
   bad faith.
   Addressed by: EPG (RBAC, separation of duties, dual control for
   constraint authorship, decomposition attestation). This chapter
-  defines the requirement; EPG (Chapter 2) specifies controls.
+  defines the requirement; EPG specifies controls.
 
   ADDITIONAL REQUIREMENT (Decomposition Verification):
     Semantic constraint decompositions (mechanical + procedural)
@@ -463,7 +409,7 @@ DEFINITION (Threat Model Scope):
 
 This framework's guarantees are valid against threats T1-T6.
 They are NOT valid against threats T7-T11 without deployment of
-the companion controls specified for ROC (Chapter 3) and MDR (Chapter 4).
+the companion controls specified for ROC and MDR.
 
 Any claim of "complete governance" must be qualified:
   "Complete within the meta-framework's threat model (T1-T6),
@@ -497,7 +443,7 @@ An AI interaction is a temporally ordered sequence of transformations:
 ```
 DEFINITION (AI Interaction Pipeline):
 
-An interaction i ∈ I is a tuple i = (p, u, m, θ, o, o', t) where:
+An interaction i ∈ I is a tuple i = (x, u, M, θ, o, o', t) where:
 
   p  ∈ P   — the assembled prompt (including retrieved context,
               conversation history, system instructions, tool schemas)
@@ -505,12 +451,12 @@ An interaction i ∈ I is a tuple i = (p, u, m, θ, o, o', t) where:
   m  ∈ M   — the model as a versioned artifact: identity(m, t)
   θ  ∈ Θ   — inference configuration (temperature, top-p, tool
               availability, sampling parameters)
-  o  ∈ O   — raw model output:  o ~ m(p, u, θ)
+  o  ∈ O   — raw model output:  o ~ M(x, u, θ)
   o' ∈ O'  — delivered output:   o' = filter(o)  where filter ∈ runtime controls
   t  ∈ T   — timestamp of the interaction
 
 The pipeline has a causal ordering:
-  p precedes u  (prompt exists before user input arrives)
+  x precedes u  (prompt exists before user input arrives)
   (p, u, θ) precedes o  (output is conditioned on all three)
   o precedes o'  (filtering follows generation)
 ```
@@ -596,29 +542,6 @@ A control surface S has governability class γ(S):
                                 and fully controllable; observable
 ```
 
-### 3.4 Surface Partition Theorem
-
-```
-THEOREM 1 (Surface Completeness):
-
-Every element of every AI interaction is assigned to exactly one control
-surface, and every control surface has a defined governability class.
-
-Proof:
-  By Axiom 1, every interaction is described by (p, u, m, θ, o).
-  o' is derived from o by definition of the pipeline.
-  By Definition 3.2, the surfaces partition {p, u, m, θ, o, o'} exhaustively
-    and disjointly.
-  By Definition 3.3, each surface has a governability classification.
-  By Axiom 4, governability requires observability; surfaces classified as
-    full or partial are observable; surfaces classified as external are
-    explicitly outside the governance boundary.
-  Therefore, no interaction element lacks surface assignment, no element
-    is multiply-assigned, and all governance boundaries are explicit.  ∎
-```
-
----
-
 ## 5. Governance Component Model
 
 ### 4.1 Component Definition
@@ -661,55 +584,9 @@ A component g provides guarantee Φ(g) iff:
       governed elements x (Axiom 5)             version-stamped
 ```
 
-### 4.3 Component Independence
-
-```
-LEMMA 1 (Component Independence):
-
-Given Axiom 3 preconditions P1-P3 hold:
-If components g₁ and g₂ govern non-overlapping surfaces, then:
-
-  Φ(g₁) holds regardless of whether g₂ is deployed
-  Φ(g₂) holds regardless of whether g₁ is deployed
-
-Proof:
-  By Axiom 3 (Guarantee Independence, Conditional), given P1-P3,
-  Φ(g) holds in deployment({g}) iff Φ(g) holds in deployment(G').
-  P1 ensures adding g₂ doesn't degrade infrastructure for g₁.
-  P2 ensures g₂ doesn't prevent g₁ from receiving its artifacts.
-  P3 ensures no shared mutable state between g₁ and g₂.
-  This is a direct consequence of the conditional axiom.  ∎
-
-If P1-P3 are violated, independence is not guaranteed and must
-be verified empirically for the specific deployment.
-
-COROLLARY 1.1 (Graceful Degradation):
-
-Deploying a subset of governance components provides the guarantees of
-that subset. No guarantee is weakened by the absence of other components.
-
-  ∀ G' ⊆ G : ∀ g ∈ G' : Φ(g) holds in deployment(G')
-
-This enables phased adoption: an organization can deploy EPG (prompt
-governance) alone and receive its full guarantees, then add ROC (output
-controls) later for additional coverage.
-
-CAVEAT (Soft Dependency Effectiveness):
-  A component's GUARANTEE (Φ) holds without soft dependencies (R_soft).
-  A component's EFFECTIVENESS may be reduced without them. Example:
-  ROC's guarantee (evaluate every output, produce audit record) holds
-  without EPG prompt context. But ROC's evaluation quality may be lower
-  because it lacks the constraint context EPG would provide. The
-  guarantee is about process completeness, not evaluation quality.
-  Phased adoption is safe for guarantees; evaluation effectiveness
-  improves as more components are deployed.
-```
-
----
-
 ## 6. Enforcement Model
 
-The governance framework describes what SHOULD happen. The enforcement model defines HOW compliance is ensured at runtime. Without enforcement, governance is advisory — which contradicts the "inviolable" property required for regulated industries. This section was added after adversarial review identified enforcement as a critical gap.
+The governance framework describes what SHOULD happen. The enforcement model defines HOW compliance is ensured at runtime. Without enforcement, governance is advisory — which contradicts the "inviolable" property required for regulated industries.
 
 ### 5.1 Enforcement Points
 
@@ -775,24 +652,12 @@ EA4 (Enforcement of Constraint Authorship):
 
 ### 5.3 Governability Conditioned on Enforcement
 
-```
-THEOREM 1a (Conditional Full Governability):
+Full governability of a surface is therefore conditional on enforcement, not a
+property of the surface alone: without a chokepoint, a surface classified as fully
+governable is only fully governable for the interactions that happen to pass
+through the governed path. The Conditional Full Governability theorem states the
+condition.
 
-γ(S_prompt) = full IFF enforcement architecture EA1-EA2 holds.
-
-If EA1 is violated (interactions bypass EPG):
-  γ(S_prompt) = partial — some prompts are governed, others are not.
-
-If EA2 is violated (anonymous model calls exist):
-  γ(S_prompt) = partial — ungoverned interactions exist.
-
-Proof:
-  γ = full requires that ALL elements of S_prompt are deterministically
-  constrained prior to execution (Definition, §4.3).
-  Without EA1, some interactions bypass constraint evaluation.
-  Without EA2, some interactions are unattributable to governed projects.
-  In either case, ∃ i where S_prompt is unconstrained → γ ≠ full.  ∎
-```
 
 ### 5.4 Enforcement Failure Modes
 
@@ -802,7 +667,7 @@ See §7 (Failure Semantics) for how enforcement point failures are handled.
 
 ## 7. Failure Semantics
 
-Governance components can fail. The framework must define what happens when they do. This section was added after adversarial review identified the absence of failure semantics as a critical gap.
+Governance components can fail. The framework must define what happens when they do. A framework silent on failure semantics does not say what its guarantees mean during an outage, which is when they matter most.
 
 ### 7.1 Failure Postures
 
@@ -853,10 +718,10 @@ This record is written to the audit chain in place of the normal
 A_g(i, t), preserving chain completeness even during failures.
 ```
 
-### 7.3 Revised Component Guarantee Under Failure
+### 7.3 Component Guarantee Under Failure
 
 ```
-DEFINITION (Component Guarantee, Revised):
+DEFINITION (Component Guarantee Under Failure):
 
 A component g provides guarantee Φ(g) iff:
 
@@ -976,35 +841,6 @@ A handoff between g₁ and g₂ for interaction i is:
   }
 ```
 
-### 8.4 Contract Satisfaction Theorem
-
-```
-THEOREM 2 (Contract Composability):
-
-Given: Axiom 3 preconditions P1-P3, Axiom 4 (observability),
-       Axiom 5 (temporal identity), Audit Linkability requirement.
-
-If components g₁ and g₂ each satisfy their component guarantees
-(Φ(g₁), Φ(g₂)), and the interface contract K(g₁, g₂) is satisfied,
-then the composed system (g₁, g₂) provides:
-
-  Φ(g₁) ∧ Φ(g₂)                          — both individual guarantees hold
-  ∧ audit_chain(g₁, g₂) is complete        — audit records compose
-  ∧ coverage(g₁, g₂) = S_g₁ ∪ S_g₂       — governed surface expands
-
-Proof:
-  Φ(g₁) holds by hypothesis.
-  Φ(g₂) holds by hypothesis.
-  By Lemma 1 (given P1-P3), guarantees are independent.
-  Contract satisfaction ensures handoff data is available, including
-    interaction_id for chain linking (Design Requirement).
-  Handoff includes version_manifest (Axiom 5), preserving temporal audit.
-  Audit integrity (§6.4, AI1-AI4) ensures records are tamper-evident.
-  Surface coverage is the union by definition.  ∎
-```
-
----
-
 ## 9. Audit Chain
 
 ### 6.1 Audit Record Definition
@@ -1043,90 +879,9 @@ component audit records:
     ∧ ∀ k : artifact integrity is verifiable via hash chain  — tamper-evident
 ```
 
-### 6.3 Audit Completeness Theorem
-
-```
-THEOREM 3 (Audit Chain Completeness):
-
-Given: Axiom 3 (P1-P3), Axiom 4 (observability), Axiom 5 (temporal
-       identity), Audit Linkability requirement, Enforcement (EA1-EA2),
-       Audit Integrity (AI1-AI4).
-
-For a deployed component set G' ⊆ G with satisfied interface contracts,
-the audit chain for any interaction i covers every governed surface,
-bounded by the observability frontier and enforcement boundary.
-
-  ∀ i ∈ I_governed : ⋃{A_g.surface | A_g ∈ chain(i)} = ⋃{S_g | g ∈ G'}
-
-  where I_governed = interactions that pass through enforcement points (EA1)
-  and A_g may be either a normal record or a degraded record (§7.2).
-
-Preconditions:
-  - All elements in ⋃{S_g | g ∈ G'} are observable (Axiom 4).
-  - All interactions pass through enforcement points (EA1-EA2).
-  - Audit records are tamper-evident (AI1-AI4).
-
-Elements beyond the observability boundary, and interactions that
-bypass enforcement, are not covered. Both contribute ungoverned risk
-that must be documented per Tier 2 classification (Axiom 1) and
-detected per EA3 (bypass detection).
-
-Proof:
-  For governed interactions (enforcement ensures they reach components):
-  Each deployed component g ∈ G' produces either A_g(i, t) (normal) or
-    A_g_degraded(i, t) (failure) by revised guarantee Φ(g) (§7.3).
-  Each record covers surface S_g by definition.
-  Each record includes version_manifest by Axiom 5.
-  Chain linking via shared interaction_id is ensured by Design Requirement.
-  Record integrity is ensured by AI1-AI4.
-  Observability is ensured by Axiom 4 and component precondition (§5.1).
-  Therefore, the chain covers the union of all deployed component surfaces
-    for all governed interactions, with explicit degraded-state markers
-    for any component failures.  ∎
-
-COROLLARY 3.1 (CISO Audit Property):
-
-For any interaction i at any time t, the audit chain provides:
-  - Which constraints were in effect: ⋃{C_g | g ∈ G'} with ver(c, t)
-  - Whether each constraint was satisfied: eval(c, artifact(i))
-  - Who authored each constraint: owner(c)
-  - The artifact as it existed: verifiable via artifact_hash
-  - Which model version processed the interaction: ver(m, t)  (Axiom 5)
-  - What inference parameters were used: θ at time t  (Axiom 5)
-  - What was NOT observable: observability_note per record  (Axiom 4)
-
-This is the formal guarantee behind "show me exactly which rules were in
-effect when this AI produced that output" — with the added rigor that
-the system explicitly declares what it could and could not observe.
-
-IMPORTANT DISTINCTION (Record Types in the Chain):
-
-  Audit records in chain(i) are one of two types with different
-  evidentiary strength:
-
-  EVALUATION RECORD (component-signed, §9.1):
-    Produced by the governance component itself during normal operation.
-    Contains actual constraint evaluations (eval(c, artifact(i))).
-    Signed by the component's KMS key.
-    Evidentiary value: STRONG — proves constraints were evaluated.
-
-  PROCESS RECORD (supervisor-signed, §7.4):
-    Produced by the Governance Supervisor on behalf of a failed component.
-    Contains failure metadata but NO constraint evaluations.
-    Signed by the Supervisor's KMS key.
-    Evidentiary value: MODERATE — proves the component failed and the
-    failure was recorded, but does NOT prove constraints were evaluated.
-
-  Consumers of audit records (regulators, auditors, incident responders)
-  MUST distinguish between these types. A chain containing process
-  records has unbroken integrity but incomplete evaluation coverage.
-  The presence of process records should trigger investigation, not
-  be treated as equivalent to full evaluation.
-```
-
 ### 9.4 Audit Integrity Properties
 
-Added after adversarial review identified that artifact_hash alone is insufficient for tamper resistance in regulated industries. A malicious administrator or compromised system could rewrite records and recompute hashes without these properties.
+An artifact hash alone is insufficient for tamper resistance in regulated industries: a malicious administrator or compromised system could rewrite records and recompute the hashes. The properties below close that gap.
 
 ```
 DEFINITION (Audit Integrity Requirements):
@@ -1167,7 +922,28 @@ AI4 (Independent Verification):
     - Record completeness can be verified against interaction_id
       generation logs
 
-AI5 (Retention and Jurisdiction):
+AI5 (Chain Truncation Detection):
+  Whole-interaction deletion is detected by AI4's comparison against
+  interaction_id generation logs. PARTIAL truncation is not: dropping
+  ROC's record while keeping EPG's leaves a chain whose every remaining
+  link verifies and whose every remaining signature is valid, under an
+  interaction_id that is present as expected.
+
+  The audit system MUST therefore record, per interaction, the set of
+  components its risk tier requires, and verification MUST compare the
+  chain against that set:
+
+    ∀ i ∈ I_governed :
+      expected_components(tier(i)) ⊆ {g | A_g ∈ chain(i)}
+      ∨ ∃ degraded_record(g, i) for each g in the difference
+
+  A chain shorter than its tier requires, with no degraded record
+  accounting for the gap, is a truncation and MUST be investigated on
+  the GIL3 ghost pathway. Without this check the cryptographic chain
+  provides no protection against a truncating adversary, because
+  truncation is not modification.
+
+AI6 (Retention and Jurisdiction):
   Audit records must be:
     - Retained for the regulatory minimum period applicable to the
       deployment context (e.g., 6 years for SOX, as required by
@@ -1179,21 +955,11 @@ AI5 (Retention and Jurisdiction):
       (e.g., hashing identifiers in logs rather than storing plaintext)
 ```
 
-```
-THEOREM 3a (Tamper-Evident Audit Chain):
+These properties are what make the chain tamper-evident: modification of any
+record is detectable by an independent verifier even if immutable storage is
+bypassed for one of them. The Tamper-Evident Audit Chain theorem states the result
+and the case it does not cover, which is deletion.
 
-Given properties AI1-AI4, any modification to any audit record in
-chain(i) is detectable by an independent verifier.
-
-Proof:
-  Suppose record A_gₖ is modified after writing.
-  By AI2, A_g(k+1).chain_hash was computed from the original A_gₖ.
-  The modified A_gₖ produces a different hash.
-  By AI1, A_g(k+1) cannot be modified to match.
-  Therefore, chain_hash verification fails at position k+1.
-  By AI3, the signature on A_gₖ no longer matches its content.
-  By AI4, an independent verifier can detect both discrepancies.  ∎
-```
 
 ---
 
@@ -1248,7 +1014,7 @@ RISK-TIERED GOVERNANCE:
 
     Tier: Critical (PHI, PCI, financial reporting)
       fail_posture: fail-closed (mandatory)
-      audit: full chain with AI1-AI4
+      audit: full chain with AI1-AI6
       constraints: full EPG + ROC + MDR
 
     Tier: Standard (internal tools, non-sensitive data)
@@ -1281,47 +1047,6 @@ The residual risk after deploying g is:
   R_Sg_residual = R_Sg(i | g deployed)
 ```
 
-### 7.3 Monotonic Risk Reduction Lemma
-
-```
-LEMMA 2 (Monotonic Risk Reduction):
-
-Given: Axiom 3 preconditions P1-P3, and that all components are
-correctly implemented (no implementation defects that introduce
-new vulnerabilities).
-
-Deploying additional governance components cannot increase total
-compliance risk.
-
-  ∀ G' ⊆ G'' ⊆ G : R(i | G'' deployed) ≤ R(i | G' deployed)
-
-Proof:
-  Let g ∈ G'' \ G' (a component in the larger set but not the smaller).
-  By Definition 7.2, deploying g reduces R_Sg: R_Sg(i|g) ≤ R_Sg(i|¬g).
-  By Axiom 3 (given P1-P3), deploying g does not affect the guarantees
-    of any g' ∈ G'. Therefore, deploying g does not increase R_Sₖ for
-    any k ≠ g's surface.
-  Total risk R(i) = ΣR_Sₖ. One term decreases, others are unchanged.
-  Therefore R(i) is non-increasing.  ∎
-
-CAVEAT (Implementation Risk):
-  This lemma assumes correct implementation. In practice, deploying a
-  new component may introduce implementation defects (bugs, misconfigs,
-  new attack surface) that increase risk outside the formal model.
-  Implementation risk is addressed by testing, security review, and
-  staged rollout — not by the governance framework itself.
-  The lemma holds for the GOVERNANCE risk model; it does not claim
-  that total OPERATIONAL risk is monotonically non-increasing.
-
-COROLLARY 2.1 (Incremental Value):
-
-Each component deployed provides non-negative marginal risk reduction:
-  ΔR(g) = R(i | G' deployed) - R(i | G' ∪ {g} deployed) ≥ 0
-
-This formally justifies phased adoption: every component added improves
-the risk posture. There is no deployment order that makes things worse.
-```
-
 ### 7.4 Prompt Governance Risk Reduction Syllogism
 
 ```
@@ -1330,14 +1055,14 @@ SYLLOGISM 1 (Prompt-to-Output Risk Transfer):
 Major Premise:
   The probability distribution of model outputs is conditioned on the
   prompt and inference configuration.
-  Formally: o ~ m(p, u, θ), therefore P(o | p₁, u, θ) ≠ P(o | p₂, u, θ)
+  Formally: o ~ M(x, u, θ), therefore P(o | p₁, u, θ) ≠ P(o | p₂, u, θ)
   in general.
 
 Minor Premise:
   Prompt governance constrains prompts to satisfy properties that reduce
   the probability of non-compliant outputs.
-  Formally: p ⊨ C*(project) → P(o violates | p, u, θ) ≤ P(o violates | p', u, θ)
-  where p' is an ungoverned prompt.
+  Formally: x ⊨ C*(project) → P(o violates | p, u, θ) ≤ P(o violates | p', u, θ)
+  where x' is an ungoverned prompt.
 
 Conclusion:
   Prompt governance reduces the probability of non-compliant outputs
@@ -1347,41 +1072,6 @@ Conclusion:
 Note: This does NOT claim R_input, R_config, R_output are reduced by
 prompt governance. Those risks require their own governance components.
 ```
-
-### 7.5 Residual Risk Theorem
-
-```
-THEOREM 4 (Irreducible Residual Risk):
-
-Even with all governance components deployed, residual compliance
-risk is non-zero.
-
-  ∀ G fully deployed : R(i | G) > 0
-
-Proof:
-  By Axiom 2 (Non-Determinism), model output is sampled from a
-    distribution: o ~ m(p, u, θ).
-  For any non-degenerate distribution, ∃ o in the support such that
-    o violates a compliance requirement.
-  Output filtering (S_delivery) operates on generated content, not
-    on the distribution — it cannot prevent generation, only intercept.
-  Novel violation patterns not covered by existing filters remain possible.
-  By Axiom 4 (Observability), elements beyond the observability boundary
-    contribute ungoverned risk that no component can reduce.
-  Therefore, R(i | G) > 0 for any finite governance system.  ∎
-
-COROLLARY 4.1 (Risk Management, Not Elimination):
-
-The goal of the governance solution is to minimize R(i) to an
-acceptable level and ensure that all residual risk is:
-  (a) documented — known and acknowledged
-  (b) monitored — detectable when it materializes
-  (c) remediable — traceable to root cause via the audit chain
-  (d) bounded — the observability frontier is declared, so ungoverned
-      risk is explicitly identified, not silently ignored (Axiom 4)
-```
-
----
 
 ## 11. Component Instantiation
 
@@ -1394,8 +1084,8 @@ The Clad instantiates the following:
 
   g_EPG = (
     S      = {S_prompt},
-    C      = constraint hierarchy (deontic, see Chapter 2),
-    E      = mechanical evaluation ∪ procedural attestation (see Chapter 2),
+    C      = constraint hierarchy (deontic),
+    E      = mechanical evaluation ∪ procedural attestation,
     A      = prompt audit records,
     R_hard = ∅                          — independently deployable
     R_soft = {constraint_ctx from organizational governance}
@@ -1403,8 +1093,8 @@ The Clad instantiates the following:
 
   g_ROC = (
     S      = {S_output, S_delivery},
-    C      = output constraint set (defined in Chapter 3),
-    E      = output evaluation function (defined in Chapter 3),
+    C      = output constraint set,
+    E      = output evaluation function,
     A      = output audit records,
     R_hard = ∅                          — independently deployable
     R_soft = {handoff from g_EPG}       — enhanced by prompt context
@@ -1426,7 +1116,7 @@ The Clad instantiates the following:
 ```
 K(g_EPG, g_ROC) = {
   provides(g_EPG → g_ROC):
-    - The assembled prompt p and its cryptographic hash
+    - The assembled prompt x and its cryptographic hash
     - The effective constraint set C*(project)
     - The prompt audit record A_EPG(i, t) with version_manifest
     - The interaction identifier
@@ -1437,7 +1127,7 @@ K(g_EPG, g_ROC) = {
 
   handoff:
     - interaction_id: shared identifier (Design Requirement)
-    - artifact: the assembled prompt p
+    - artifact: the assembled prompt x
     - artifact_hash: hash(p)
     - audit_ref: pointer to A_EPG(i, t)
     - constraint_ctx: C*(project)
@@ -1477,48 +1167,6 @@ K(g_EPG, g_MDR) = {
 }
 ```
 
-### 8.3 Full Chain Audit
-
-```
-THEOREM 5 (Full Solution Audit Completeness):
-
-Given: Axiom 3 (P1-P3), Axiom 4, Axiom 5, enforcement (EA1-EA2),
-       audit integrity (AI1-AI4), GIL (GIL1-GIL4).
-
-When all three components are deployed with satisfied interface
-contracts, the composed audit chain covers every Tier 1 element
-of every governed interaction within the observability boundary.
-
-  ∀ i ∈ I_governed :
-    chain(i) = [A_EPG(i, t), A_ROC(i, t), A_MDR(i, t)]
-
-    covers: S_prompt ∪ S_output ∪ S_delivery ∪ S_input ∪ S_config
-          = {p, o, o', u, m, θ}
-          = all Tier 1 interaction elements
-
-  NOT covered by this theorem:
-    - Tier 2 elements (known but unmodeled — documented as ungoverned)
-    - Tier 3 elements (unknown — undocumented residual risk)
-    - Model internals (γ = external)
-    - Ungoverned interactions that bypass enforcement (detectable via GIL)
-    - Threats T7-T11 (out of scope per §2.4)
-
-Proof:
-  For governed interactions (registered in GIL, passing through EA1):
-  g_EPG covers S_prompt = {p}.
-  g_ROC covers S_output ∪ S_delivery = {o, o'}.
-  g_MDR covers S_input ∪ S_config = {u, m, θ}.
-  By Theorem 1, these surfaces are exhaustive over Tier 1 elements.
-  By Theorem 2 (given P1-P3), the chain composes correctly.
-  By Theorem 3, every governed surface has audit records.
-  Model internals are documented as ungoverned (Axiom 4).
-  Tier 2 elements are documented per Axiom 1 three-tier classification.
-  Therefore, the chain covers all Tier 1 elements of governed
-    interactions, and explicitly declares what it does not cover.  ∎
-```
-
----
-
 ## 12. Composition Algebra
 
 ### 9.1 Component Composition Operator
@@ -1536,158 +1184,6 @@ Define the composition operator ⊕ on governance components:
     R_hard = R_hard(g₁) ∪ R_hard(g₂) \ {mutual provisions}
   )
 ```
-
-### 9.2 Algebraic Properties
-
-```
-LEMMA 3 (Composition Properties):
-
-Given components with non-overlapping surfaces (S_g₁ ∩ S_g₂ = ∅):
-
-(a) Associativity:
-    (g₁ ⊕ g₂) ⊕ g₃ = g₁ ⊕ (g₂ ⊕ g₃)
-
-    Proof: Surface union is associative. Constraint union is associative.
-    Audit composition via shared interaction_id is associative (chain
-    order is determined by pipeline causality, not composition order).  ∎
-
-(b) Commutativity:
-    g₁ ⊕ g₂ = g₂ ⊕ g₁
-
-    Proof: By Axiom 3 (Guarantee Independence), Φ(g₁) and Φ(g₂) hold
-    regardless of the other's presence or ordering. Surface union and
-    constraint union are commutative. Audit chain links by interaction_id,
-    not by composition order.  ∎
-
-(c) Identity:
-    ∃ g_∅ = (∅, ∅, ∅, ∅, ∅) such that g ⊕ g_∅ = g
-
-    The null component governs nothing, produces no audit records,
-    and does not affect any other component.  ∎
-
-THEOREM 6 (Governance Monoid — Abstract Components):
-
-Given: Axiom 3 preconditions P1-P3, non-overlapping surfaces,
-       components satisfying P3's isolation constraints.
-
-The set of abstract governance components with non-overlapping
-surfaces and no shared mutable evaluation state forms a commutative
-monoid under ⊕.
-
-  (G_abstract, ⊕) satisfies: closure, associativity, identity,
-                              commutativity.
-
-APPLICATION TO CONCRETE COMPONENTS (EPG, ROC, MDR):
-  The concrete solution components have read-only cross-surface data
-  flows (R_soft) permitted by P3. These flows do not affect guarantee
-  composition (Lemma 1), so the monoid properties hold for guarantees.
-  However, the read-only flows mean that EVALUATION EFFECTIVENESS
-  (not guarantees) depends on deployment composition — ROC is more
-  effective with EPG's context than without it.
-
-  Therefore: guarantee-level composition is commutative and associative.
-  Effectiveness-level composition is not — deployment order matters
-  for quality, even though it does not matter for formal guarantees.
-
-This distinction is the mathematical basis for phased deployment:
-  guarantees are safe in any order; effectiveness improves as more
-  components provide cross-surface context.
-```
-
----
-
-## 13. Syllogistic Arguments for Solution Validity
-
-These connect the formal model to the business case using classical deductive form.
-
-### Syllogism 2 (Necessity of Prompt Governance)
-
-```
-Major Premise:
-  Model outputs are conditioned on prompts (Axiom 2, pipeline definition).
-
-Minor Premise:
-  Ungoverned prompts have no guaranteed constraint satisfaction,
-  therefore no auditable compliance posture for the prompt surface.
-
-Conclusion:
-  Without prompt governance, the prompt surface contributes unmanaged,
-  unauditable compliance risk.
-
-Contrapositive:
-  If compliance risk on the prompt surface is managed and auditable,
-  then prompt governance (or a functional equivalent) is deployed.
-```
-
-### Syllogism 3 (Necessity of Output Controls)
-
-```
-Major Premise:
-  Prompt governance cannot guarantee output compliance
-  (Axiom 2, Theorem 4).
-
-Minor Premise:
-  Output compliance is a regulatory requirement in governed industries.
-
-Conclusion:
-  Prompt governance alone is insufficient; output-level controls are
-  necessary to address the residual risk on the output surface.
-```
-
-### Syllogism 4 (Sufficiency of the Composed Solution)
-
-```
-Major Premise:
-  The composed solution covers all observable interaction surfaces
-  (Theorem 5), given Axiom 3 preconditions P1-P3, enforcement
-  architecture EA1-EA2, and audit integrity AI1-AI4.
-
-Minor Premise:
-  Each component provides deterministic, immutable, version-stamped
-  audit records for its surfaces (Component Guarantee, Axiom 5),
-  including degraded-state records during component failures (§7).
-
-Conclusion:
-  The composed solution provides an auditable compliance posture
-  across the governed portion of the AI interaction pipeline,
-  within the framework's threat model (T1-T6).
-
-Scope of "auditable compliance posture" — what this DOES mean:
-  - Every governed interaction has a tamper-evident audit chain
-  - Every applicable constraint is evaluated with version stamps
-  - Every component failure is recorded with declared posture
-  - Observability gaps are explicitly documented
-
-What this does NOT mean:
-  - Every output is compliant (Theorem 4: residual risk > 0)
-  - Ungoverned interactions are covered (EA3 detects, doesn't prevent)
-  - Threats T7-T11 are addressed (requires ROC, MDR)
-  - Tier 2 and Tier 3 elements are governed (Axiom 1)
-  - Implementation defects are absent (Lemma 2 caveat)
-```
-
-### Syllogism 5 (Observability as Governance Precondition)
-
-```
-Major Premise:
-  Governance requires evaluation of governed elements against
-  constraints (Component Definition, §5.1).
-
-Minor Premise:
-  Evaluation requires observation of the element's state
-  (Axiom 4: governable → observable).
-
-Conclusion:
-  Any interaction element that is not observable cannot be governed.
-  The governance boundary is determined by the observability boundary.
-
-Implication:
-  Extending governance coverage requires extending observability first.
-  Deploying a governance component without ensuring observability of
-  its surfaces produces a guarantee that is formally vacuous.
-```
-
----
 
 ## 14. Scope Limitations and Extension Points
 
@@ -1725,13 +1221,25 @@ Model internals (weights, training data, fine-tuning provenance) are classified 
 
 ---
 
+## Where the results are
+
+This chapter states the model: the surfaces an interaction presents, the component
+that governs one, the contracts between components, and the algebra by which they
+compose. What is *proved* over that model — sixteen theorems, lemmas and
+corollaries, their proofs, and the twenty-two assumptions every one of them depends
+on — is collected in the theorems appendix.
+
+The separation is deliberate. Deciding whether to adopt this framework needs the
+model and the guarantees in prose, which is this chapter. Building it, or auditing
+someone else's build, needs the statements with their preconditions in one place,
+which is the appendix. Results are referred to by designation throughout — Theorem
+4, Lemma 2, Axiom 5 — and those designations are stable.
+
 ## Key takeaways
 
 - Clad's guarantees rest on the axioms of §1 and the two design requirements derived from them — audit linkability and the Global Interaction Log. Where a deployment cannot satisfy an axiom, the theorems that depend on it must be re-evaluated.
 - An AI interaction is governed at five control surfaces (§4); each surface carries a governability class that bounds what any component can promise.
 - A governance component is the tuple `g = (S, C, E, A, R)` (§5), and components compose under a well-defined algebra (§12) that preserves each component's guarantees when they are deployed together.
-- Governance reduces but does not eliminate residual risk (§10, Theorem 4); what it guarantees is provable evidence, not perfect prevention.
+- Governance reduces but does not eliminate residual risk (Theorem 4); what it guarantees is provable evidence, not perfect prevention.
 
-The three chapters of Part II instantiate this model, one control surface at a time. Chapter 2 begins with the prompt — the surface an enterprise fully controls before the model ever runs.
-
-*(The symbols introduced in this chapter are collected in Notation & Conventions. Open engineering questions tracked during development are recorded in [`docs/meta-framework-open-issues.md`](../docs/meta-framework-open-issues.md), outside the book.)*
+The three chapters of Part IV instantiate this model, one control surface at a time. They begin with the prompt — the surface an enterprise fully controls before the model ever runs.

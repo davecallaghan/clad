@@ -1,0 +1,359 @@
+% !TEX root = ../main.tex
+\chapter{Introduction}
+\label{ch:introduction}
+\label{sec:intro}
+
+Consider a decision you have to be able to defend two years from now.
+
+A clinical operations team asks a language model system whether a compound is
+approved for a paediatric indication. The system answers. Someone acts on the
+answer. Later---in an audit, an inspection, a dispute---the question arrives:
+what was that answer based on? Not whether the model is generally accurate. Which
+document, in which version, as of which date, under which jurisdiction, supported
+this specific claim.
+
+Most current validation practice cannot answer that question, and the reason is
+not that the practice is careless. It is that the practice measures the wrong
+thing. The dominant approach evaluates a model by sampling questions with known
+answers and scoring the outputs against them---\emph{reference-based evaluation},
+in the terms of the natural-language-generation literature. It produces a
+number---accuracy, or its complement, often reported as a hallucination
+rate---and that number is then used as evidence of fitness for deployment.
+
+The central argument of this book can be stated in one sentence. \textbf{In
+regulated settings, the relevant question is not merely whether an answer is
+accurate. It is whether the organization can reconstruct why this particular
+assertion was produced, identify the authoritative and versioned evidence on which
+it rests, establish that the evidence applies to the resolved case context, verify
+the asserted relation, and show that reliance was authorized under the institution's
+governing rules.} Accuracy is one input to that question and settles none of it.
+
+This book argues that reference-based evaluation cannot support the use it is put
+to,
+for two reasons that compound.
+
+The first is a classification problem. Pooling every wrong answer into one
+metric conflates failures with different causes and different remedies. A system
+that faithfully reports an erroneous source has a data problem. A system that
+fabricates a plausible-looking figure has a generation problem. A system that
+correctly reports a regulation that was superseded last year, or that applies in
+a different jurisdiction, has a context-resolution problem. These are three
+separate defects, addressed by three separate teams, on three separate budgets.
+One number does not tell you which one to spend.
+
+The second reason is worse, because it closes off the obvious remedy. The
+system applies no canonical form to its inputs. It computes a conditional distribution over token sequences given
+token sequences; its inputs are strings; and two semantically identical
+queries---a contraposed conditional, a quantity written in digits rather than
+words, an active rather than passive phrasing---are two distinct points in input
+space. Nothing in the architecture guarantees they map to the same output, and
+measurement confirms they frequently do not. A database normalizes before it
+compares. A compiler canonicalizes before it optimizes. This system does
+neither. Nor does the problem stop at paraphrase: the same input, re-asked in the
+same session, can produce a different assertion as context accumulates. So a
+passing test does not extend to materially identical requests, and does not
+securely cover even the string that was tested.
+
+The consequence for validation is direct. If a test case passes, you have
+learned that one string produced an acceptable output on one occasion. You have
+not learned that the semantically identical string will, or that the same string
+will next week, or that the same string will later in the same conversation. A
+passing test does not generalize to the paraphrase, so the test suite does not
+certify the behavior it appears to certify. Accuracy is a property of a sample,
+and this sample does not support the inference that validation requires of it.
+
+That is a negative result, and on its own it would be unhelpful. The
+constructive claim is that a different property does not have this defect.
+\emph{Grounding}---whether an assertion is supported by evidence applicable to
+the decision at hand, through a mechanism actually sensitive to that
+evidence---is a property of the relation between an assertion and an evidential
+base, not of a sampled output. It is stable under paraphrase in the way accuracy
+is not, because it is a fact about the pipeline rather than about a draw from it.
+It is therefore the property a governance regime can audit.
+
+That claim is made precise later, in the sharpest form the argument takes: no
+accuracy figure identifies or bounds the grounding rate over the unit square. No accuracy figure constrains the rate at which a system asserts
+beyond its evidence, in either direction. A system can be highly accurate and
+almost entirely ungrounded, and the second fact is the one that predicts what
+happens when the questions change.
+
+\paragraph{What this book is not arguing.} Not that these systems are
+unreliable in a way that precludes use. I build them, in exactly the regulated
+settings this book is about, and they work. Not that accuracy is uninteresting;
+it is interesting, and it is the wrong thing to certify against. And not that
+better models will not help. They will, on some axes and not others, and which
+axes those are follows from the architecture itself.
+
+\paragraph{Contributions.} Six, in the order they appear.
+
+\begin{enumerate}
+  \item \textbf{A redefinition of hallucination, indexed to a decision context.}
+        Existing definitions ask whether an assertion is supported by a supplied
+        source. This one asks the prior question---whether that source governs the
+        case---by requiring support to be applicable at a resolved context of
+        jurisdiction, valid time, material facts, and intended use, and by
+        requiring the assertion to have been produced \emph{because of} the evidence
+        rather than merely to agree with it. The consequence is a failure class that
+        faithfulness and attribution metrics score as clean by construction, and a
+        definition evaluable at the point of assertion without a reference answer.
+  \item A five-category taxonomy following from it---\textsc{Sound},
+        \textsc{Lucky}, \textsc{Error}, \textsc{Fabrication}, and
+        \textsc{Misapplied}---in which the fifth, assertion grounded in authentic
+        but inapplicable evidence, is a distinct control failure with its own
+        remedy and owner.
+  \item A proof that aggregate accuracy neither identifies nor bounds the grounding
+        rate, so a validation program reporting accuracy alone cannot distinguish
+        radically different reliance profiles.
+  \item An architectural account of why the failures are structural, grounded in the
+        specific architecture and training regime these systems inherit, and an
+        argument that the absence of a canonical form makes accuracy uncertifiable
+        rather than merely incomplete.
+  \item A set of nineteen invariants separating what assertion behavior does not
+        supply from what a system must be built to supply, each tied to a control.
+  \item A reference architecture for governed retrieval, a definition of
+        institutional warrant, and an account of why the division of ownership
+        across data, policy, and platform functions is itself a principal cause of
+        failure.
+\end{enumerate}
+
+\paragraph{Scope.} This book is about one class of system: models that emit
+natural-language assertions by autoregressive sampling over a token vocabulary,
+fitted by next-token likelihood on large text corpora, and optionally post-trained
+on human preferences. That is the decoder-only transformer language model
+established at scale by the GPT-3 generation and everything built on that pattern
+since. It is not about deep learning generally. Generative adversarial networks and
+diffusion models are out of scope, as are encoder-only classifiers, rankers, and
+extractors, and the conventional predictive models that make up most of an
+enterprise analytics estate. Those components assert nothing, so grounding is not a
+coherent question about them---which is not to say they are easy to validate,
+since they share several of the problems described here. The boundary is stated
+precisely, with the reason it falls where it does, alongside the account of the
+architecture.
+
+\paragraph{Structure.} Chapter~\ref{ch:architecture-training} identifies the
+systems in scope and derives, from their architecture and training regime, why the
+failures this book describes are structural. Chapter~\ref{ch:taxonomy} redefines
+hallucination as ungrounded assertion, gives the five categories that follow,
+proves that aggregate accuracy does not identify the grounding rate, and defines
+the resolved context and the seven dimensions of grounding --- along with why
+retrieval and citation do not supply them.
+Chapter~\ref{ch:canonical-form} shows that neither form invariance nor
+repeatability holds, and what that costs a validation program.
+Chapter~\ref{ch:invariants} turns those failures into a list: what these systems do
+not supply, what a system must be built to supply instead, and why grounding rather
+than accuracy is the property that can be measured.
+
+The second half is constructive. Chapter~\ref{ch:governed-rag} gives a reference
+architecture, Chapter~\ref{ch:scale-and-scope} says what in it is actually tunable,
+Chapter~\ref{ch:warrant-tiers} defines warrant with reliance tiers and the
+organizational analysis that goes with it, and Chapter~\ref{ch:evaluation} gives an
+evaluation protocol. Chapter~\ref{ch:framework} then builds the control model that
+generalizes the architecture --- five surfaces, a governance component, an algebra
+for composing components --- and the three chapters after it govern the surfaces one
+at a time: the prompt before the model runs, the output before it is delivered, and
+the system as a whole over time. A closing chapter on related work positions the
+argument.
+
+\paragraph{Notation.} Formal notation is used where it makes a claim checkable
+and avoided where it would only make one look rigorous. Two operators, five
+defined categories, one proposition with a two-line proof. Every definition is
+stated over observable behavior, so that any claim made here can be tested
+against a running system.
+
+\section{Premise: What Generation Does Not Establish}
+\label{ch:epistemic-premise}
+\label{sec:premise}
+
+One premise carries the rest of the book, and it is deliberately modest. A
+system's producing a statement is a different thing from that statement being
+supported by evidence, applicable to the case at hand, checked, and permitted for
+use. Any architect will grant the distinction in every other context: a report that
+renders is not a report that reconciles, and a value that populates a field is not
+a value that passed validation. The premise says only that generated text is
+subject to the same distinction, and that the generation event is not what closes
+it.
+
+The argument below needs no position on what a model understands or represents
+internally. It needs the distinction stated formally, which is the business of this
+section.
+
+\subsection{Notation}
+\label{sec:notation}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+$M$ & the language model: a parameterized generative function \\
+$S$ & the deployed system: $M$ together with its decoding, retrieval, policy,
+      and control layers \\
+$x$ & an input---a prompt, a structured request, a conversation state \\
+$p, q$ & propositions or claims \\
+$c$ & the resolved context of a decision \\
+$E$ & an evidentiary basis \\
+$V$ & a verification procedure \\
+$I$ & an institution or accountable organization \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The distinction between $M$ and $S$ is load-bearing rather than pedantic. Every
+property this book identifies as necessary for reliance is a property of $S$, and
+none is a property of $M$. A model has no version of an audit record, an
+authorization, or a resolved context; a system can have all three. Where the
+literature reports a result about models, I say $M$; where the object of
+governance is at issue, I say $S$.
+
+\subsection{The resolved context}
+\label{sec:resolved-context}
+
+A great deal of enterprise information is true only relative to a governing frame.
+Call that frame the \emph{resolved context} and write
+\begin{equation}
+  c = \{\, j,\ t_v,\ f,\ u \,\},
+  \label{eq:context}
+\end{equation}
+where
+
+\begin{center}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{10.6cm}@{}}
+\toprule
+$j$ & jurisdiction or governing regime: the legal, regulatory, or policy authority
+      whose rules apply \\
+$t_v$ & \emph{valid time}: the effective date the assertion is about---the as-of date
+      against which the governing rules are to be assessed \\
+$f$ & material case facts: patient facts, customer facts, transaction facts,
+      product facts, or whatever else is decision-relevant \\
+$u$ & intended use: the decision class, the reliance context, what the answer will
+      be used to do \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+What these four have in common is what decides membership: each is something that
+must be settled about the \emph{question} before the question is well posed. Ask
+whether a filing may use the accelerated pathway and you have asked nothing
+answerable until the regime, the as-of date, the case facts and the intended use are
+fixed. That is why $c$ contains these and not other true and relevant things.
+
+A second time dimension is required, and it fails that test, which is why it does not
+belong in $c$. Write $t_k$ for \emph{transaction time}: the state of the evidential
+base the system actually had access to---which corpus release, ingested to what date.
+A requester does not supply $t_k$ and could not; it is a fact about the system at the
+moment it answered, not about the question it was asked. The distinction is the
+ordinary bitemporal one and it is not decoration.
+
+$t_v$ is a property of the \emph{question}: which date's rules govern this decision.
+$t_k$ is a property of the \emph{answer's provenance}: what the system could have
+known when it answered. Correctness is assessed against $t_v$; reconstruction requires $t_k$; and their
+relation is checkable in \emph{both} directions, which is the whole reason two
+timestamps are needed:
+\begin{align}
+  t_k \prec t_v &\;\Longrightarrow\; \text{the base may omit instruments in force at }
+    t_v \quad \text{(omission)}, \label{eq:bitemporal-stale}\\
+  t_k \succ t_v &\;\Longrightarrow\; \text{the base may contain instruments not in
+    force at } t_v \quad \text{(anachronism)}. \label{eq:bitemporal-anachronism}
+\end{align}
+
+Omission is the familiar case: a rule amended before $t_v$ but ingested after $t_k$
+leaves an assertion ungrounded in a way no inspection of the retrieved evidence will
+reveal, because the missing instrument is missing.
+
+Anachronism is the other half and in regulated work it is the more dangerous of the two,
+because the answer is confidently wrong rather than incompletely right. A corpus current
+to today, answering a question as-of two years ago, will retrieve provisions that had
+not yet been made. Applying a rule to a transaction that preceded it is a familiar and
+serious error in its own right, and the system will produce a clean citation to a real
+instrument while committing it.
+
+Neither failure is prevented by having a recent corpus, and both are prevented by the
+same condition. $\Applicable(E, c)$ must be read to require \emph{interval containment}
+on the temporal component of $c$: the instrument's own validity period includes $t_v$.
+That excludes the not-yet-enacted and the already-superseded together, and it is a
+filter on the evidence rather than a property of the corpus. Temporal validity is
+therefore part of applicability rather than a dimension of its own, which is why the
+conditions on grounded evidence, set out later, do not list it separately. Both directions are also detectable at the aggregate level
+without knowing what any amendment said: compare the corpus ingest watermark against
+the decision date, per source class, and flag either sign of the difference. Systems that record only one timestamp cannot
+perform the comparison, and most record only one.
+
+$\Resolved(c)$ holds when the components of \eqref{eq:context} are explicit rather
+than assumed or inferred without validation. $t_k$, for the reason above, is not
+among them: it is recorded rather than resolved, and belongs to what the audit record
+must preserve. The distinction between explicit and inferred is the whole of
+it: a system that guesses the jurisdiction correctly has not resolved the context,
+because nothing in the record establishes that the guess was checked, and an
+auditor cannot distinguish a correct guess from a lucky one.
+
+The truth predicate is correspondingly indexed. $\True(p \mid c)$ is truth relative
+to a resolved context, and the relation that fails is:
+\begin{equation}
+  \True(p \mid j_1, t_1, f_1, u_1)
+  \nentails
+  \True(p \mid j_2, t_2, f_2, u_2).
+  \label{eq:no-transfer}
+\end{equation}
+
+\subsection{The non-entailments}
+
+Write $\Pr_M(\gen(p) \mid x)$ for the probability that the model $M$, given input
+$x$, generates a token sequence expressing $p$. This is a generation event and nothing
+more --- a fact about $M$'s output distribution. It is deliberately not called an
+assertion: $\Assert_S(p)$, defined in Chapter~\ref{ch:taxonomy}, is a property of the
+deployed system $S$ and is behavioral rather than probabilistic, for reasons given
+there. The two are kept in separate notation because conflating them is the error this
+section exists to block. The premise is that a high value of $\Pr_M(\gen(p) \mid x)$
+does not establish any of the properties on which reliance depends:
+
+\begin{align}
+  \Pr_M(\gen(p) \mid x) \text{ high}
+    &\nentails \True(p \mid c),            \label{eq:ne-true}\\
+  \Pr_M(\gen(p) \mid x) \text{ high}
+    &\nentails \Supports(E, p, c),         \label{eq:ne-supported}\\
+  \Pr_M(\gen(p) \mid x) \text{ high}
+    &\nentails \Applicable(E, c),          \label{eq:ne-applicable}\\
+  \Pr_M(\gen(p) \mid x) \text{ high}
+    &\nentails \Verified(V, p, c),         \label{eq:ne-verified}\\
+  \Pr_M(\gen(p) \mid x) \text{ high}
+    &\nentails \Warranted_I(p \mid c).     \label{eq:ne-warranted}
+\end{align}
+
+Compactly, and in the order in which an institution needs them:
+\begin{equation}
+  \Pr_M(\gen(p) \mid x) \text{ high}
+  \nentails \True(p \mid c)
+  \nentails \Supports(E, p, c)
+  \nentails \Warranted_I(p \mid c).
+  \label{eq:ne-chain}
+\end{equation}
+
+These are non-entailments, and the distinction matters because the claim is
+frequently misread as stronger than it is. They do not assert that the properties
+fail to co-occur. A model can and routinely does produce propositions that are
+true, well supported, applicable, verifiable, and fit for reliance. The claim is
+that the generation event is not what establishes those properties, so the
+generation event cannot be what an institution points to when asked to defend
+them. Each arrow in \eqref{eq:ne-chain} marks a gap that something other than the
+model has to close.
+
+Nor is the claim that the properties are unrelated. High generation probability is
+correlated with truth on the distribution the model was fitted to, sometimes
+strongly. Correlation on a training distribution is not entailment, and what concerns this
+book is what happens when the distribution of interest is not that one.
+
+\subsection{What follows}
+
+The premise is weak, and that is its value: it can be granted without conceding
+anything contentious, and it is sufficient for everything in this book.
+
+Two clarifications, because both are easy to misread from the non-entailments
+alone. The claim is not that model output is unreliable. Output is often excellent,
+and the argument concerns what can be established about an individual assertion
+rather than what can be expected of a population of them. And the claim is not that
+the properties in \eqref{eq:ne-chain} are rare. In a well-built system most
+assertions have all of them. The point is that they are established elsewhere, by
+components that can be pointed to.
+
+That is the whole of the constructive program. If generation does not establish
+support, applicability, verification, or authorization, then those properties are
+supplied by something in $S$ that is not $M$---and identifying, building, and
+measuring that something is what the rest of this book is about.

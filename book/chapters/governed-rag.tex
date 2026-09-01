@@ -1,0 +1,567 @@
+% !TEX root = ../main.tex
+\chapter{Governed Retrieval: A Reference Architecture}
+\label{ch:governed-rag}
+\label{sec:governed-rag}
+
+Section~\ref{sec:measurability} established a requirement rather than a preference:
+the grounding rate is measurable only where the evidential base is explicit at
+inference time. Section~\ref{sec:retrieval-insufficient} established that standard
+retrieval supplies one of seven grounding dimensions reliably and none of the three
+that are relations to $c$. This section sets out what closes the gap.
+
+The distinction I will use throughout:
+
+\begin{quote}
+Standard retrieval retrieves evidence. \emph{Governed} retrieval establishes the
+controlled conditions under which retrieved evidence may support an institutional
+assertion.
+\end{quote}
+
+This is architecture, not prompt engineering. None of the eight components below can
+be implemented as an instruction to the model, and Section~\ref{sec:missing} says
+why: instructions enter as tokens and are processed by the same mechanism as the
+content, so an instruction to abstain is a probabilistic influence on a
+continuation rather than a precondition on output.
+
+\section{The underspecified-request principle}
+\label{sec:holodeck}
+
+Before the components, the requirement that motivates the first two of them.
+
+\begin{quote}
+Natural language is an incomplete specification for consequential action.
+\end{quote}
+
+A fluent request routinely leaves unresolved: the referents; the jurisdiction; the
+effective time; the applicable policy; the objective; the requester's authority; the
+constraints; the side effects; the reversibility; the threshold at which action
+should be taken; and whether the requester wants analysis, a recommendation,
+execution, or a binding determination.
+
+The point is not that natural language is a poor interface. It is an excellent
+interface, which is why these systems are worth building. The point is that a
+fluent request cannot be treated as a \emph{complete operational specification} in a
+regulated decision or execution workflow, and that the gap between the two is
+invisible in the request itself. A well-formed sentence does not announce which of
+its parameters were never bound.
+
+Two consequences. The system must force or validate material bindings before
+crossing into consequential action---which is I10. And the boundary at which it
+crosses has to be an explicit architectural decision, because by
+Section~\ref{sec:rlhf} the training regime supplies pressure to answer rather than
+to ask.
+
+\section{Eight components}
+
+\paragraph{1. Authoritative corpus control.} Sources are approved, authenticated,
+and governed. Each carries stable identity, version, effective date, jurisdiction,
+authority level, and applicability metadata, and sources can be pinned to a corpus
+release or a decision-time snapshot. This supplies I8, I9, and the substrate for
+I11 and I14. It is the component most familiar from ordinary data governance and,
+in my experience, the one most often assumed to be sufficient on its own.
+
+\paragraph{2. Context resolution before assertion.} Material variables---$j$, $t$,
+$f$, $u$---are resolved, collected, or explicitly marked unknown before an
+assertion is produced. Where material context is missing the system requests it,
+qualifies the output, declines to produce a decision-ready assertion, or escalates.
+This supplies I10 and is the only defense against illicit universalization
+(Section~\ref{sec:illicit}). It is also the component with the highest product cost,
+because it makes the interaction less immediately satisfying, and it is therefore
+the first to be cut.
+
+\paragraph{3. Metadata-aware retrieval.} Retrieval filters or ranks on scope
+constraints, not on semantic similarity alone: jurisdiction predicates, effective
+date windows, population or product class, decision type. The retrieval event and
+the resulting evidence set are retained. This supplies I11, and it is the direct
+answer to the observation of Section~\ref{sec:retrieval-insufficient} that a
+paediatric and an adult dosing passage are near-neighbours in embedding space.
+
+\paragraph{4. Claim decomposition.} Complex outputs are decomposed, where feasible,
+into atomic claims, each with linked evidence and an explicit support relation. This
+supplies I12. A response-level citation list does not permit checking the third
+sentence, and the third sentence is frequently the one relied upon.
+
+\paragraph{5. Evidence-to-assertion verification.} Citation presence is
+insufficient. The system checks whether the cited evidence supports the claim, and
+whether it does so under $c$ and at the strength asserted
+(Section~\ref{sec:entails-supports}). Controls may combine deterministic rules,
+structured policy logic, source checks, independent model review, and human
+validation, proportioned to risk. This supplies I13 and is where the
+$\Sensitive$ condition of Definition~\ref{def:grounding} is actually enforced
+rather than assumed.
+
+\paragraph{6. Output gating.} If evidence is missing, stale, conflicting,
+inapplicable, or insufficient for the strength of claim requested, the system does
+not present an unqualified assertion as decision-ready. It returns bounded
+information, an explicit uncertainty, a request for missing context, or an
+escalation path. This supplies I17, and it must sit outside $M$.
+
+\paragraph{7. Audit record and replay.} Retain the prompt or structured input; the
+resolved context; source identifiers and versions; retrieved passages; model
+version; prompt or template version; system configuration; verification results;
+human interventions and approvals; the final response; and timestamps with
+retention identifiers. This supplies I14 and I16, and it is what answers the
+question posed at the start of Section~\ref{sec:intro}.
+
+\paragraph{8. Authorization and tiered reliance.} Permitted use depends on the
+consequence of reliance, not only on model quality. Higher-consequence uses require
+stronger constraints, independent validation, and where appropriate a qualified
+human decision-maker with the standing to be accountable. This supplies I15, and the
+tiers of reliance that make it proportionate are developed with the definition of
+warrant.
+
+\section{The flow}
+
+\begin{center}
+raw generative output
+$\rightarrow$ context resolution
+$\rightarrow$ controlled retrieval
+$\rightarrow$ applicability filtering \\
+$\rightarrow$ evidence-to-claim verification
+$\rightarrow$ authorization or escalation
+$\rightarrow$ auditable decision support
+\end{center}
+
+Two things about this sequence carry most of its value, and neither is the ordering.
+
+Each arrow is a \emph{stopping point}. Context resolution can return a request for
+missing bindings; applicability filtering can exclude every candidate source; verification
+can find that the evidence does not reach the claim; the defeater search can find contrary
+authority; and authorization can decline. A pipeline in which the only outcome is an
+answer has implemented the boxes without the arrows, and it is the arrows that make the
+conditions enforceable rather than advisory.
+
+Each arrow is also a \emph{record}. What the audit trail contains is not a summary of the
+final answer but the sequence of determinations that produced it: which context was
+resolved and how, which sources survived filtering and which were excluded and why, what
+the verification returned, what the defeater search returned, and who authorized the
+result. That is what makes the flow reconstructable months later by someone who was not
+present, which is the requirement Section~\ref{sec:intro} opened with.
+
+The sequence is not a confidence gradient. It is a sequence of distinct conditions, and an
+assertion that satisfies six of them is not ninety per cent warranted; it is unwarranted
+for a reason that the record should name.
+
+\section{What each intervention buys}
+
+Common interventions address different invariants, and conflating them is how programs
+spend a great deal and move one number. The table below is best read as a purchasing
+guide: the left column is what a program funds, the middle column is what that
+purchase actually delivers against Table~\ref{tab:invariants-system}, and the right
+column is what it is frequently assumed to deliver and does not.
+
+Two features of it are worth pointing out before reading it. Retrieval appears with two
+distinct entries in the middle column because it does two unrelated things: it reduces
+fabrication, which is why it is usually funded, and it supplies an identified evidential
+base, which is what makes \eqref{eq:rate} measurable at all and is the more durable of
+the two. And no single row delivers more than a handful of invariants, which is the
+practical form of an argument about ownership: there is no purchase
+that makes a system auditable, only a set of purchases that between them cover the
+conditions.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{5.4cm}@{}}
+    \toprule
+    Intervention & Buys & Does not buy \\
+    \midrule
+    Standard retrieval
+      & I8; makes \eqref{eq:rate} measurable; reduces \textsc{Fabrication}
+      & I10--I11, I13; form invariance; applicability \\
+    \addlinespace
+    Better base model
+      & fewer fabrications on covered topics
+      & I8--I19; may worsen \textsc{Lucky} by guessing better \\
+    \addlinespace
+    Verifier loops
+      & I13 on checkable claims; some of I2--I4
+      & grounding, unless the verifier checks evidence rather than form \\
+    \addlinespace
+    Persistent memory
+      & a precondition for I7 and I14
+      & either of them---storage is not retrieval discipline \\
+    \addlinespace
+    Context resolution
+      & I10, and the substrate for I11
+      & anything on the generation path \\
+    \addlinespace
+    Output gating
+      & I17, and thereby enforceability of the rest
+      & correctness of the evidence itself \\
+    \bottomrule
+  \end{tabular}
+  \caption{Retrieval does double duty in most deployments: it is funded to improve
+    accuracy, and its more durable contribution is making the grounding rate
+    observable at all.}
+  \label{tab:interventions}
+\end{table}
+
+The row worth dwelling on is the second. A better base model improves the numbers
+most programs report while leaving every system invariant untouched, and its
+effect on the lucky cell runs the wrong way: a model that guesses better produces
+more cell-(ii) assertions and scores higher for doing so.
+
+\section{Structured evidence is the strongest case}
+\label{sec:structured}
+
+The components above are described in terms of retrieved passages, which
+understates what is available. The highest-assurance form of $E$ in an enterprise is
+not a document at all. It is a \emph{query against a system of record}, with the query
+text, the parameters, the result set, and the as-of state all recorded.
+
+Structured evidence satisfies the grounding conditions more cleanly than text
+retrieval does, because the evidence has a schema. Authenticity follows from the source
+system's own controls. Versioning is the table's temporal model rather than a document
+revision. Applicability becomes a set of predicates over columns---jurisdiction,
+effective date range, product class, population---evaluated rather than judged.
+Sufficiency becomes a completeness check over required fields. Traceability is the
+recorded query. And the defeater check of \eqref{eq:nodefeater} becomes a query for
+contradicting rows rather than a search for contradicting prose.
+
+The practical consequence is a preference order that most retrieval-first designs
+invert: where a claim can be answered from a governed table, it should be, and the
+model's role is to render the result rather than to find it. Text retrieval is the
+fallback for claims whose evidence exists only as prose, and it inherits every
+judgment that the schema would otherwise have decided.
+
+\section{What this costs}
+\label{sec:cost}
+
+The controls are not free and a proposal that does not say so is not usable. The
+multipliers can be given structurally, without benchmarks, because they follow from how
+many model calls and retrievals each control requires.
+
+Let a response contain $m$ consequential claims, each with up to $k$ candidate
+supporting sources. Generation is one call. Claim decomposition is one call plus $O(m)$.
+Support verification is $O(mk)$ calls where it is model-based, and $O(1)$ per claim where
+the check is deterministic. The defeater search is one additional retrieval per claim,
+$O(m)$. Coverage checking is $O(m)$ against an enumerated rule and unbounded against a
+rule that must be read out of prose. So the dominant term is $mk$, and the design levers
+follow directly: reduce claims per response, reduce candidate sources per claim, or
+replace model verification with deterministic checks. A ten-claim response over three
+candidate sources each is on the order of thirty verification calls against one
+generation call---which is the difference between a system that costs what a chat costs
+and one that does not.
+
+Storage grows with retained evidence rather than with traffic, and
+Section~\ref{sec:retention} constrains what may lawfully be kept.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.9cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}p{6.6cm}@{}}
+    \toprule
+    Component & Cost profile & Notes \\
+    \midrule
+    Corpus control, metadata
+      & one-off plus upkeep
+      & Ontology and curation effort; no per-request cost \\
+    \addlinespace
+    Metadata-aware retrieval
+      & negligible per request
+      & Predicate filtering is cheaper than the embedding search it constrains \\
+    \addlinespace
+    Context resolution
+      & one round trip, or a form
+      & Latency and interaction cost, not compute \\
+    \addlinespace
+    Claim decomposition
+      & multiplies calls
+      & Linear in claims per response \\
+    \addlinespace
+    Support verification
+      & multiplies again
+      & The dominant cost. Deterministic checks are cheap; model-based
+        entailment is per claim per source; human adjudication is the expensive tail \\
+    \addlinespace
+    Defeater search (I19)
+      & one extra retrieval
+      & The governed contrary query, run under the same applicability predicates.
+        Cheap, and it needs the precedence order to exist \\
+    \addlinespace
+    Coverage checking (I18)
+      & per claim
+      & Cheap where the rule's conditions are enumerated; expensive where they must be
+        inferred from prose \\
+    \addlinespace
+    Audit record
+      & storage, growing
+      & See Section~\ref{sec:retention} on what may lawfully be kept \\
+    \bottomrule
+  \end{tabular}
+  \caption{Cost profile of the controls. The expensive items are per-claim
+    verification and human adjudication, which is precisely why tiering
+    makes them proportional to consequence.}
+  \label{tab:cost}
+\end{table}
+
+Tiered reliance exists for this reason and not only for
+governance tidiness. If every request bore the full control set the economics would
+not work, and a design that applies Tier~3 controls to Tier~1 traffic will be
+abandoned rather than descoped.
+
+\section{Retention against minimization}
+\label{sec:retention}
+
+The audit record of component~7 conflicts with another control regime, and the
+conflict should be stated rather than discovered in review. Prompts, resolved contexts,
+and retrieved passages routinely contain personal or special-category data. Data
+minimization and erasure obligations cut directly against the retention that
+reconstructability requires.
+
+Four resolutions, none complete on its own. Retain references, identifiers, and hashes
+in place of content wherever the content is recoverable from a governed source, so the
+audit record points at evidence rather than copying it. Segregate the audit store and
+control access to it separately from the application. Align retention to the retention
+schedule of the \emph{decision} the assertion supported, rather than choosing a new
+period for the AI system. And where erasure is exercised, preserve the structure of the
+record---that a claim was made, on what evidence class, under what authority---while
+removing the identifying content.
+
+The point for this book is narrower than the resolutions. Reconstructability is a
+requirement in tension with minimization, the tension is a design decision rather than
+an implementation detail, and it requires a fifth function: privacy and records
+management, which joins the three that own the rest.
+
+\section{What this does not claim}
+
+Governed retrieval does not make these systems infallible, and nothing above should
+be read as proposing that it does. Cell (iii) survives it entirely: a controlled,
+versioned, applicable, authoritative corpus can still be wrong, and no amount of
+architecture converts a bad source into a good one. Verification is relative to the
+checks implemented and the assumptions they encode. Human review introduces its own
+failure modes and its own capacity limits. And the floor of
+Section~\ref{sec:floor} does not move.
+
+The function of the architecture is narrower and worth stating precisely. It
+transforms otherwise unlicensed generated text into a controlled, inspectable input
+to an accountable institutional process---one whose failures are attributable,
+whose evidence is identifiable, and whose reasoning can be reconstructed after the
+fact by someone who was not present. That is a lower bar than reliability and a
+much higher bar than accuracy.
+
+\section{Bounding the Request Space}
+\label{ch:bounded-requests}
+\label{sec:bounded}
+
+Section~\ref{sec:canonical-form} argued that the absence of a canonical form is what
+makes accuracy uncertifiable, and Section~\ref{sec:normalizer} argued that training a
+semantic normalizer is not the remedy. There is a third option, and it is the one an
+architect reaches for first: if the model will not canonicalize its input and cannot
+be taught to, \emph{do not give it free-form input at all}.
+
+Restricting the interface is not a workaround. It is the direct application of the
+diagnosis: canonicalization moves upstream of the model, into a schema, where it is
+inspectable and versioned. This section works through what that buys, what it does
+not, and where the residual risk goes---because it does not disappear.
+
+\subsection{The construction}
+
+Replace free text with a typed request. Instead of ``is this approved for children?''
+the interface accepts an object:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{7.2cm}@{}}
+\toprule
+\texttt{intent} & \texttt{INDICATION\_CHECK} (from a closed set) \\
+\texttt{subject\_id} & a key into a system of record \\
+\texttt{indication} & a coded value \\
+\texttt{jurisdiction} & required \\
+\texttt{as\_of} & required \\
+\texttt{population} & required, from a controlled vocabulary \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The object is rendered into a fixed template by code the organization controls and
+versions. Requests are stateless: one request, one fresh context.
+
+The fields are not arbitrary, and the discipline that selects them is the point rather
+than the example. Every component of $c$ appears, because
+Section~\ref{sec:resolved-context} established that a claim whose context is unresolved is
+not yet evaluable---so jurisdiction, valid time, and intended use are required fields, and
+a request missing any of them does not validate. The material facts $f$ enter as keys into
+systems of record rather than as free text, so that the entity under discussion is
+identified rather than described. The intent is drawn from a closed set, because the
+decision class determines which sources have standing under $\standing$ and therefore what
+counts as authoritative. And coded values replace prose wherever a controlled vocabulary
+exists, since that is what allows applicability to be evaluated as a predicate in
+Section~\ref{sec:governed-rag}'s third component rather than judged.
+
+What the schema encodes, in other words, is the set of bindings that would otherwise have
+to be guessed. Anything the type system requires is a thing the system can no longer
+silently assume.
+
+\subsection{What this fixes}
+
+Against Table~\ref{tab:invariants-system}, the gains are specific and substantial.
+
+\paragraph{I1 becomes satisfied by construction.} Not because the model acquired form
+invariance, but because the opportunity to violate it has been removed. Two
+materially equivalent requests are now \emph{the same request}: the equivalence class
+of Section~\ref{sec:canonical-form} has exactly one member, and the canonical form is
+supplied by the schema.
+
+\paragraph{The request space becomes enumerable.} It is a product of typed fields
+rather than $\mathcal{V}^{*}$. It may be combinatorially large, but it is
+\emph{stratifiable}: coverage can be designed by jurisdiction, date band, population,
+and intent, with known sampling properties. That is ordinary test design. The
+validation problem becomes well posed in the sense of
+Section~\ref{sec:not-easier}---the same sense in which it is well posed for a
+classifier.
+
+\paragraph{I10 is enforced by the type system rather than detected.} A request without
+a jurisdiction does not validate. The misapplied category of
+Section~\ref{sec:cell-v} does not need to be caught downstream, because the binding
+it depends on is a precondition of submission. This is the single largest gain, and
+it is available with no machine learning at all.
+
+\paragraph{I7 becomes achievable.} Statelessness removes context accumulation, which
+is the dominant source of within-session drift. Combined with the reproducibility
+conditions of Section~\ref{sec:determinism}, replay becomes a realistic control
+rather than an aspiration.
+
+\subsection{What this does not fix}
+
+\paragraph{The output space is still $\mathcal{V}^{*}$.} Bounding the input bounds the
+input. The model can still emit any string, so ungrounded assertion survives
+untouched: a confident figure resting on nothing is exactly as available as before.
+Grounding is I13 and no amount of input discipline supplies it.
+
+\paragraph{Errors are still not label mismatches.} If the response is prose, it can be
+partly right, right for the wrong reason, or adequate for a weaker claim than the one
+made. The atomic countable error of the classifier case does not follow from a typed
+input.
+
+\subsection{Where the problem goes}
+\label{sec:relocation}
+
+This is the part that decides whether the design is an improvement or a disguise.
+\textbf{Who fills in the request?}
+
+If a person translates their need into the typed object, the ambiguity has not been
+eliminated; it has been moved into that translation, and it is unrecorded unless the
+system captures it.
+
+If a language model performs the translation---which is what is usually built,
+because it preserves the interface that made the technology attractive---then the
+unbounded input space has been reintroduced at the parsing stage. Form-invariance
+failure now determines \emph{which request object is constructed}. A paraphrase can
+produce a different jurisdiction, a different population, or a different intent, and
+everything downstream will process that object correctly and produce a well-grounded
+answer to the wrong question.
+
+This is worse than the original failure in one specific respect: it is less visible.
+An ungrounded assertion at least looks like an assertion, and the audit record shows
+what evidence was and was not used. A misparsed request produces a record that is
+internally consistent and complete. Every control passes. The evidence applies to the
+context in the record, and the context in the record is not the user's context.
+
+The mitigation is not technical. It is to \textbf{render the resolved request back and
+require confirmation before proceeding}, which converts a silent failure into a
+visible one and puts the binding decision where accountability already sits. This is
+the pattern enterprise systems have always used before consequential execution, and
+the argument of this book is that a natural-language front end does not earn an
+exemption from it. Where confirmation is impractical, the parse should be treated as
+part of the assertion for audit purposes: recorded, versioned, and measured for
+accuracy against reviewed samples like any other component.
+
+\subsection{Constraining the output, and what that does and does not buy}
+\label{sec:constrained-output}
+
+The natural complement is to constrain the output as well: grammar-constrained
+decoding into a schema, with an enumerated verdict field, required evidence
+references, and an explicit \texttt{INSUFFICIENT\_EVIDENCE} variant.
+
+This is worth doing and its benefits should be stated exactly, because it is easy to
+credit it with more than it delivers.
+
+It \emph{does} guarantee that the output parses, that the output space is enumerable,
+and that errors become atomic and countable again---restoring on the output side the
+well-posedness that typed requests restore on the input side. It \emph{does} make
+abstention a first-class value rather than a hoped-for phrasing, and it makes
+per-field evidence linkage (I12) structurally enforceable rather than conventional.
+
+It does \emph{not} satisfy I17. A grammar constrains which strings can be emitted; it
+does not determine which the model selects. The choice between a substantive verdict
+and the abstention variant is made by the same next-token computation as everything
+else, subject to the same pressures identified in Section~\ref{sec:rlhf}. Constrained decoding makes abstention \emph{expressible}, not
+\emph{correctly triggered}.
+
+I17 is therefore satisfied by the check, not by the schema. The evidence conditions of
+Definition~\ref{def:grounded-evidence} are evaluated outside the model, and the gate
+must be able to \emph{override} a substantive verdict the model produced---replacing it
+with a qualification, a refusal, or an escalation---when those conditions are not met.
+A system that trusts the model's own choice of variant has implemented a vocabulary
+for abstention and no gate.
+
+\subsection{Where this is practical}
+
+The design suits high-volume, repetitive, well-typed decisions: eligibility
+determinations, coding against a rulebook, standard disclosures, reconciliations,
+completeness checks. The user is an operator working a queue against a known decision
+class, and the intent set is small and stable.
+
+It suits exploratory work badly, and that matters, because exploration is a large part
+of why these systems were adopted. An analyst pursuing an unanticipated question has
+no intent to select.
+
+Two costs deserve naming.
+
+\paragraph{The intent taxonomy is an ontology project.} Enumerating decision classes,
+coding their fields, and maintaining controlled vocabularies is the same work as
+building a conformed dimensional model, with the same effort profile and the same
+tendency to be underestimated.
+
+\paragraph{An incomplete taxonomy fails quietly.} A question outside the intent set
+does not raise an error. It is routed to the nearest available intent, which is a
+misparse of the kind described in Section~\ref{sec:relocation}. Twenty intents may
+cover most of the volume, and the residual tail is disproportionately where the
+unusual, high-consequence cases live. A closed intent set therefore needs an explicit
+\emph{no matching intent} outcome and a route for it, or the constraint will silently
+manufacture the failure it was introduced to prevent.
+
+\subsection{The effect on what the system is}
+
+One consequence should be faced directly, because it changes how the component should
+be described and governed.
+
+If the input is typed, the output is schema-constrained, and the evidence conditions
+are checked outside the model, then it is fair to ask what the model is contributing.
+Frequently the honest answer is: retrieval, summarization, and the rendering of a
+determination into readable language---while the determination itself is made by
+deterministic rules over structured evidence.
+
+That is a legitimate and valuable architecture, and it is one enterprises already know
+how to validate. But it \emph{reclassifies} the system. The model is a retrieval and
+presentation layer over a decision service, not the decision-maker, and the assurance
+argument should say so. A program that describes such a system as ``AI-driven
+decisioning'' is overstating the model's role and, more importantly, misdirecting its
+own validation effort toward the component that is doing the least consequential work.
+
+There is a further consequence worth facing, because it follows from combining this
+section with Section~\ref{sec:structured} and a reader will combine them. If structured
+evidence is the strongest available form of $E$, and typed requests plus constrained
+output are what reach the higher reliance tiers, then the architecture that best
+satisfies this book's conditions is one in which the model does comparatively little of
+the deciding. Taken to its conclusion, that is an argument for routing decidable claims
+\emph{away} from the model altogether.
+
+I take that to be a feature rather than an embarrassment. A framework that identifies
+which decisions do not need a language model is more useful than one that assumes every
+decision does. What remains for the model, once the decidable residue is routed away, is
+the genuinely open-textured part: synthesis across heterogeneous sources, questions whose
+evidence exists only as prose, interpretation where the governing text is ambiguous, and
+interaction with people who cannot state their need in a schema. That is a smaller claim
+about the technology than the field usually makes, and a more defensible one---and it is
+the part where the measurement problem of Section~\ref{sec:auditable} genuinely bites,
+because it is the part no schema can decide.
+
+Tiered reliance is where this resolves. Bounding the request
+space is not a general answer to the problem of ungrounded assertion; it is the
+mechanism by which a narrow, well-understood decision class can be moved to a higher
+reliance tier than free-form interaction can support. Free-form interfaces are
+appropriate at Tiers~0 to~2. Reaching Tier~3 and above is, in practice, an exercise in
+bounding what may be asked and what may be answered.

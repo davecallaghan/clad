@@ -1,0 +1,157 @@
+% !TEX root = ../main.tex
+\section{Introduction}
+\label{sec:intro}
+
+Consider a decision you have to be able to defend two years from now.
+
+A clinical operations team asks a language model system whether a compound is
+approved for a paediatric indication. The system answers. Someone acts on the
+answer. Later---in an audit, an inspection, a dispute---the question arrives:
+what was that answer based on? Not whether the model is generally accurate. Which
+document, in which version, as of which date, under which jurisdiction, supported
+this specific claim.
+
+Most current validation practice cannot answer that question, and the reason is
+not that the practice is careless. It is that the practice measures the wrong
+thing. The dominant approach evaluates a model by sampling questions with known
+answers and scoring the outputs against them---\emph{reference-based evaluation},
+in the terms of the natural-language-generation literature. It produces a
+number---accuracy, or its complement, often reported as a hallucination
+rate---and that number is then used as evidence of fitness for deployment.
+
+The central argument of this paper can be stated in one sentence. \textbf{In
+regulated settings, the relevant question is not merely whether an answer is
+accurate. It is whether the organisation can reconstruct why this particular
+assertion was produced, identify the authoritative and versioned evidence on which
+it rests, establish that the evidence applies to the resolved case context, verify
+the asserted relation, and show that reliance was authorised under the institution's
+governing rules.} Accuracy is one input to that question and settles none of it.
+
+This paper argues that reference-based evaluation cannot support the use it is put
+to,
+for two reasons that compound.
+
+The first is a classification problem. Pooling every wrong answer into one
+metric conflates failures with different causes and different remedies. A system
+that faithfully reports an erroneous source has a data problem. A system that
+fabricates a plausible-looking figure has a generation problem. A system that
+correctly reports a regulation that was superseded last year, or that applies in
+a different jurisdiction, has a context-resolution problem. These are three
+separate defects, addressed by three separate teams, on three separate budgets.
+One number does not tell you which one to spend.
+
+The second reason is worse, and it is the argument of this paper.
+Section~\ref{sec:canonical-form} shows that the system applies no canonical form
+to its inputs. It computes a conditional distribution over token sequences given
+token sequences; its inputs are strings; and two semantically identical
+queries---a contraposed conditional, a quantity written in digits rather than
+words, an active rather than passive phrasing---are two distinct points in input
+space. Nothing in the architecture guarantees they map to the same output, and
+measurement confirms they frequently do not. A database normalises before it
+compares. A compiler canonicalises before it optimises. This system does
+neither.
+
+The consequence for validation is direct. If a test case passes, you have
+learned that one string produced an acceptable output on one occasion. You have
+not learned that the semantically identical string will, or that the same string
+will next week, or that the same string will later in the same conversation. A
+passing test does not generalise to the paraphrase, so the test suite does not
+certify the behaviour it appears to certify. Accuracy is a property of a sample,
+and this sample does not support the inference that validation requires of it.
+
+That is a negative result, and on its own it would be unhelpful. The
+constructive claim is that a different property does not have this defect.
+\emph{Grounding}---whether an assertion is supported by evidence applicable to
+the decision at hand, through a mechanism actually sensitive to that
+evidence---is a property of the relation between an assertion and an evidential
+base, not of a sampled output. It is stable under paraphrase in the way accuracy
+is not, because it is a fact about the pipeline rather than about a draw from it.
+It is therefore the property a governance regime can audit.
+
+Section~\ref{sec:auditable} makes this precise, and proves the sharpest form of
+the point: no accuracy figure identifies or bounds the grounding rate over the
+unit square. No accuracy figure constrains the rate at which a system asserts
+beyond its evidence, in either direction. A system can be highly accurate and
+almost entirely ungrounded, and the second fact is the one that predicts what
+happens when the questions change.
+
+\paragraph{What this paper is not arguing.} Not that these systems are
+unreliable in a way that precludes use. I build them, in exactly the regulated
+settings this paper is about, and they work. Not that accuracy is uninteresting;
+it is interesting, and it is the wrong thing to certify against. And not that
+better models will not help. They will, on some axes and not others, and
+Section~\ref{sec:architecture} says which.
+
+\paragraph{Contributions.} Six, in the order they appear.
+
+\begin{enumerate}
+  \item \textbf{A redefinition of hallucination, indexed to a decision context.}
+        Existing definitions ask whether an assertion is supported by a supplied
+        source. This one asks the prior question---whether that source governs the
+        case---by requiring support to be applicable at a resolved context of
+        jurisdiction, valid time, material facts, and intended use, and by
+        requiring the assertion to have been produced \emph{because of} the evidence
+        rather than merely to agree with it. The consequence is a failure class that
+        faithfulness and attribution metrics score as clean by construction, and a
+        definition evaluable at the point of assertion without an answer key
+        (Sections~\ref{sec:taxonomy}, \ref{sec:novelty}).
+  \item A five-category taxonomy following from it---\textsc{Sound},
+        \textsc{Lucky}, \textsc{Error}, \textsc{Fabrication}, and
+        \textsc{Misapplied}---in which the fifth, assertion grounded in authentic
+        but inapplicable evidence, is a distinct control failure with its own
+        remedy and owner (Sections~\ref{sec:taxonomy}, \ref{sec:cell-v}).
+  \item A proof that aggregate accuracy neither identifies nor bounds the grounding
+        rate, so a validation programme reporting accuracy alone cannot distinguish
+        radically different reliance profiles
+        (Proposition~\ref{prop:independence}).
+  \item An architectural account of why the failures are structural, grounded in the
+        specific architecture and training regime these systems inherit, and an
+        argument that the absence of a canonical form makes accuracy uncertifiable
+        rather than merely incomplete
+        (Sections~\ref{sec:architecture}, \ref{sec:canonical-form}).
+  \item A set of nineteen invariants separating what assertion behaviour does not
+        supply from what a system must be built to supply, each tied to a control
+        (Section~\ref{sec:invariants}).
+  \item A reference architecture for governed retrieval, a definition of
+        institutional warrant, and an account of why the division of ownership
+        across data, policy, and platform functions is itself a principal cause of
+        failure (Sections~\ref{sec:governed-rag}--\ref{sec:three-teams}).
+\end{enumerate}
+
+\paragraph{Scope.} This paper is about one class of system: models that emit
+natural-language assertions by autoregressive sampling over a token vocabulary,
+fitted by next-token likelihood on large text corpora, and optionally post-trained
+on human preferences. That is the decoder-only transformer language model
+established at scale by the GPT-3 generation and everything built on that pattern
+since. It is not about deep learning generally. Generative adversarial networks and
+diffusion models are out of scope, as are encoder-only classifiers, rankers, and
+extractors, and the conventional predictive models that make up most of an
+enterprise analytics estate. Those components assert nothing, so grounding is not a
+coherent question about them---which is not to say they are easy to validate;
+Section~\ref{sec:not-easier} is explicit that they share several of the problems
+described here. Section~\ref{sec:scope} states the boundary
+precisely and says why it falls where it does.
+
+\paragraph{Structure.} Section~\ref{sec:premise} states the premise the argument
+rests on. Section~\ref{sec:architecture} identifies the systems in scope and
+derives, from their architecture and training regime, why the failures this paper
+describes are structural. Section~\ref{sec:taxonomy} redefines
+hallucination as ungrounded assertion and gives the five categories that follow.
+Section~\ref{sec:independence} proves that aggregate accuracy does not identify the
+grounding rate.
+Section~\ref{sec:grounding-context} defines the resolved context and the six
+dimensions of grounding, and explains why retrieval and citation do not supply
+them. Section~\ref{sec:canonical-form} develops the canonical-form argument and its
+consequence for validation. Section~\ref{sec:invariants} states the invariants.
+Section~\ref{sec:auditable} sets out why grounding rather than accuracy is
+auditable, and where it can be measured. Sections~\ref{sec:governed-rag}
+to~\ref{sec:three-teams} give the constructive architecture, the definition of
+warrant with reliance tiers, and the organisational analysis.
+Section~\ref{sec:evaluation} gives an evaluation protocol and
+Section~\ref{sec:related} positions the work.
+
+\paragraph{Notation.} Formal notation is used where it makes a claim checkable
+and avoided where it would only make one look rigorous. Two operators, five
+defined categories, one proposition with a two-line proof. Every definition is
+stated over observable behaviour, so that any claim made here can be tested
+against a running system.

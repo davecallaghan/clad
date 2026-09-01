@@ -1,0 +1,105 @@
+% !TEX root = ../main.tex
+\appendix
+\section{A Case Traced End to End}
+\label{sec:worked}
+
+The argument has been made in fragments. This appendix traces one case through every
+condition, showing what each invariant produces as a record and where the assertion
+would have been stopped. The case is constructed to exercise applicability, both time
+dimensions, and the defeater search at once; it is an illustration of the failure shapes
+described above rather than a report of a measured incident.
+
+\paragraph{The request.} An operator asks: \emph{``Can we rely on the accelerated
+pathway for this filing?''} A system with a free-form interface will answer. Nothing in
+the sentence is ill-formed.
+
+\paragraph{Context resolution (I10).} The request is missing every component of $c$. The
+system resolves, or refuses:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{8.9cm}@{}}
+\toprule
+$j$ & jurisdiction of the filing --- \emph{not stated}; two candidate regimes apply to
+      the entity \\
+$t_v$ & valid time --- the filing date, 14 months ago, \emph{not stated}; the operator
+      assumed today \\
+$f$ & material facts --- entity class and product type, \emph{partially stated} \\
+$u$ & intended use --- a binding submission, not an internal estimate,
+      \emph{not stated} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Four of four components unresolved or wrong. Under I10 this request does not proceed; it
+returns a resolution prompt. \textbf{Most deployments stop being defensible here}, and
+nothing downstream can recover it, because a well-grounded answer to the wrong question
+is indistinguishable in the record from a well-grounded answer.
+
+\paragraph{Retrieval under applicability (I11).} With $c$ resolved, retrieval filters on
+scope rather than similarity alone. Similarity search returns guidance for both
+jurisdictions and for the current period; the applicability predicates admit only
+instruments governing $j$ whose validity interval contains $t_v$. Two of the five
+highest-similarity passages are excluded: one for jurisdiction, one for
+anachronism---it postdates the filing by four months and would have supported the
+answer the operator expected.
+
+\paragraph{Temporal checks (I9).} The corpus watermark $t_k$ is today; $t_v$ is 14 months
+ago. By \eqref{eq:bitemporal-anachronism} the base may contain instruments not in force
+at $t_v$, which is what the previous step caught. Had $t_k$ predated $t_v$,
+\eqref{eq:bitemporal-stale} would flag possible omission instead, and the correct action
+would be to decline rather than to answer from a base known to be incomplete.
+
+\paragraph{Support and sufficiency (I12, I13, I18).} The surviving passage supports
+eligibility for the pathway. Claim decomposition splits the response into four atomic
+claims; three link to that passage. Coverage checking against the enumerated conditions
+of the rule finds the passage addresses four of five: it is silent on a filing-history
+condition. $\Sufficient$ fails. The correct output is a qualified answer naming the
+unaddressed condition, not an unqualified yes.
+
+\paragraph{Defeater search (I19).} The governed contrary query returns a supervisory
+statement of equal standing, in force at $t_v$, narrowing the pathway for this entity
+class. It does not contradict the primary passage---it \emph{undercuts} it, by removing
+the entity from scope. A search for contradictions would have found nothing.
+$\NoDefeater$ fails, and the case is \textsc{Contested} in the sense of
+Section~\ref{sec:contested} unless the institution's precedence order separates the two
+instruments. Here it does not: both are of the same standing.
+
+\paragraph{Gating (I17).} Three conditions have failed---applicability caught two
+candidate sources, sufficiency is unmet, and a defeater exists. The gate returns an
+escalation with the unresolved question stated, not an answer with caveats.
+
+\paragraph{What the record contains (I14, I15, I16).} Resolved $c$; the corpus release
+and $t_k$; every retrieved passage with source identity, version, and validity interval;
+the applicability exclusions and their reasons; claim-level links; the coverage gap; the
+defeater and its standing; the gate decision; and the escalation recipient.
+
+\paragraph{What each metric would have said.} This is the point of the exercise.
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.3cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{6.2cm}@{}}
+\toprule
+Measurement & Verdict & Why \\
+\midrule
+Reference-based accuracy
+  & possibly correct
+  & The unqualified answer may match an answer key written without $c$ \\
+\addlinespace
+Faithfulness / attribution
+  & clean
+  & The citation is accurate and the passage does entail the claim \\
+\addlinespace
+Context relevance
+  & high
+  & Topic matches exactly \\
+\addlinespace
+Ungrounded assertion rate
+  & \textbf{hallucination}
+  & Applicability, sufficiency, and no-defeater all fail \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three of the four established measurements pass a case that should not have produced an
+assertion at all. That is the paper's argument in one row.

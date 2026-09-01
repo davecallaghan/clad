@@ -1,0 +1,211 @@
+\chapter{Templates \& Classifier Specifications}
+\label{ch:templates}
+
+
+Reusable artifacts for putting the framework into practice.
+
+\section{EPG Constraint Library Template}
+\label{sec:templates-C-1}
+
+
+\subsection{Library Structure}
+\label{sec:templates-C-1-1}
+
+
+A constraint library package contains:
+
+\textbf{Library metadata:}
+\begin{itemize}
+  \item Name and version (semantic versioning: major.minor.patch)
+  \item Target industry and regulatory basis (e.g., ``HIPAA Privacy Rule \S{}164.502-\S{}164.514")
+  \item Maintainer organization and contact
+  \item Last review date and next scheduled review
+  \item Applicable governance levels (recommended)
+\end{itemize}
+
+
+\textbf{Constraint entries:} each containing:
+\begin{itemize}
+  \item Deontic modality (O or F)
+  \item Atomic property identifier from the controlled vocabulary
+  \item Recommended governance level (enterprise, department, or project)
+  \item Domain assignment
+  \item Evaluability class (C\_\allowbreak{}m or C\_\allowbreak{}p)
+  \item Rationale and regulatory reference
+\end{itemize}
+
+
+\textbf{Pre-attested decompositions:} for each semantic intent underlying the constraints:
+\begin{itemize}
+  \item The intent record (C\_\allowbreak{}s) with full semantic description
+  \item The mechanical components (C\_\allowbreak{}m) with implementation specifications
+  \item The procedural components (C\_\allowbreak{}p) with attestation requirements
+  \item The decomposition attestation record (who attested, when, qualifications)
+\end{itemize}
+
+
+\textbf{Known residual gaps:} documented per constraint where soundness cannot be fully demonstrated, including compensating control recommendations.
+
+\textbf{Regression test suite:} known-bad inputs that mechanical checks must catch, plus expected evaluation outcomes. This suite is the minimum test set that must pass during local verification (\S{}9.4).
+
+\subsection{Library Lifecycle}
+\label{sec:templates-C-1-2}
+
+
+Libraries follow semantic versioning:
+
+\begin{itemize}
+  \item \textbf{Major version} (e.g., 1.0 $\to$ 2.0): new constraints added, constraints removed, or constraint semantics materially changed. Requires full re-attestation by adopting organizations.
+  \item \textbf{Minor version} (e.g., 1.0 $\to$ 1.1): modified decompositions, updated mechanical checks, expanded test suites. Requires regression test re-execution by adopting organizations.
+  \item \textbf{Patch version} (e.g., 1.0.0 $\to$ 1.0.1): documentation updates, test case additions, editorial corrections. No action required by adopting organizations beyond acknowledgment.
+\end{itemize}
+
+
+Each version requires domain expert attestation from the library maintainer. Organizations that have adopted a library version receive update notifications when new versions are released, including a changelog and impact assessment.
+
+\subsection{Example: HIPAA Prompt Constraints v1.0 (Skeleton)}
+\label{sec:templates-C-1-3}
+
+
+\textbf{Library metadata:}
+\begin{itemize}
+  \item Name: HIPAA Prompt Constraints
+  \item Version: 1.0.0
+  \item Industry: Healthcare / Life Sciences
+  \item Regulatory basis: HIPAA Privacy Rule (45 CFR \S{}164.502-\S{}164.514), HIPAA Security Rule (45 CFR \S{}164.302-\S{}164.318)
+  \item Recommended level: Enterprise
+\end{itemize}
+
+
+\textbf{Constraint entries (8 constraints):}
+
+\begin{table}[ht]
+  \centering\footnotesize
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{1.12cm}>{\raggedright\arraybackslash}p{1.12cm}>{\raggedright\arraybackslash}p{4.11cm}>{\raggedright\arraybackslash}p{1.19cm}>{\raggedright\arraybackslash}p{6.11cm}@{}}
+  \toprule
+  \# & Modality & Property & Class & Regulatory Reference \\
+  \midrule
+  1 & F & phi\_\allowbreak{}disclosure\_\allowbreak{}in\_\allowbreak{}output & C\_\allowbreak{}m & \S{}164.502(a) --- Minimum Necessary \\
+  2 & O & hipaa\_\allowbreak{}disclaimer\_\allowbreak{}present & C\_\allowbreak{}m & \S{}164.520 --- Notice of Privacy Practices \\
+  3 & F & pii\_\allowbreak{}in\_\allowbreak{}system\_\allowbreak{}logs & C\_\allowbreak{}m & \S{}164.312(a) --- Access Control \\
+  4 & O & data\_\allowbreak{}minimization\_\allowbreak{}instruction & C\_\allowbreak{}m & \S{}164.502(b) --- Minimum Necessary Standard \\
+  5 & F & medical\_\allowbreak{}diagnosis\_\allowbreak{}instruction & C\_\allowbreak{}m + C\_\allowbreak{}p & \S{}164.502 --- Uses and Disclosures \\
+  6 & O & patient\_\allowbreak{}redirect\_\allowbreak{}to\_\allowbreak{}provider & C\_\allowbreak{}m & \S{}164.502 --- Treatment Exception \\
+  7 & F & phi\_\allowbreak{}in\_\allowbreak{}test\_\allowbreak{}environments & C\_\allowbreak{}m & \S{}164.308(a)(4) --- Information Access Management \\
+  8 & O & breach\_\allowbreak{}notification\_\allowbreak{}instruction & C\_\allowbreak{}p & \S{}164.404 --- Notification to Individuals \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\textbf{Decomposition example (Constraint \#1: F(phi\_\allowbreak{}disclosure\_\allowbreak{}in\_\allowbreak{}output)):}
+
+Intent record: ``The AI system must not include protected health information in its outputs unless the disclosure is explicitly authorized under a HIPAA-permitted use or disclosure."
+
+Mechanical components:
+\begin{itemize}
+  \item NER-based PHI detection in prompt instructions (names, dates, MRNs, SSNs, addresses, phone numbers)
+  \item Pattern-based detection of prompt instructions that request PHI inclusion
+  \item Required presence of explicit ``Do not include patient-identifying information" instruction
+\end{itemize}
+
+
+Procedural components:
+\begin{itemize}
+  \item Privacy officer review and attestation that the prompt's PHI protections are adequate for the intended use case
+  \item Annual re-attestation aligned with HIPAA risk assessment cycle
+\end{itemize}
+
+
+Residual gap: mechanical NER detection covers approximately 90\% of standard PHI patterns. Novel identifiers, contextual PHI (e.g., ``the patient in room 3"), and inference-based re-identification are not fully captured. Compensating control: 10\% HITL review of outputs by trained privacy staff.
+
+\textbf{Regression test suite (partial):}
+\begin{itemize}
+  \item 50 known-PHI test prompts containing explicit patient identifiers $\to$ mechanical checks must flag all 50
+  \item 20 boundary-case prompts with contextual identifiers $\to$ mechanical checks should flag at least 15
+  \item 30 clean prompts with no PHI $\to$ mechanical checks must pass all 30 (false positive baseline)
+\end{itemize}
+
+
+
+
+
+
+\section{ROC Output Classifier Specifications}
+\label{sec:templates-C-2}
+
+
+\subsection{Classifier Governance Profile Template}
+\label{sec:templates-C-2-1}
+
+
+Every classifier deployed in ROC must have a documented governance profile:
+
+\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.48cm}>{\raggedright\arraybackslash}p{12.22cm}@{}}
+  \toprule
+  Field & Description \\
+  \midrule
+\endfirsthead
+  \toprule
+  Field & Description \\
+  \midrule
+\endhead
+  \bottomrule
+\endlastfoot
+  Classifier ID & Unique identifier \\
+  Version & Semantic version (major.minor.patch) \\
+  Purpose & What threat/constraint it evaluates \\
+  Output constraint class & O\_\allowbreak{}c or component of O\_\allowbreak{}x \\
+  Training data summary & Source, size, composition (no PII in the profile) \\
+  Benchmark metrics & Precision, recall, F1 at configured threshold \\
+  Known limitations & Classes of inputs where performance degrades \\
+  Expected Calibration Error (ECE) & Calibration metric for the current version --- required for threshold governance. A threshold is meaningless without knowing the classifier's calibration curve. \\
+  Reliability diagram & Visual calibration curve for the current version \\
+  Threshold ($\tau$) & Current governance threshold, with risk-tier variants. Only governable when ECE is known. \\
+  Threshold owner & Which governance domain owns the threshold \\
+  Validation cadence & How often retested against updated benchmarks \\
+  Last validation date & When last validated \\
+  Red-team results & Summary of last adversarial testing \\
+  Retraining trigger & Conditions that mandate classifier retraining \\
+\end{longtable}
+\normalsize
+
+
+\subsection{Minimum Classifier Requirements by Threat}
+\label{sec:templates-C-2-2}
+
+
+\begin{table}[ht]
+  \centering\small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.66cm}>{\raggedright\arraybackslash}p{5.45cm}>{\raggedright\arraybackslash}p{6.24cm}@{}}
+  \toprule
+  Threat & Minimum Classifier Type & Recommended Benchmark \\
+  \midrule
+  T7: Prompt injection & Sequence classifier on output patterns & Injection benchmark dataset (updated quarterly) \\
+  T8: Jailbreak & Safety boundary classifier & Red-team jailbreak corpus (updated quarterly) \\
+  T10: PII/PHI & NER + regex composite & HIPAA PHI pattern corpus, PCI test data \\
+  T10: Memorization & Similarity scorer against training corpus & Memorization benchmark (model-specific) \\
+  T11: Cross-tenant & Tenant-specific terminology detector & Tenant vocabulary cross-reference \\
+  \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\subsection{Threshold Calibration Guidance}
+\label{sec:templates-C-2-3}
+
+
+Threshold selection involves a precision-recall tradeoff with regulatory implications:
+
+\textbf{Conservative (low $\tau$, \textasciitilde{}0.5-0.7):} More flags, fewer misses. Higher false-positive rate increases review burden. Appropriate for Critical-tier PHI/safety constraints where a missed violation has severe regulatory or safety consequences.
+
+\textbf{Balanced (medium $\tau$, \textasciitilde{}0.7-0.85):} Moderate flags and misses. Appropriate for Standard-tier constraints where the cost of false positives and false negatives is roughly symmetric.
+
+\textbf{Permissive (high $\tau$, \textasciitilde{}0.85-0.95):} Fewer flags, more misses. Lower review burden but higher miss rate. Appropriate for Low-tier or informational constraints where violations are not safety-critical.
+
+Threshold calibration is not a one-time event. As models change, user populations shift, and adversarial techniques evolve, the operating point on the precision-recall curve shifts. Periodic recalibration (aligned with classifier validation cadence) ensures thresholds remain appropriate.
+
+
+
+

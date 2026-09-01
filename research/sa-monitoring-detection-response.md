@@ -1,8 +1,6 @@
 # Chapter 4 — Seeing the Whole Picture (MDR)
 
-**Part II · The Three Control Layers**
-
-Chapters 2 and 3 governed the two sides of a single interaction: the prompt going in, the output coming out. But some risks are invisible at the level of any one interaction — a slow drift in constraint quality, an adversary probing across many sessions, a governance component silently degrading, an interaction that bypassed governance entirely. This chapter watches the whole system over time through Monitoring, Detection & Response (MDR), the component `g_MDR`, which governs the remaining surfaces — S_input and S_config — and correlates the evidence the other two components produce.
+EPG and ROC governed the two sides of a single interaction: the prompt going in, the output coming out. But some risks are invisible at the level of any one interaction — a slow drift in constraint quality, an adversary probing across many sessions, a governance component silently degrading, an interaction that bypassed governance entirely. This chapter watches the whole system over time through Monitoring, Detection & Response (MDR), the component `g_MDR`, which governs the remaining surfaces — S_input and S_config — and correlates the evidence the other two components produce.
 
 By the end of the chapter you will be able to:
 
@@ -306,4 +304,4 @@ MDR is the "nervous system" of the governance solution — it senses, alerts, an
 - Its value is cross-interaction: drift, adversarial probing across sessions, and component degradation are visible only in aggregate (§3–§4). Response is an orchestrated workflow — contain, investigate, remediate, report (§5).
 - MDR consumes EPG's and ROC's audit records through defined contracts; without those feeds it degrades to generic monitoring (§6).
 
-This completes Part II: the three components now govern every control surface of an interaction, and the system that runs them. Part III turns outward — mapping these controls to the regulatory frameworks an enterprise must answer to.
+This completes Part IV: the three components now govern every control surface of an interaction, and the system that runs them. How those controls line up against the regulatory frameworks an enterprise must answer to is set out in the regulatory-mapping appendix.

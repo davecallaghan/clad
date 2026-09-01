@@ -1,0 +1,227 @@
+% !TEX root = ../main.tex
+\section{The Output Operator and Its Axiom Failures}
+\label{sec:output-operator}
+
+\subsection{Defining the operator}
+\label{sec:defining-o}
+
+Fix a model $M$: a function from input strings to distributions over output
+strings, together with a decoding procedure. Fix a \emph{prompt-form} $\pi$: an
+equivalence class of input contexts presenting a query in a given surface
+formulation---wording, format, system prompt, few-shot exemplars, position in
+context. Fix an \emph{assertion threshold} $t \in (0,1)$: a level of output
+probability above which we count the model as committing to a content rather
+than merely mentioning it.
+
+\begin{definition}[Output operator]
+\label{def:output}
+$\Out_M \phi$ holds iff model $M$, under prompt-form $\pi$, produces an
+assertion with content $\phi$ at output probability at least $t$.
+\end{definition}
+
+Four comments. First, $\Out_M$ is officially three-place, $\Out_M(\phi, \pi, t)$;
+I suppress the parameters where they are held fixed, and it is precisely the
+ineliminability of the $\pi$-parameter that drives the hyperintensionality
+result. For a doxastic system, relativisation to $\pi$ would be a curable
+indexicality: the system believes what it believes, and the prompt merely
+elicits it. My claim will be that for $M$ there is no $\pi$-invariant state
+\emph{governing} assertion for the prompt to elicit. That is weaker than the
+claim that no $\pi$-invariant state exists at all, and
+Section~\ref{sec:internal} explains why the weaker claim is the one I need and
+the one the evidence supports.
+
+Second, ``content $\phi$'' presupposes a mapping from output strings to
+propositions. I assume a charitable, contextually standard interpretation
+function---a substantive assumption, and one under independent scrutiny
+\citep{mandelkern2024}---since the argument is that $\Out_M$ misbehaves even granting the
+friendliest content-assignment available.
+
+Third, the threshold is defined over \emph{output probability}, not credence.
+This matters more than it may appear. To speak of the model's credence would be
+to ascribe a graded doxastic state in the very definition of the operator whose
+non-doxastic character is at issue. Output probability is a behavioural quantity,
+measurable from the decoding distribution, and commits us to nothing.
+
+Fourth, the threshold idealises away sampling noise. The failures below are
+failures at high output probability, not artefacts of temperature.
+
+One methodological point before proceeding, because it determines how much each
+of the following subsections is worth. Some failures can be demonstrated with
+$\pi$ held fixed---within a single context, with all premises explicit---and
+some can be demonstrated only by varying $\pi$. The first kind is independent
+evidence. The second is the RE-failure of Section~\ref{sec:re-failure} appearing
+under another name, and I mark it as such rather than counting it twice.
+
+\subsection{Failure of K}
+\label{sec:k-failure}
+
+K licenses detachment inside the operator: from $\Out_M(\phi \rightarrow \psi)$
+and $\Out_M \phi$, infer $\Out_M \psi$. The failure is among the
+best-documented behavioural signatures of these systems. A model asserts, under
+direct query, a general conditional---a rule of a game, a regulatory principle,
+an arithmetic identity schema; asserts, under direct query, an instance of its
+antecedent; and then denies or fails to produce the consequent, including within
+a single context window where both premises are tokens it has itself just
+generated.
+
+The reversal-curse results provide a clean instance: models trained on ``$A$ is
+$B$'' reliably assert it, yet fail to assert ``$B$ is $A$,'' even where the
+bridging equivalence is separately available \citep{berglund2024}. The diagnosis
+is architectural. Assertion probability is computed by forward passes over
+surface contexts, and there is no mechanism whose function is to close the
+asserted set under modus ponens. Detachment occurs when the training
+distribution happens to contain the closure, and not otherwise.
+
+This failure is demonstrable with $\pi$ fixed, and so counts as independent
+evidence.
+
+\subsection{Failure of M}
+\label{sec:m-failure}
+
+M says that asserting a conjunction commits one to each conjunct. $\Out_M$ fails
+it: a model asserts a conjunctive content fluently, because the conjunction is
+distributionally natural as a surface string, while denying one conjunct under
+isolated query. Biographical and regulatory summaries are the common case---the
+model asserts that a compound was approved for an indication \emph{and} carries a
+particular contraindication, then denies the contraindication when asked about it
+directly. The conjunction was licensed by the statistics of summary-genre text,
+not by conjunction introduction over independently held commitments.
+
+Two caveats, in the interest of not overselling this. First, a reader may object
+that M should hold automatically for a probability threshold, since a marginal
+cannot fall below a joint. The reply is that the two assertions are elicited
+under different prompt-forms, so no single distribution is being
+marginalised---which is exactly the point, and shows again that the
+$\pi$-parameter is doing real work. Second, and for the same reason, this is not
+independent evidence: the demonstration varies $\pi$, and so belongs to the
+RE-failure family. I include it because M is validated by every monotonic logic,
+so its failure locates $\Out_M$ below the regular systems before we reach RE.
+
+\subsection{Failure of D}
+\label{sec:d-failure}
+
+D forbids asserting both $\phi$ and $\neg\phi$. $\Out_M$ violates it flagrantly
+across prompt-forms: sycophancy results show models asserting $\phi$ under
+neutral framing and $\neg\phi$ when the prompt signals a user preference for
+$\neg\phi$, both above threshold \citep{sharma2024}. But D also fails with $\pi$
+fixed. Models produce, in one continuous generation, sentences that contradict
+each other under any reasonable content-assignment, each locally licensed by its
+immediate context \citep{mundler2024}; and measured consistency under
+paraphrase is well below what a consistency-maintaining process would deliver
+\citep{elazar2021}.
+
+The point is not that a doxastic system cannot harbour contradictions. It is
+that for KD45 belief, contradiction is a malfunction relative to a
+consistency-enforcing competence. For $\Out_M$ there is nothing whose function is
+consistency for the contradiction to be a malfunction of. This failure is
+demonstrable with $\pi$ fixed.
+
+\subsection{Failure of 4 and 5}
+\label{sec:introspection-failure}
+
+The introspection axioms presuppose that the system has access to its own
+attitude-states. $\Out_M \phi \rightarrow \Out_M \Out_M \phi$ would require that
+when $M$ asserts $\phi$, it also asserts, above threshold, that it asserts
+$\phi$---that its self-reports track its first-order dispositions. They do not,
+reliably. Self-reports are generated by the same next-token machinery as
+everything else, trained on human self-report text, and correlate imperfectly
+with actual output distributions. A model asserts that it knows nothing about a
+topic and, several turns later, asserts detailed contents about it; or claims
+certainty while its distribution over the relevant completions is close to
+uniform.
+
+Two qualifications are owed here, because the evidence is genuinely mixed and I
+do not want the argument to rest on a caricature. Models do exhibit non-trivial
+ability to evaluate their own outputs \citep{kadavath2022}, and can be trained
+to express calibrated uncertainty in words \citep{lin2022}. What that work
+establishes is aggregate calibration on a benchmark distribution. What axiom 5
+demands is something else: reliable recognition of the system's own epistemic
+boundary, claim by claim---formally, that
+\[
+  \forall \phi\, \forall c \;\bigl(\neg K_A(\phi \mid c) \rightarrow
+  K_A\bigl(\neg K_A(\phi \mid c)\bigr)\bigr).
+\]
+Aggregate calibration and per-claim boundary recognition are different
+properties, and only the second supports abstention in a consequential setting.
+It is not enough that a system sometimes expresses uncertainty; the requirement
+is that it reliably identify what it does not know. Negative introspection fails
+a fortiori, since the absence of an assertion disposition is nowhere represented
+in a form the model can report.
+
+I note in passing that 4 and 5 sit awkwardly on an output operator at all.
+``$M$ asserts that $M$ asserts $\phi$'' iterates an operator whose operand
+should be a proposition, over a fact about $M$. The awkwardness is itself mild
+evidence for the thesis: these axioms were designed for attitude operators with
+introspective access, and their ill-fit is a symptom of the category difference
+I am arguing for.
+
+\subsection{Failure of RE}
+\label{sec:re-failure}
+
+I have saved the critical case. RE is the weakest closure condition in the
+classical hierarchy: it demands only that logically equivalent contents receive
+the same treatment. \emph{Any} operator over propositions---any operator whose
+objects are individuated no more finely than sets of possible worlds---validates
+RE automatically. RE-failure therefore diagnoses something categorical: the
+operator's objects are not propositions but finer-grained entities.
+
+$\Out_M$ fails RE, robustly. Let $\phi$ and $\psi$ be logically equivalent
+formulations: contraposed conditionals; ``no $A$ are $B$'' against ``all $A$ are
+non-$B$''; a claim and its double negation; a quantity in words against digits;
+active against passive renderings of the same relational claim. The record on
+paraphrase and format sensitivity is substantial: performance and assertion
+behaviour diverge sharply across semantically equivalent formattings
+\citep{sclar2024}, and models perform comparably under prompts whose content is
+irrelevant or misleading, which decouples response from propositional content
+\citep{webson2022}. The reversal-curse case of Section~\ref{sec:k-failure} is
+the cleanest instance, since for identity statements ``$A$ is $B$'' and ``$B$ is
+$A$'' are equivalent and the asymmetry is systematic rather than noisy.
+
+Why is this constitutive rather than noise? Because the quantity the
+architecture computes---conditional probability of token sequences given token
+sequences---is defined over strings, and strings individuate more finely than
+logical equivalence: equivalent contents are in general distinct strings with
+distinct distributional histories. There is no representation of the proposition
+``behind'' the formulations to which sameness of treatment could be pegged.
+Insofar as equivalent formulations are treated alike, that is a contingent
+achievement of training coverage, degrading predictably as formulations become
+distributionally rarer.
+
+The distinction I need is between an empirical tendency and a validity.
+RE-conformity for $\Out_M$ is a tendency with principled exceptions; RE-validity
+requires exceptionlessness in principle. A critic will observe that human
+RE-conformity is also a tendency with principled exceptions, and that observation
+is correct and important; I take it up in Section~\ref{sec:human-parallel},
+which is where this argument is won or lost.
+
+\subsection{Summary}
+\label{sec:axiom-summary}
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Principle & Status & Fixed $\pi$? & Diagnosis \\
+    \midrule
+    K  & Fails & yes & no closure mechanism over the asserted set \\
+    M  & Fails & no  & conjunctions licensed as surface strings \\
+    D  & Fails & yes & no consistency maintenance \\
+    4  & Fails & yes & self-reports insensitive to first-order dispositions \\
+    5  & Fails & yes & absences unrepresented \\
+    RE & Fails & ---  & operator defined over strings, not propositions \\
+    \midrule
+    T  & Fails & yes & models assert falsehoods; settles the epistemic claim alone \\
+    \bottomrule
+  \end{tabular}
+  \caption{Axiom failures for $\Out_M$. The third column records whether the
+    failure is demonstrable with the prompt-form held fixed. Where it is not,
+    the demonstration varies $\pi$ and is therefore an instance of RE-failure
+    rather than independent evidence. C and N are omitted deliberately; see
+    Section~\ref{sec:preliminaries}.}
+  \label{tab:axioms}
+\end{table}
+
+The pattern is not a scattering of independent defects. It has a single root:
+$\Out_M$ is computed over surface formulations by processes with no access to,
+and no function of tracking, propositional identity or logical relations among
+contents. The axiom failures are symptoms. RE-failure names the disease.

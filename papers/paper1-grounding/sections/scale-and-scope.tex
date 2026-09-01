@@ -1,0 +1,206 @@
+% !TEX root = ../main.tex
+\section{Scale, Scope, and What Is Actually Tunable}
+\label{sec:scale}
+
+The architectural choices of Sections~\ref{sec:governed-rag} and~\ref{sec:bounded}
+were presented as though the model were fixed. It usually is not. The question an
+architect faces early is whether to consume a large general-purpose model as a
+service or to operate a smaller model over a defined domain, and the two options are
+routinely compared on accuracy. This section argues that accuracy is close to
+irrelevant to the comparison, identifies the two variables that do govern it, and
+declines a tempting conclusion that does not follow.
+
+\subsection{What scale does, and what it cannot do}
+
+Scale improves accuracy. That is not in dispute and nothing here argues otherwise.
+What matters is what an accuracy improvement licenses, and by
+Proposition~\ref{prop:independence} it licenses nothing about the grounding rate. The
+two quantities are not linked by any entailment, so a model that
+scores better tells you it scores better.
+
+There is a stronger point available, and it follows from
+Section~\ref{sec:pretraining} rather than from any claim about how well these systems
+work. The objective \eqref{eq:objective} contains no term that is a function of
+truth. Accuracy gains from scale are therefore gains in modelling the training
+distribution, which correlates with truth to the degree the corpus is truthful. They
+are not convergence toward truth as an optimisation target, because no term in the
+loss distinguishes a true continuation from a plausible false one where the two
+diverge. Scale sharpens the estimate of the distribution; it does not introduce a
+distinction the objective never drew.
+
+This is worth stating carefully, because it is easy to overstate in either
+direction. The claim is not that a larger model is not more often right---it is. The
+claim is that being more often right on a distribution is a different property from
+standing in an auditable relation to evidence, and that no amount of the first
+produces the second. The mechanism that would produce grounding is absent from the
+architecture, per Section~\ref{sec:missing}, and adding parameters does not add a
+mechanism.
+
+\subsection{Reproducibility is a property of topology, not of size}
+
+Invariant I14 is where the comparison is usually miscast. Reproducibility does not
+scale, in either direction, because it is not a function of the model at all. It is a
+function of who operates the inference.
+
+Section~\ref{sec:determinism} listed the conditions: pinned model versions,
+controlled batching or single-request inference, deterministic kernel selection,
+recorded decoding parameters, statelessness. Every one of those is a property of the
+serving stack. A parameter count appears in none of them.
+
+What is true, and is the defensible core of the common intuition, is that the
+\emph{typical consumption pattern} for large models makes those conditions harder to
+obtain. A shared multi-tenant endpoint batches your request with other traffic, so
+batch composition is outside your control; sparse expert routing under capacity
+limits makes that batch composition affect your output; and the served version may
+change without notice. None of that follows from the model being large. It follows
+from the model being operated by someone else.
+
+The distinction is not pedantic, because it changes what an architect should do about
+it. ``Prefer a small model'' is not actionable advice and is sometimes wrong.
+``Obtain version pinning, deterministic serving, and stateless requests---by
+self-hosting, by contract, or by choosing a deployment that offers them'' is
+actionable, and it is available for open-weight models of any size.
+
+\subsection{Corpus scope changes what can be measured}
+\label{sec:corpus-scope}
+
+Here the comparison is genuinely asymmetric, and in a way that has nothing to do with
+parameter count and everything to do with what the evidential base contains.
+
+Two of this paper's measurements require establishing a \emph{negative}: that the
+evidence does not support a claim. The abstention items of
+Section~\ref{sec:abstention} need it by construction---an item whose correct
+behaviour is silence is only well formed if you can establish that the answer is
+absent from what the system can draw on. And the ungrounded assertion rate
+\eqref{eq:rate} needs it for the parametric half of $E$, which is why
+Section~\ref{sec:measurability} concluded that half is largely unmeasurable.
+
+Negative claims about a bounded, enumerated, versioned corpus are tractable. You can
+determine that a controlled document set does not address a question, by search over
+an enumerated and versioned index rather than by inference about what a model
+absorbed. For a corpus of any size that is work rather than inspection, and it is
+tractable in the way any completeness check over a known population is tractable. Negative claims about a web-scale training corpus are not
+tractable with current attribution methods, and the gap is one of kind rather than
+maturity: the question is what a model did \emph{not} absorb, and attribution
+techniques estimate influence of what it did.
+
+A related asymmetry follows from Section~\ref{sec:floor}. The statistical floor on
+ungrounded assertion is highest for facts that are rare in the training
+distribution---and \emph{rare} is only definable relative to a known corpus. For a
+domain corpus you can characterise coverage and therefore estimate where the floor
+sits. For a frontier training set you cannot, so the floor is present, consequential,
+and unquantified.
+
+So bounding the corpus does not merely improve accuracy on the domain. It changes
+which properties of the system are \emph{measurable at all}, which is a different and
+more important kind of gain. It is the same move as
+Section~\ref{sec:bounded}, applied to the evidence rather than the request:
+enumerability is what makes negative statements available, and negative statements
+are what auditing requires.
+
+\subsection{What the dials actually buy}
+
+Collecting the choices available to an architect against the invariants they affect:
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{6.4cm}@{}}
+    \toprule
+    Choice & Invariants & Effect on auditability \\
+    \midrule
+    Typed request interface
+      & I1, I7, I10
+      & Large. Supplies the canonical form and enforces context binding \\
+    \addlinespace
+    Controlled, versioned corpus
+      & I8, I9, I11
+      & Large. Precondition for every evidence condition \\
+    \addlinespace
+    Bounded, enumerable corpus
+      & enables I13, I17 testing
+      & Large. Makes negative evidence claims and abstention items possible \\
+    \addlinespace
+    Schema-constrained output plus external gate
+      & I12, I13, I17
+      & Large. Atomic errors; abstention enforced rather than expressed \\
+    \addlinespace
+    Operational control of inference
+      & I14, I7
+      & Moderate to large. Version pinning, batching, statelessness \\
+    \addlinespace
+    Claim decomposition
+      & I12
+      & Moderate. Claim-level rather than response-level linkage \\
+    \addlinespace
+    \textbf{Model parameter count}
+      & \textbf{none directly}
+      & \textbf{No direct effect.} Affects accuracy, which by
+        Prop.~\ref{prop:independence} bounds nothing. One indirect path matters---see
+        below \\
+    \bottomrule
+  \end{tabular}
+  \caption{Architectural choices ranked by effect on auditability. Model size is the
+    dial most often debated and the one with the least direct effect.}
+  \label{tab:dials}
+\end{table}
+
+The ordering is the practical conclusion of this section, and it is somewhat
+counterintuitive: the variable that dominates procurement discussion has the smallest
+\emph{direct} effect on whether the resulting system can be audited.
+
+One indirect path is real and should not be buried in a table. Where an in-scope model
+performs the context resolution or request construction of
+Section~\ref{sec:relocation}---translating free text into a typed request---its
+capability bears directly on I10, and a misparse there produces the most dangerous
+failure in the architecture: a complete, internally consistent record answering the
+wrong question. So model capability does matter, at exactly one point, and the
+conclusion to draw is not that a larger model fixes it. It is that the parse must be
+made \emph{reviewable}, per Section~\ref{sec:relocation}, because a control that depends
+on model capability is a control whose failure rate is unknown. Better capability
+narrows that failure rate without bounding it; confirmation bounds it.
+
+\subsection{The conclusion that does not follow}
+\label{sec:not-follow}
+
+It is tempting to conclude that small domain models can be governed and large
+general-purpose models cannot. That does not follow, and it is worth saying why,
+because the error would misdirect real spending.
+
+Every condition in Table~\ref{tab:invariants-system} is a property of the system
+surrounding the model. None mentions parameter count, training corpus size, or
+provenance of the weights. A large model placed inside a governed architecture---typed
+requests, controlled corpus, external evidence gate, defeater search, audit record,
+pinned version---satisfies those conditions exactly as a small model would, because the
+conditions are about the architecture. Conversely, a small model consumed through a
+shared endpoint with no version pinning and free-form input satisfies almost none of
+them.
+
+The two genuine axes identified above are \emph{operational control of the inference
+stack} and \emph{enumerability of the evidential base}. Both correlate with model
+size in current practice, and neither is caused by it. Self-hosted open weights give
+operational control at any scale. A retrieval corpus can be bounded and versioned
+whatever model reads it.
+
+The claim I would defend is therefore narrower than the intuition and more useful
+than it: \textbf{you cannot govern inference you neither operate nor contract for, and
+you cannot make negative evidence claims about a corpus you cannot enumerate.}
+
+The contractual half deserves emphasis, because enterprises govern third-party
+processors routinely and the instruments are familiar. What would otherwise be
+configuration becomes a term, and the terms are nameable: version pinning with a
+defined support window; advance notice of model and serving changes; a deterministic or
+single-tenant serving option; recorded decoding parameters; retention of request and
+response for a stated period; audit rights over the serving configuration; and
+restrictions on sub-processing. An organisation that cannot obtain those has not
+discovered a property of large models---it has discovered the terms it accepted. The
+practical conclusion is a procurement checklist rather than a prohibition, and it is
+the one place in this paper where the binding control is legal rather than technical.
+
+One asymmetry does survive, and it is worth stating because it is where the intuition
+is right. Scale is offered as a solution to accuracy, and accuracy is not the
+constraint. So an organisation that responds to a grounding problem by buying a larger
+model has bought an improvement it cannot use for the purpose it needs, and has
+usually given up operational control to obtain it. That is not an argument against
+large models. It is an argument against treating model capability as the lever when
+the binding constraint is architectural.

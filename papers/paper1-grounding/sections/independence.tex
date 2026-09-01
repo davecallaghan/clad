@@ -1,0 +1,98 @@
+% !TEX root = ../main.tex
+\section{Aggregate Accuracy Does Not Identify Grounding}
+\label{sec:independence}
+
+A word on the word. What follows is a \emph{non-identification} result, not a claim of
+statistical independence. It shows that an aggregate accuracy figure does not determine,
+and without further assumptions does not bound, the grounding rate. It does not show that
+the two are probabilistically independent in deployed populations, and they may well be
+correlated---a system built to ground its assertions will plausibly be more accurate too.
+The distinction matters because the weaker claim is the one a validation regime turns on:
+an assessor who accepts an accuracy figure as evidence about grounding is relying on an
+entailment that does not hold, whatever the empirical association happens to be.
+
+The redefinition of Section~\ref{sec:hall-def} is not merely a useful
+reclassification. It supports a formal result about what aggregate accuracy can and
+cannot tell an assessor---and the result is what makes the redefinition consequential
+rather than semantic.
+
+\subsection{The result}
+
+For a population of $n$ assertions, define
+\begin{equation}
+  \mathrm{Accuracy} = \frac{1}{n}\sum_{i=1}^{n} A_i,
+  \qquad
+  \mathrm{GroundingRate} = \frac{1}{n}\sum_{i=1}^{n} G_i.
+  \label{eq:rates}
+\end{equation}
+
+\begin{proposition}[Non-identification]
+\label{prop:independence}
+Let $\alpha, \gamma \in [0,1]$ with $n\alpha$ and $n\gamma$ integral. There is a
+population of $n$ assertions with $\mathrm{Accuracy} = \alpha$ and
+$\mathrm{GroundingRate} = \gamma$. Aggregate accuracy therefore does not identify the
+grounding rate, and supplies no bound on it in the absence of further assumptions; the
+same holds in the other direction.
+\end{proposition}
+
+\begin{proof}
+Let $n_{\mathrm{sound}}, n_{\mathrm{lucky}}, n_{\mathrm{err}}, n_{\mathrm{fab}}$
+be the counts in the four cells of Table~\ref{tab:taxonomy}, so that
+$n\alpha = n_{\mathrm{sound}} + n_{\mathrm{lucky}}$ and
+$n\gamma = n_{\mathrm{sound}} + n_{\mathrm{err}}$. Choose any integer
+\[
+  n_{\mathrm{sound}} \in
+  \bigl[\max(0,\, n\alpha + n\gamma - n),\ \min(n\alpha,\, n\gamma)\bigr],
+\]
+an interval containing an integer for every admissible $\alpha, \gamma$, and set
+$n_{\mathrm{err}} = n\gamma - n_{\mathrm{sound}}$,
+$n_{\mathrm{lucky}} = n\alpha - n_{\mathrm{sound}}$, and
+$n_{\mathrm{fab}} = n - n\alpha - n\gamma + n_{\mathrm{sound}}$. Each is a
+non-negative integer by the choice of interval, and the four sum to $n$.
+\end{proof}
+
+The construction requires only that grounding not entail truth, which cell (iii)
+supplies: an assertion can rest on authentic, applicable, authoritative evidence
+and still be false, through misreading, invalid inference, or evidence adequate for
+a weaker claim than the one asserted.
+
+The result is arithmetically simple and strategically significant, and the two
+should not be confused. For a population of generated assertions, any feasible
+aggregate accuracy can coexist with any feasible grounding rate, because the
+population may contain varying proportions of grounded-true, ungrounded-true,
+grounded-false, and ungrounded-false assertions. Consequently pooled accuracy
+cannot identify or bound the frequency of auditable grounding.
+
+One limitation should be stated before the corollary, because a reader is entitled to
+ask for it. The construction establishes \emph{logical} independence: no accuracy
+figure entails anything about the grounding rate. It does not establish that the two
+are empirically uncorrelated in deployed systems, and they may well be---a system
+built to ground its assertions will plausibly be more accurate too. The claim is about
+what an accuracy measurement \emph{licenses}, not about what is typical. That is
+sufficient for the argument, because a validation regime rests on entailment rather
+than on correlation: an assessor who accepts an accuracy figure as evidence of
+grounding is relying on a relation that does not hold, whatever the empirical
+association happens to be in the population they did not measure.
+
+\begin{corollary}
+\label{cor:no-bound}
+A system measured at $95\%$ accuracy is consistent with a grounding rate of $0$,
+and a system measured at $40\%$ accuracy is consistent with a grounding rate of
+$1$.
+\end{corollary}
+
+\subsection{What it implies for a validation programme}
+
+What follows is a claim about validation programmes rather than about models. A
+programme that reports accuracy without measuring per-assertion grounding cannot
+distinguish between radically different reliance profiles---between a system whose
+correct answers rest on identifiable authoritative evidence and one whose correct
+answers are draws that happened to land well. Those two systems have the same
+score and different futures, and the difference appears the moment the question
+distribution moves.
+
+Two further readings matter for anyone choosing between releases. Since neither rate constrains the other, an intervention that raises accuracy tells you nothing
+about grounding; and optimising against reference answers applies pressure toward
+confident guessing, which raises accuracy by moving mass into the lucky cell where
+$G_i = 0$. A leaderboard improvement is fully consistent with a system that has
+become more willing to assert without support.

@@ -1,0 +1,138 @@
+% !TEX root = ../main.tex
+\section{Implications for Evaluation}
+\label{sec:evaluation}
+
+The framework yields a concrete reorientation of evaluation practice, in four
+directives and a checklist.
+
+\subsection{Measure the grounding rate, and know where you can}
+\label{sec:measure-rate}
+
+Measure hallucination as \eqref{eq:rate}, via attribution audit. The procedure:
+sample assertions from deployment-representative prompts; for each, test
+condition (2) of Definition~\ref{def:grounding}---does the assertion trace to
+identifiable support that is applicable at $c$, and does it respond appropriately
+when that support is ablated, contradicted, or perturbed? The resulting statistic
+separates the mechanism question, is the asserter evidence-coupled, from the
+corpus question, is the evidence any good. Truth-matching conflates them, and
+Corollary~\ref{cor:no-bound} shows the conflation cannot be repaired by
+collecting more accuracy data.
+
+The caveat of Section~\ref{sec:measurement} is a design constraint, not a
+footnote. For retrieval-provided evidence the test is direct: ablate the context
+and observe. For parametric encodings it is not, because the counterfactual ranges
+over training corpora; attribution methods approximate it, imperfectly, and the
+gap between the two cases is one of kind. So the honest position is that
+\eqref{eq:rate} is estimable for retrieval-grounded assertion and largely not for
+parametric assertion. Anyone reporting a hallucination rate should say which of
+the two they measured.
+
+A note on adjacent instruments. Semantic-entropy methods detect a related defect
+by clustering sampled outputs into meaning classes via bidirectional entailment
+\citep{farquhar2024}. That is a useful signal, and it is not this measurement:
+clustering by meaning deliberately quotients out the formulation-level variation
+that Section~\ref{sec:re-failure} identifies as constitutive. Semantic entropy
+measures instability of content under resampling; \eqref{eq:rate} measures
+decoupling of assertion from evidence. A system can be low-entropy and
+ungrounded---confidently and consistently wrong---so the two belong side by side
+rather than one standing in for the other.
+
+\subsection{Score the off-diagonal cells correctly}
+\label{sec:score-cells}
+
+Cell (iii) outputs---grounded falsehoods---should be charged to the evidential
+base rather than the assertion mechanism. They call for corpus and retrieval
+intervention and should not depress a hallucination metric. Cell (ii)
+outputs---veridical hallucinations---should be charged to the mechanism despite
+their truth. A benchmark that scores them as successes is training systems to
+guess confidently.
+
+Operationally, and this is the most directly implementable consequence of the
+paper: \textbf{evaluation suites should include items whose correct answers are
+absent from the accessible evidence, where the only correct behaviour is
+abstention, and should penalise true answers on those items.} A system that
+answers such an item correctly has demonstrated nothing except that its guessing
+distribution happened to align with the world, and rewarding it selects for
+exactly the decoupling of assertion from evidence that
+Section~\ref{sec:unity} identifies as the root pathology.
+
+The same measurability asymmetry applies here and is easy to miss. Establishing
+that an answer is absent from the accessible evidence is straightforward when you
+control the retrieval corpus, and not generally possible for a frontier model's
+parametric knowledge. Abstention items are therefore constructible for
+retrieval-grounded systems and, for unaugmented models, only in domains where
+corpus absence can be independently established. This is a limitation of the
+method, and another reason the architecture of
+Section~\ref{sec:warrant} is not merely good hygiene.
+
+\subsection{Audit congruentiality directly}
+\label{sec:re-audit}
+
+Since RE-failure is the root pathology, paraphrase-equivariance deserves promotion
+from robustness footnote to headline metric. For a battery of logically equivalent
+formulation pairs---contraposition, negation duality, notation shifts, active
+against passive---measure divergence in assertion behaviour at matched output
+probability. The statistic is in effect an empirical estimate of how far $\Out_M$
+sits from classicality: a scalar summary of the distance between the system's
+operator and a proposition-directed one.
+
+Two methodological cautions. Matching output probability across paraphrases is
+itself non-trivial, since the probability is formulation-sensitive too. And the
+battery must control for the possibility that paraphrases differ in tokenisation
+difficulty rather than in logical form, or the statistic will measure the wrong
+thing.
+
+Applied across inference-compute budgets and training checkpoints, the same
+battery answers the question left open in Section~\ref{sec:reasoning}: whether
+scale, post-training, and extended deliberation move systems toward normality or
+merely broaden the set of formulations handled. Falling divergence is convergence
+on classicality. Steady divergence under rising accuracy is coverage. I know of no
+systematic measurement of this, and it is the experiment the framework most wants
+run.
+
+\subsection{Reformulate subject-level appraisal}
+\label{sec:appraisal}
+
+Metrics and documentation phrased in terms of what a model ``knows'' or
+``believes'' should be restated in the $(\Out_M, \Grd_M)$ idiom: assertion rates,
+grounding rates, stability profiles. Section~\ref{sec:deflationism} gives the
+reason---the doxastic idiom carries normality assumptions that distort measurement
+design and downstream reliance.
+
+I would not extend this to every evaluative term with a mentalistic ring. Notions
+like deception and honesty have operational definitions in safety evaluation that
+do real work, and the framework does not impugn them; it reconstructs them. The
+safety-relevant phenomenon is precisely the dissociation of
+Section~\ref{sec:dissociation}: divergence between what a model's internal state
+registers and what it asserts. That is expressible in the present idiom without
+loss, and expressing it that way makes clear why it is a defect---not insincerity
+by a subject, but assertion unaccountable to the system's own best estimate.
+
+\subsection{What an architecture would have to achieve}
+\label{sec:checklist}
+
+The framework's most useful output may be constructive. It specifies what a
+system would have to do to earn doxastic description:
+
+\begin{enumerate}
+  \item maintain content-level rather than formulation-level representations,
+        sufficient to validate RE;
+  \item implement processes whose \emph{function} is closure and consistency
+        maintenance, delivering K, M, and D at the level of competence;
+  \item support self-access channels causally coupled to first-order states,
+        delivering 4 and 5; and
+  \item embed assertion in a persistent cross-context economy that makes closure
+        a functional norm rather than an ornament---which, by
+        Section~\ref{sec:human-parallel}, is what makes (1)--(3) norms rather than
+        accidents.
+\end{enumerate}
+
+Retrieval-grounded generation, verifier-loop architectures, outcome-reinforcement
+training, and persistent-memory agents are partial steps along distinct axes, and
+the framework says which axis each addresses. Retrieval supplies an explicit $E$
+and makes \eqref{eq:rate} measurable; it does nothing for congruentiality.
+Verifier loops address (2) and can be checked against
+Section~\ref{sec:re-audit}. Persistent memory is a precondition of (4) and not
+sufficient for it, since storage is not recruitment. The apparatus turns ``do
+these systems believe?'' from a slogan-war into a checklist, and the checklist has
+the useful property that each item names its own measurement.

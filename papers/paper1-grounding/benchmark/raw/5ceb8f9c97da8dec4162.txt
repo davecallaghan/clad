@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-">
+
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<meta content="8e9683a0-5608-4cf6-8cdc-13cfc199498f" name="documentId"/>
+<meta content="0000025c-6dbf-4af7-a741-5cbacaed519a" name="documentSetId"/>
+<meta content="1" name="documentVersionNumber"/>
+<meta content="20151102" name="documentEffectiveTime"/>
+<title></title>
+<link href="/public/fda/spl.min.css" rel="stylesheet" type="text/css"><link href="/public/dailymed-cf/css/dist/archives.min.css" rel="stylesheet" type="text/css"/><link href="/public/fda/spl-nonquirk-.min.css" rel="stylesheet" type="text/css"/></link>
+<script charset="utf-8" src="/public/fda/spl.min.js" type="text/javascript">/* */</script>
+<meta content="noindex" name="robots"/></head>
+<body class="spl" id="spl" onload='if(typeof convertToTwoColumns == "function")convertToTwoColumns();'><div class="watermark">
+<div class="DocumentTitle">
+<p class="DocumentTitle">
+<strong>SILICEA- silicea pellet </strong>
+<br/>Rxhomeo Private Limited d.b.a. Rxhomeo, Inc<br/>
+</p>
+<p class="disclaimer">Disclaimer: This homeopathic product has not been evaluated by the Food and Drug Administration for safety or efficacy. FDA is not aware of scientific evidence to support homeopathy as effective.</p>
+<p>----------</p>
+</div>
+<h1></h1>
+<div class="Contents">
+<div class="Section" data-sectioncode="55106-9">
+<a name="Lb61a53b7-b18b-43f6-b306-436b847500e8"></a><a name="section-1"></a>
+<p></p>
+<h1>ACTIVE INGREDIENT</h1>
+<p class="First">SILICEA HPUS 2X and higher</p>
+</div>
+<div class="Section" data-sectioncode="55105-1">
+<a name="L0805a43f-ed47-486d-964c-085a6fd02eb2"></a><a name="section-2"></a>
+<p></p>
+<h1>USES</h1>
+<p class="First">Boils, Abscess, Otitis</p>
+</div>
+<div class="Section" data-sectioncode="34067-9">
+<a name="L86f0dc42-c607-4af0-8780-fc10e0a08c9f"></a><a name="section-3"></a>
+<p></p>
+<h1>  INDICATIONS
+</h1>
+<p class="First">Condition listed above or as directed by the physician</p>
+</div>
+<div class="Section" data-sectioncode="34068-7">
+<a name="L0f97fe14-79c7-4f0c-973e-c35f173bd4ee"></a><a name="section-4"></a>
+<p></p>
+<h1>DOSAGE</h1>
+<p class="First">Adults- Take 4 or 6 Pellets by mouth, three times daily or as suggested by physician. Children 2 years and older- take 1/2 the adult dose.</p>
+</div>
+<div class="Section" data-sectioncode="34071-1">
+<a name="L6ff86796-70a2-43bc-b81b-de753fcc12d2"></a><a name="section-5"></a>
+<p></p>
+<h1>WARNINGS</h1>
+<p class="First">This product is to be used for self-limiting conditions</p>
+<div class="Section" data-sectioncode="50566-9">
+<a name="L827fd2c3-5352-4c71-9c81-ca05953b4d22"></a><a name="section-5.1"></a>
+<p></p>
+<p class="First">If symptoms do not improve in 4 days, or worsen, discontinue use and seek assistance of health professional.</p>
+</div>
+<div class="Section" data-sectioncode="53414-9">
+<a name="Le4174941-bc92-4e8b-ba9c-9f63dfcddb6e"></a><a name="section-5.2"></a>
+<p></p>
+<p class="First">As with any drug, if you are pregnant, or nursing a baby, seek professional advice before taking this product.</p>
+</div>
+<div class="Section" data-sectioncode="50565-1">
+<a name="L84a62a0b-8e71-4302-a673-83bbda25800a"></a><a name="section-5.3"></a>
+<p></p>
+<p class="First">Keep this and all medication out of reach of children</p>
+</div>
+<div class="Section" data-sectioncode="50570-1">
+<a name="L9ba0980e-b672-4fa9-9f4c-24e7c567f13e"></a><a name="section-5.4"></a>
+<p></p>
+<p class="First">Do not use if capseal is broken or missing.</p>
+<p>Close the cap tightly after use.</p>
+</div>
+</div>
+<div class="Section" data-sectioncode="51727-6">
+<a name="L1b9c4104-e1a9-4eba-8e48-6efe6ff63629"></a><a name="section-6"></a>
+<p></p>
+<h1>INACTIVE INGREDIENTS</h1>
+<p class="First">Sucrose</p>
+</div>
+<div class="Section" data-sectioncode="44425-7">
+<a name="L9309427f-e20f-40c8-9cef-d78b316ff686"></a><a name="section-7"></a>
+<p></p>
+<h1>STORAGE</h1>
+<p class="First">Store in a cool dark place</p>
+</div>
+<div class="Section" data-sectioncode="53413-1">
+<a name="Ld813c4ce-aec3-49e4-b2fb-5843ec545477"></a><a name="section-8"></a>
+<p></p>
+<h1>QUESTIONS OR COMMENTS</h1>
+<p class="First">
+<a href="http://www.rxhomeo.com/">www.Rxhomeo.com</a> | 1.888.2796642 | info@rxhomeo.com</p>
+<p>Rxhomeo, Inc 9415 Burnet Road, Suite 312, Austin, TX 78758</p>
+</div>
+<div class="Section" data-sectioncode="51945-4">
+<a name="L8ca9725c-5471-4643-967a-bbea5c4ce113"></a><a name="section-9"></a>
+<p></p>
+<p class="First">
+<img alt="image description" src="/dailymed/image.cfm?name=15631-0404.jpg&amp;archiveid=192529"/></p>
+</div>
+</div>
+<div class="DataElementsTables">
+<table cellpadding="3" cellspacing="0" class="contentTablePetite" width="100%">
+<tbody>
+<tr>
+<td class="contentTableTitle"><strong>SILICEA 		
+					</strong>
+<br/>
+<span class="contentTableReg">silicea pellet</span></td>
+</tr>
+<tr>
+<td>
+<table cellpadding="5" cellspacing="0" class="formTablePetite" width="100%">
+<tr>
+<td class="formHeadingTitle" colspan="4">Product Information</td>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formLabel">Product Type</td><td class="formItem">HUMAN OTC DRUG</td><td class="formLabel">Item Code (Source)</td><td class="formItem">NDC:15631-0404</td>
+</tr>
+<tr class="formTableRow">
+<td class="formLabel" width="30%">Route of Administration</td><td class="formItem">ORAL</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<table cellpadding="3" cellspacing="0" class="formTablePetite" width="100%">
+<tr>
+<td class="formHeadingTitle" colspan="3">Active Ingredient/Active Moiety</td>
+</tr>
+<tr>
+<th class="formTitle" scope="col">Ingredient Name</th><th class="formTitle" scope="col">Basis of Strength</th><th class="formTitle" scope="col">Strength</th>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formItem"><strong>SILICON DIOXIDE</strong> (UNII: ETJ7Z6XBU4)  (COLLOIDAL SILICON DIOXIDE - UNII:ETJ7Z6XBU4) </td><td class="formItem">SILICON DIOXIDE</td><td class="formItem">2 [hp_X]</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<table cellpadding="3" cellspacing="0" class="formTablePetite" width="100%">
+<tr>
+<td class="formHeadingTitle" colspan="2">Inactive Ingredients</td>
+</tr>
+<tr>
+<th class="formTitle" scope="col">Ingredient Name</th><th class="formTitle" scope="col">Strength</th>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formItem"><strong>SUCROSE</strong> (UNII: C151H8M554) </td><td class="formItem"> </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td>
+<table cellpadding="3" cellspacing="0" class="formTablePetite" width="100%">
+<tr>
+<td class="formHeadingTitle" colspan="5">Packaging</td>
+</tr>
+<tr>
+<th class="formTitle" scope="col" width="1">#</th><th class="formTitle" scope="col">Item Code</th><th class="formTitle" scope="col">Package Description</th><th class="formTitle" scope="col">Marketing Start Date</th><th class="formTitle" scope="col">Marketing End Date</th>
+</tr>
+<tr class="formTableRowAlt">
+<th class="formItem" scope="row">1</th><td class="formItem">NDC:15631-0404-0</td><td class="formItem">100  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+<tr class="formTableRow">
+<th class="formItem" scope="row">2</th><td class="formItem">NDC:15631-0404-1</td><td class="formItem">200  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+<tr class="formTableRowAlt">
+<th class="formItem" scope="row">3</th><td class="formItem">NDC:15631-0404-2</td><td class="formItem">400  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+<tr class="formTableRow">
+<th class="formItem" scope="row">4</th><td class="formItem">NDC:15631-0404-3</td><td class="formItem">750  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+<tr class="formTableRowAlt">
+<th class="formItem" scope="row">5</th><td class="formItem">NDC:15631-0404-4</td><td class="formItem">2500  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+<tr class="formTableRow">
+<th class="formItem" scope="row">6</th><td class="formItem">NDC:15631-0404-5</td><td class="formItem">12500  in 1 PACKAGE; Type 0: Not a Combination Product</td><td class="formItem"></td><td class="formItem"></td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+<tr>
+<td class="normalizer">
+<table cellpadding="3" cellspacing="0" class="formTableMorePetite" width="100%">
+<tr>
+<td class="formHeadingReg" colspan="4"><span class="formHeadingTitle">Marketing Information</span></td>
+</tr>
+<tr>
+<th class="formTitle" scope="col">Marketing Category</th><th class="formTitle" scope="col">Application Number or Monograph Citation</th><th class="formTitle" scope="col">Marketing Start Date</th><th class="formTitle" scope="col">Marketing End Date</th>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formItem">unapproved homeopathic</td><td class="formItem"></td><td class="formItem">10/02/2015</td><td class="formItem"></td>
+</tr>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<table cellpadding="3" cellspacing="0" class="formTableMorePetite" width="100%">
+<tr>
+<td class="formHeadingReg" colspan="4"><span class="formHeadingTitle">Labeler - </span>Rxhomeo Private Limited d.b.a. Rxhomeo, Inc
+							(650833994)
+						</td>
+</tr>
+</table>
+<table cellpadding="3" cellspacing="0" class="formTableMorePetite" width="100%">
+<tr>
+<td class="formHeadingReg" colspan="4"><span class="formHeadingTitle">Establishment</span></td>
+</tr>
+<tr>
+<th class="formTitle" scope="col">Name</th><th class="formTitle" scope="col">Address</th><th class="formTitle" scope="col">ID/FEI</th><th class="formTitle" scope="col">Business Operations</th>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formItem">Rxhomeo, Inc</td><td class="formItem"></td><td class="formItem">832534981</td><td class="formItem">wholesale drug distributor(15631-0404) </td>
+</tr>
+</table>
+<table cellpadding="3" cellspacing="0" class="formTableMorePetite" width="100%">
+<tr>
+<td class="formHeadingReg" colspan="4"><span class="formHeadingTitle">Establishment</span></td>
+</tr>
+<tr>
+<th class="formTitle" scope="col">Name</th><th class="formTitle" scope="col">Address</th><th class="formTitle" scope="col">ID/FEI</th><th class="formTitle" scope="col">Business Operations</th>
+</tr>
+<tr class="formTableRowAlt">
+<td class="formItem">Rxhomeo Private Limited d.b.a. Rxhomeo, Inc</td><td class="formItem"></td><td class="formItem">650833994</td><td class="formItem">manufacture(15631-0404) , label(15631-0404) </td>
+</tr>
+</table>
+</div>
+<p>
+<div class="EffectiveDate">Revised: 11/2015<div class="DocumentMetadata">
+<div>
+<a href="javascript:toggleMixin();">Document Id: </a>8e9683a0-5608-4cf6-8cdc-13cfc199498f</div>
+<div id="setId">Set id: 0000025c-6dbf-4af7-a741-5cbacaed519a</div>
+<div>Version: 1</div>
+<div>Effective Time: 20151102</div>
+</div>
+</div> <div class="DistributorName">Rxhomeo Private Limited d.b.a. Rxhomeo, Inc</div>
+</p>
+</div></body>
+</html>
+

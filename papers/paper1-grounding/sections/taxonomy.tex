@@ -1,0 +1,579 @@
+% !TEX root = ../main.tex
+\section{Hallucination as Ungrounded Assertion}
+\label{sec:taxonomy}
+
+The architecture of Section~\ref{sec:architecture} produces failures with a specific
+shape: assertion is computed over surface form, with no evidence gate and no resolved
+context, so output can be fluent and detached from anything at once. The received
+vocabulary for those failures misdescribes them, and the misdescription has consequences
+for what gets measured.
+
+The term \emph{hallucination} is in universal use and is used in at least two
+incompatible ways. In popular and much industry usage it is truth-conditional: a
+hallucination is a false or fabricated output. In the natural-language-generation
+literature it generally is not. There, hallucination means content unsupported by
+the source, whether or not that content happens to be true, and the possibility of a
+factually correct hallucination is explicitly recognised
+\citep{maynez2020,ji2023}.
+
+This paper adopts the second convention and claims no priority for it. Separating
+support from truth is established work, and a definition that merely restated it
+would contribute nothing. The definition below departs from \emph{both} conventions
+somewhere else, and it is worth being exact about where, because that departure is
+this paper's first contribution and it is narrower and more specific than
+``hallucination is not falsity.''
+
+The source-based definition takes the source as given. It asks whether the assertion
+follows from the evidence supplied. It does not ask the prior question: whether that
+evidence \emph{governs the decision at hand}. A clinical guideline may be authentic,
+authoritative, correctly retrieved, accurately quoted, and genuinely entailing of the
+assertion---and concern a different jurisdiction, a superseded period, or another
+patient population. Every faithfulness metric scores that assertion as clean, because
+the entailment holds. Definition~\ref{def:grounding} does not, because it requires
+support to be \emph{applicable at a resolved context}.
+
+That is the move: hallucination indexed to a decision context rather than to a
+source. It is the first of this paper's two central claims. The second, developed in
+Section~\ref{sec:canonical-form}, is that the same architecture makes accuracy
+uncertifiable. They are connected, and Section~\ref{sec:unity} states how.
+
+\subsection{Scope of the term}
+\label{sec:hall-scope}
+
+One restriction has to be stated before the definitions, because the definition below is
+broader than ordinary usage and would otherwise convict a great deal that nobody thinks
+is defective. Under a requirement of applicable, traceable, dependence-bearing evidence,
+the following would all count as ungrounded: a statement of common knowledge; an
+inference a reader would regard as obvious; a fact the user supplied and the system
+restated; hypothetical or exploratory content; and a true claim from parametric memory
+in a setting where nobody expected an evidence record. Calling those hallucinations
+would be a misuse of the word.
+
+So the term is used here in an operationally restricted sense: \textbf{an asserted
+proposition, presented as decision-relevant, that lacks an auditable and applicable
+evidentiary basis.} The restriction is carried by \emph{presented as
+decision-relevant}, and it does two things. It excludes the benign cases above, which
+are not offered as grounds for consequential action. And it makes the reliance tier of
+Section~\ref{sec:tiers} part of the definition's scope rather than an afterthought: the
+same sentence can be unobjectionable at Tier~1 and a hallucination at Tier~3, because
+what changed is what it is being relied upon for.
+
+Readers who find the appropriation of the word uncomfortable may substitute
+\emph{unwarranted assertion} or \emph{reliance-ineligible assertion} throughout without
+affecting any argument. I keep ``hallucination'' because it is the word the field,
+industry, and regulators actually use, and a redefinition that abandons the term
+forfeits the conversation it is trying to correct. Nothing here is intended as a general
+taxonomy of undesirable model output.
+
+\subsection{Assertion}
+
+I will talk about the deployed system $S$ rather than the model $M$ in isolation.
+That is the thing being validated, and it is the thing whose failures have owners.
+
+\begin{definition}[Assertion]
+\label{def:assertion}
+$\Out_S(p)$ holds iff system $S$, under input $x$, emits $p$ in an unqualified,
+decision-relevant form under a stated output-interpretation policy.
+\end{definition}
+
+The definition is behavioural rather than probabilistic, and the earlier temptation to
+define it by a sequence-probability threshold should be resisted for three reasons. The
+probability of a full proposition's token sequence is small even when the system plainly
+asserts it; equivalent phrasings of one assertion carry different sequence probabilities,
+which reintroduces the form dependence of Section~\ref{sec:canonical-form} into the
+definition of assertion itself; and most deployed interfaces do not expose the relevant
+distribution. What makes an output an assertion is that it was emitted unqualified in a
+decision-relevant position, which an interpretation policy can specify and a reviewer can
+apply.
+
+The policy has to separate commitment from mention: a system that lists $p$ among
+possibilities, hedges it, or attributes it to a source without adopting it has not asserted
+it. Where a graded notion of commitment is wanted it should be introduced separately
+rather than folded into $\Out_S$. Nothing here requires a view about what
+$M$ believes, per Section~\ref{sec:premise}, and every predicate below is likewise
+defined over instrumentable behaviour.
+
+\subsection{Grounding}
+\label{sec:grounding-def}
+
+Grounding is the property that carries the paper, and it must mean considerably
+more than that a document was retrieved or a citation was emitted.
+
+\begin{definition}[Grounded evidence]
+\label{def:grounded-evidence}
+For an evidential set $E$, proposition $p$, and resolved context $c$:
+\begin{equation}
+  \begin{aligned}
+  \Grounded(E, p, c) \;\leftrightarrow\;
+    &\Authentic(E) \wedge \Versioned(E) \wedge \Authoritative(E, c)
+      \wedge \Applicable(E, c)\\
+    &\wedge\ \Supports(E, p, c) \wedge \Sufficient(E, p, c)
+      \wedge \Traceable(E, p, c).
+  \end{aligned}
+  \label{eq:grounded}
+\end{equation}
+\end{definition}
+
+\begin{definition}[Grounded assertion]
+\label{def:grounding}
+$\Grd_S(p \mid c)$ holds iff there is some $E \subseteq E_S$ in the system's
+evidential base such that
+\begin{equation}
+  \Grounded(E, p, c) \ \wedge\ \Sensitive(S, p, E) \ \wedge\ \NoDefeater(E_S, p, c),
+  \label{eq:grd}
+\end{equation}
+where $\Sensitive(S, p, E)$ holds iff, had $E$ not supported $p$, the assertion would
+not have been produced, and
+\begin{equation}
+  \NoDefeater(E, E_S, p, c) \;\equiv\; \DefeaterSearch(E, E_S, p, c) = \emptyset .
+  \label{eq:nodefeater}
+\end{equation}
+$\DefeaterSearch$ is a \emph{specified search} over the governed base, not a
+quantification over its subsets. It returns evidence $E'$ that is applicable at $c$, of
+standing at least equal to that of $E$, and that either supports $\neg p$ or undermines
+$E$'s support for $p$:
+\begin{multline}
+  \DefeaterSearch(E, E_S, p, c) = \bigl\{\, E' \in \mathcal{Q}(E_S, c) \;:\;
+    \standing(E', c) \succeq \standing(E, c)\\
+    \wedge\ \bigl[\Supports(E', \neg p, c)
+      \ \vee\ \text{undermines}(E', E, p, c)\bigr] \,\bigr\}.
+  \label{eq:defeatersearch}
+\end{multline}
+\end{definition}
+
+The seven conjuncts of \eqref{eq:grounded} are properties of the \emph{evidence};
+$\Sensitive$ is a property of the \emph{system}; and $\NoDefeater$ is a property of
+the \emph{evidential base as a whole}. All three kinds are required, and the
+separation matters operationally because they are checked by different means and fail
+for different reasons. Section~\ref{sec:grounding-context} takes the evidence
+dimensions one at a time; here I note why the other two cannot be dropped.
+
+\subsection{Why grounding needs a defeater condition}
+\label{sec:why-defeater}
+
+$\NoDefeater$ closes a hole that the existential quantifier in \eqref{eq:grd} would
+otherwise open. Without it, grounding is satisfied whenever \emph{some} applicable
+authoritative source supports $p$---even if another source of equal standing in the same
+base supports $\neg p$. That is not a corner case. Two regulators may differ; a standard
+and its national implementation may differ; a clinical guideline and a local protocol
+may differ; a group policy and a subsidiary policy may differ. A system that retrieves
+one side of such a disagreement and asserts it has not produced a grounded assertion. It
+has produced an arbitrary selection from a contested record.
+
+Three features of \eqref{eq:nodefeater} and \eqref{eq:defeatersearch} are deliberate,
+and each answers an objection the unbounded form invites.
+
+\paragraph{It is a search, not a quantifier.} $\mathcal{Q}(E_S, c)$ is the governed
+retrieval over the base under the applicability predicates of $c$---the same retrieval
+the system already performs, run in the contrary direction. Quantifying over subsets of
+a corpus would be neither computable nor useful: in a large regulatory base something
+can be read as supporting almost any negation. Bounding the condition to a specified
+search makes it a control that a system can execute and a reviewer can re-execute, and
+it aligns the definition with the architecture of
+Section~\ref{sec:governed-rag}. The cost is honest and worth stating: a defeater outside
+the search is a corpus-coverage failure rather than a loophole in the definition, and it
+is detected the way coverage failures are always detected---by widening the search, not
+by strengthening the logic.
+
+\paragraph{What defeats is \emph{unresolved} defeat.} Institutions act amid
+disagreement constantly, and they do it legitimately, through precedence rules and
+escalation procedures that were established precisely because authorities conflict. A
+condition that made any equal-standing disagreement fatal to grounded assertion would
+forbid most of what regulated organisations lawfully do. So $\NoDefeater$ should be read
+as: no defeater that the institution's own precedence and escalation policy leaves
+unresolved. Where the policy determines an outcome, the conflict has been resolved and
+the assertion can be grounded on the surviving evidence, with the resolution recorded.
+Where the policy is silent or the authorities are incomparable under it, the assertion is
+\textsc{Contested} and escalation is the correct output. The condition is therefore
+relative to a governed artefact, not absolute---and an institution with no precedence
+policy has not discovered that grounded assertion is impossible; it has discovered a
+missing deliverable.
+
+\paragraph{Standing is an ordering, not a predicate.} $\standing(E, c)$ places evidence
+in a partial order of authority that the institution defines: statute above guidance,
+regulator above trade body, group policy above local practice except where local is
+stricter. Contrary evidence of \emph{lower} standing is not a defeater---it is resolved
+by precedence, which is what precedence is for. Only contrary evidence of equal or
+incomparable standing defeats. This matters practically: the unordered version would
+escalate every routine conflict, and a control that escalates routine cases is switched
+off. It also locates a deliverable: the precedence order is a governed artefact owned by
+the policy function, and its absence is why conflicts currently resolve by retrieval
+order.
+
+\paragraph{Defeat comes in two kinds.} The vocabulary is borrowed from work on
+defeasible reasoning, where the distinction is standard. A \emph{rebutting} defeater
+supports the contrary claim. An \emph{undercutting} defeater leaves the contrary claim
+untouched and attacks the support relation instead: the instrument was withdrawn, its
+scope was narrowed by a later provision, the passage was superseded in a revision the
+retrieval did not reach, or the extraction misread a table. Undercutting defeat is
+common in a governed corpus and invisible to a search for contradictions, because
+nothing contradicts anything---the support simply no longer holds. Both belong in
+\eqref{eq:defeatersearch}.
+
+Where $\DefeaterSearch$ returns a result, the correct outcome is adjudication or
+escalation rather than assertion. Section~\ref{sec:contested} treats this as a category
+in its own right.
+
+Every output of $M$ is caused by training, so causal provenance cannot be the
+criterion---it would be satisfied by everything. And $\Grounded(E, p, c)$ alone is
+satisfied whenever suitable evidence happens to exist somewhere in $E_S$, whether
+or not the assertion had anything to do with it. A system that retrieves an
+authoritative passage and then answers from parametric memory, coincidentally
+agreeing with it, satisfies \eqref{eq:grounded} and is not grounded in any sense
+an auditor should accept. $\Sensitive$ is what excludes this, and its operational
+test is ablation: remove or contradict the putatively supporting evidence and
+observe whether the assertion survives.
+
+$\Sufficient$ closes a different hole, and one a data-quality reviewer will find
+first. Evidence can be authentic, versioned, authoritative, applicable, and genuinely
+supporting, and still address only part of what the claim requires. A rule imposing
+five conditions is not satisfied by a source that speaks to three of them, and an
+assertion resting on such a source is grounded in every dimension except adequacy.
+Completeness is a standard data-quality dimension and its omission here would be
+conspicuous.
+
+The two conjuncts are independent rather than redundant, and the reason should be
+stated because the redundancy objection is otherwise natural. $\Supports$ is a
+\emph{positive} relation admitting degrees: the evidence favours $p$, at some strength,
+as Section~\ref{sec:entails-supports} sets out. $\Sufficient$ is a \emph{coverage}
+relation: the evidence addresses every condition the claim requires. Evidence can favour
+a partial claim strongly---entail it, even---while covering three of five conditions, so
+neither conjunct implies the other. Their remedies differ accordingly: inadequate support
+is fixed by retrieving \emph{better}, insufficient coverage by retrieving \emph{more}.
+
+\subsection{Five categories}
+
+Let $A_i \in \{0,1\}$ record whether assertion $i$ is true under its resolved
+context $c_i$, and $G_i \in \{0,1\}$ whether it is grounded in the sense of
+Definition~\ref{def:grounding}. Crossing the two gives four categories.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}cc>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{7.4cm}@{}}
+    \toprule
+    $A_i$ & $G_i$ & Category & Meaning \\
+    \midrule
+    1 & 1 & \textsc{Sound}
+      & True assertion with authenticated, applicable, traceable evidentiary
+        support \\
+    \addlinespace
+    1 & 0 & \textsc{Lucky}
+      & True assertion lacking a sufficient auditable evidentiary basis \\
+    \addlinespace
+    0 & 1 & \textsc{Error}
+      & Grounded but false: the system accurately reported what applicable
+        authoritative evidence says, and the evidence diverges from the world \\
+    \addlinespace
+    0 & 0 & \textsc{Fabrication}
+      & False assertion without an auditable evidentiary basis \\
+    \bottomrule
+  \end{tabular}
+  \caption{The four categories. Reference-based evaluation observes $A_i$ only.}
+  \label{tab:taxonomy}
+\end{table}
+
+Because grounding requires applicability, a fifth category is analytically
+distinct and, in regulated deployment, the most consequential.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{5.4cm}@{}}
+    \toprule
+    Condition & Category & Meaning \\
+    \midrule
+    $\Authentic(E) \wedge \Authoritative(E, c') \wedge \neg\,\Applicable(E, c)$
+      & \textsc{Misapplied}
+      & Authentic and perhaps authoritative evidence that does not govern $c$:
+        wrong jurisdiction, time period, population, policy, product, or decision
+        use \\
+    \bottomrule
+  \end{tabular}
+  \caption{The fifth category. Operationally this is a subset of
+    $G_i = 0$, since Definition~\ref{def:grounding} requires applicability. It is
+    kept separate because it identifies a different control failure with a
+    different owner.}
+  \label{tab:misapplied}
+\end{table}
+
+A sixth follows from $\NoDefeater$ for the same reason:
+
+\begin{itemize}
+  \item[\textsc{(vi)}] \textsc{Contested} --- the governed defeater search returns
+        applicable evidence of equal or incomparable standing on the other side. No
+        selection is grounded, whichever side the system asserts and whichever turns out
+        to be right.
+\end{itemize}
+
+Like \textsc{Misapplied}, this is operationally a subset of $G_i = 0$: the no-defeater
+condition of Definition~\ref{def:grounding} fails, so the assertion is ungrounded and
+falls in the right-hand column of Table~\ref{tab:taxonomy}. It is kept separate for the
+same reason---the control that fails is different, the remedy is different, and the
+owner is different. There is no double counting in either case.
+
+The relationship between Table~\ref{tab:misapplied} and Table~\ref{tab:taxonomy}
+should be stated explicitly, since it is a place where a reader may reasonably
+suspect double-counting. Grounding as defined requires applicability, so a
+misapplied assertion is \emph{operationally ungrounded}: $G_i = 0$, and it falls in
+the right-hand column. It remains analytically distinct because the underlying
+control failure is different in kind. In cells (ii) and (iv) no evidence was
+brought to bear at all. In the misapplied case authentic evidence was retrieved,
+cited, and genuinely relied upon---and its scope did not match the assertion's
+resolved context. The first is a generation failure. The second is a binding
+failure. Work on the generation path will rarely find it, because the information that
+would reveal the mismatch---which regime governs, which version was in force at
+$t_v$---is metadata about the evidence rather than content of the assertion, and is
+usually not in the context at all.
+
+\subsection{The definition}
+\label{sec:hall-def}
+
+\begin{definition}[Hallucination, error, misapplied evidence]
+\label{def:hallucination}
+\begin{align}
+  \Hall(p \mid c)       &\;=_{\mathrm{def}}\; \Out_S(p) \wedge \neg\,\Grd_S(p \mid c), \label{eq:hall}\\
+  \Err(p \mid c)        &\;=_{\mathrm{def}}\; \Out_S(p) \wedge \Grd_S(p \mid c)
+                           \wedge \neg\,\True(p \mid c), \label{eq:err}\\
+  \Misapplied(p \mid c) &\;=_{\mathrm{def}}\; \Out_S(p) \wedge \Supports(E, p, c')
+                           \wedge \Authentic(E) \wedge \neg\,\Applicable(E, c),
+                           \label{eq:misapplied}\\
+  \Contested(p \mid c)  &\;=_{\mathrm{def}}\; \Out_S(p) \wedge \neg\,\NoDefeater(E, E_S, p, c).
+                           \label{eq:contested}
+\end{align}
+\end{definition}
+
+Note what \eqref{eq:hall} omits: \textbf{any condition on the truth of $p$.} A
+hallucination is an assertion unsupported by applicable evidence, and that is all.
+Truth and falsity distinguish successes from errors; they do not distinguish
+hallucination from sound assertion.
+
+Two consequences follow immediately, and both invert the standard usage. A false
+assertion faithfully reporting an applicable source is \emph{not} a hallucination;
+it is an error, and the fault lies in the evidence. A true assertion resting on
+nothing \emph{is} a hallucination, and remains one however often it turns out
+right. The next three subsections defend each of these, and the defence is in each
+case an argument about remedies rather than about words.
+
+The definition also has a property that neither convention has: it is
+\emph{evaluable at the point of assertion}, without an answer key. That is the
+subject of Section~\ref{sec:auditable}, and it is why this is an engineering claim
+rather than a terminological preference. A truth-conditional definition can only be
+applied offline, against known answers. A source-based definition can be applied at
+runtime but only relative to whatever was retrieved. Definition~\ref{def:grounding}
+is applied at runtime against the evidence \emph{and} the context, which is what a
+gate needs.
+
+\subsection{What is claimed as new, and what is not}
+\label{sec:novelty}
+
+Groundedness, provenance, factuality, attribution, and contextual relevance all have
+substantial literatures, and nothing here is offered as a discovery in any of them.
+The claim is narrower, and stating it precisely is worth a paragraph because a claim
+pitched wider would be false.
+
+This paper does not treat hallucination as synonymous with factual error, and does
+not claim priority for that separation. It formalises the relevant failure as the
+absence of an auditable relation between an assertion, an authenticated and
+\emph{contextually applicable} evidentiary basis, and a verification pathway that an
+institution has authorised. Four components of that formalisation are, so far as I am
+aware, not present in existing definitions:
+
+\begin{enumerate}
+  \item \textbf{Applicability as a conjunct.} Support is indexed to
+        $c = \{j, t_v, f, u\}$, so evidence that entails the assertion but does not
+        govern the case fails the definition. Faithfulness metrics take the source as
+        given and cannot express this condition.
+  \item \textbf{Dependence rather than entailment.} $\Sensitive$ requires the
+        assertion to have been produced \emph{because of} the evidence, not merely to
+        be consistent with it. A system that retrieves an authoritative passage and
+        answers from parametric memory satisfies entailment and fails this.
+  \item \textbf{Authority and version as conditions on support.} Whether a source has
+        standing for this decision class, and which version of it applied at $t$, are
+        treated as preconditions of valid support rather than as metadata.
+  \item \textbf{Defeat by contrary authority.} $\NoDefeater$ makes grounding a
+        property of the evidential base rather than of a selected subset of it, so an
+        assertion drawn from one side of a live disagreement between applicable
+        authorities is not grounded. Faithfulness and attribution metrics evaluate an
+        assertion against the source it cites and have no way to express this.
+  \item \textbf{The non-identification result.} Proposition~\ref{prop:independence}
+        establishes that no accuracy figure constrains the resulting rate, which is
+        what makes the redefinition consequential for validation rather than
+        expository.
+\end{enumerate}
+
+Taken together these separate four cases that pooled accuracy and conventional
+source-faithfulness metrics conflate: lucky truth, grounded error, fabrication, and
+contextual misapplication. The compact form of the claim is that factual accuracy is
+insufficient for institutional reliance, because an assertion must also possess a
+reconstructable and contextually applicable evidentiary lineage---and that a metric
+which cannot distinguish those four cases cannot support a reliance decision.
+
+% TODO(priority): I have not been able to establish exhaustively that no existing
+% work indexes a grounding or hallucination definition to a decision context in this
+% way. Before asserting priority in items 1-3, run a targeted check of the
+% temporal-QA, legal-NLP, and clinical-decision-support literatures, where the
+% individual phenomena (temporal validity, jurisdiction, population applicability)
+% are certainly recognised even if their integration into a definition is not.
+
+\subsection{Cell (iii): a faithful report of a bad source is an error, not a fabrication}
+\label{sec:cell-iii}
+
+A corpus contains, consistently and across several reference works, an incorrect
+effective date for a regulatory provision. The system reports that date. Ablation
+confirms the assertion is driven by those documents: remove them and it stops.
+
+Reference-based evaluation scores this as a hallucination, because the output is
+false.
+That classification discards a distinction the organisation needs. The system did
+what a reporting component is supposed to do: it reported what its evidence said,
+through a mechanism sensitive to that evidence. The defect is in the evidence.
+
+One clarification is owed first, because the cell looks over-full as often stated. If
+grounding requires $\Supports$ and $\Sufficient$, how can a grounded assertion be false?
+Several candidate causes turn out not to belong here. A misread passage means the evidence
+does not in fact support the claim, so $\Supports$ fails and the assertion is ungrounded.
+An invalid inference is the same. Overstating a source fails $\Sufficient$. Those are
+\textsc{Fabrication} in the sense of \eqref{eq:hall}, not \textsc{Error}, and their remedy
+is on the generation path.
+
+\textsc{Error} is therefore narrower than it first appears, and the narrowness is the
+point: it is the case where the system accurately reported applicable authoritative
+evidence and \emph{the evidence itself diverges from the world}. Grounding, as defined, is
+institutional evidentiary grounding rather than truth-tracking, so the cell is exactly the
+gap between the two. It is the only failure the model and the pipeline cannot be blamed
+for, and the only one that no amount of generation-path work will reduce.
+
+The distinction is not terminological, it is budgetary. Cell (iii) is addressed by
+work on the evidential base---source selection, authority ranking, curation,
+retrieval from systems of record rather than secondary literature. Cell (iv) is
+addressed by work on the generation path---evidence gating, abstention policies,
+refusal thresholds. Different teams, different skills, different funding cycles, as
+Section~\ref{sec:three-teams} develops. A metric that pools them reports a number
+on which no one can act.
+
+There is a normative point as well. We do not say that a careful analyst
+fabricated when she accurately reported a source that later proved wrong. We say
+she was misled, and we look at her sources. Machine assertion should be held to the
+same distinction, in both directions.
+
+\subsection{Cell (ii): a lucky right answer is not evidence about the system}
+\label{sec:cell-ii}
+
+Now the reverse. The system is asked for a figure absent from its evidential
+base---the headcount of a small subsidiary. The generation path, running on surface
+regularities about how entities of this type and sentences of this genre continue,
+produces $8{,}200$. That happens to be right.
+
+Reference-based evaluation scores this as a success. Every property that makes
+fabrication dangerous is nonetheless present, and the precise defect is worth
+stating because it is what makes the case more than a curiosity: had the true
+figure been $3{,}400$, the same process would have produced the same output. The
+assertion does not depend on the fact it reports. It is not a measurement; it is a
+draw from a distribution that happened to land on the answer.
+
+The consequence for validation is the one that matters. A user who receives a
+cell-(ii) output, checks it, and finds it correct has acquired \emph{no} evidence
+about the system. The check confirmed the output, not the process, and the process
+will behave identically on the next question, where the draw may land elsewhere.
+Lucky answers are not repeatable performances. Grounding is---and that asymmetry
+is the argument of Section~\ref{sec:auditable}, arriving early.
+
+This also explains why a benchmark that rewards cell (ii) does more than fail to
+inform. Scoring lucky answers as successes applies
+optimisation pressure toward confident guessing and away from abstention, which by
+Section~\ref{sec:rlhf} is a direction the training regime already favours. The
+metric compounds a bias the architecture supplies.
+
+\subsection{Cell (v): authentic is not applicable}
+\label{sec:cell-v}
+
+The category pooled metrics hide, and in my experience the most common serious
+failure in regulated deployment.
+
+The system asserts that a treatment is indicated for a condition. The assertion is
+driven by clinical guidance that says exactly that, and ablation confirms it. But
+the guidance concerns an adult population and the case is paediatric. Or a system
+asserts a capital treatment on the basis of a rule that governs a different
+jurisdiction. Or it cites a policy that was superseded before the decision date. Or
+it applies a product rule to a different product class.
+
+Without the context index these are cell (iii): grounded, false, therefore charged
+to a defective evidential base. That verdict is wrong twice over. The base was not
+defective---the guidance is accurate for its population, the foreign rule is
+correctly stated, the superseded policy was valid when issued. And the implied
+remedy is wrong: curating the corpus will not help, because nothing in it is
+incorrect.
+
+What failed is applicability, and the remedy is context resolution: establishing
+$c$ before answering, checking currency against $t$, checking jurisdiction,
+material facts, and intended use, and abstaining or qualifying when the applicable
+evidence has not been identified. These examples are illustrations of the failure
+shape rather than reports of measured incidents, and
+Section~\ref{sec:grounding-context} develops the underlying generalisation error.
+\subsection{Cell (vi): a contested record is not a grounded one}
+\label{sec:contested}
+
+The failure that the existential quantifier hides, and the one most likely to be
+misclassified as an error.
+
+Two authoritative sources in the base disagree. A group accounting policy and a
+statutory requirement in one jurisdiction reach different treatments. A clinical
+guideline and a local formulary differ on a first-line therapy. A standard and its
+national implementation diverge on a threshold. The system retrieves one, and asserts
+it. Ablation confirms the assertion rests on that source; the source is authentic,
+versioned, authoritative, applicable, sufficient, and traceable.
+
+Every dimension of \eqref{eq:grounded} passes, and the assertion is not fit for
+reliance. What the system has done is resolve a policy conflict by retrieval order,
+which is to say arbitrarily, and it has produced a record showing a single clean
+citation with no indication that the question was contested at all. That is worse than
+an unsupported answer, because the audit trail actively conceals the problem: a
+reviewer sees one authoritative source and an assertion that follows from it.
+
+Note that the defect is independent of which side is correct. If the retrieved source
+happens to state the treatment a reviewer would have chosen, nothing has been
+established---the selection was still arbitrary, and the next case may go the other
+way. This is the lucky cell again, at the level of source selection rather than token
+generation.
+
+The remedy is neither corpus work nor generation work. It is \emph{adjudication}: a
+rule that determines which authority governs when authorities conflict, and an
+escalation path for cases the rule does not settle. That is a policy artefact, and its
+absence is why contested cases surface as apparently well-grounded assertions.
+
+The categories exist to route work, and this is what they are for. Four remedies,
+across three owners:
+\label{sec:remedies}
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{2.3cm}@{}}
+    \toprule
+    Category & Diagnosis & Remedy & Typical owner \\
+    \midrule
+    \textsc{Error}
+      & applicable evidence, but wrong
+      & source authority, curation, systems of record
+      & data \\
+    \addlinespace
+    \textsc{Misapplied}
+      & evidence inapplicable at $c$
+      & context resolution, currency and scope binding
+      & policy / risk \\
+    \addlinespace
+    \textsc{Contested}
+      & applicable authority on both sides
+      & precedence rules, adjudication, escalation path
+      & policy / risk \\
+    \addlinespace
+    \textsc{Lucky}, \textsc{Fabrication}
+      & no evidential connection
+      & evidence gating, abstention, refusal thresholds
+      & platform \\
+    \bottomrule
+  \end{tabular}
+  \caption{A single pooled hallucination rate cannot distinguish these rows, and
+    therefore cannot tell an organisation which of four budgets to spend.
+    Section~\ref{sec:three-teams} argues that the division of ownership is itself
+    a principal source of failure.}
+  \label{tab:remedies}
+\end{table}

@@ -1,0 +1,208 @@
+\chapter{Glossary}
+\label{ch:glossary}
+
+
+Definitions of the terms used throughout the book. Symbols and notation are
+collected separately in \emph{Notation \& Conventions} at the front of the book.
+
+\textbf{Attestation (procedural).} Human sign-off (\texttt{$\vDash$\_\allowbreak{}p}) used to satisfy a constraint
+that cannot be checked mechanically, recorded as auditable evidence. See
+\emph{decomposition}.
+
+\textbf{Invariants (I1--I19).} The properties an assertion-emitting system does not
+supply on its own (I1--I7, \emph{behavioral}) and those it must be built to supply
+(I8--I19, \emph{system}). Both sets are tabulated in the invariants chapter; they are
+listed here because they are referred to by number throughout.
+
+\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{1.12cm}>{\raggedright\arraybackslash}p{2.59cm}>{\raggedright\arraybackslash}p{10.63cm}@{}}
+  \toprule
+   & Name & What it requires \\
+  \midrule
+\endfirsthead
+  \toprule
+   & Name & What it requires \\
+  \midrule
+\endhead
+  \bottomrule
+\endlastfoot
+  I1 & Form invariance & Materially equivalent requests give equivalent decision-relevant outcomes \\
+  I2 & Closure & Asserting \texttt{p} and \texttt{p $\to$ q} implies asserting \texttt{q} \\
+  I3 & Decomposition & Asserting a conjunction implies asserting its parts \\
+  I4 & Consistency & Not both \texttt{p} and \texttt{not p} \\
+  I5 & Self-report fidelity & Claims about what it knows track what it asserts \\
+  I6 & Correctness & What is asserted is true \\
+  I7 & Repeatability & Same input, same session, same assertion \\
+  I8 & Source identity & Every cited source has stable identity and established authority \\
+  I9 & Temporal validity & Source version and effective date are recorded and compared to the decision date \\
+  I10 & Context binding & The resolved context is explicit before assertion, or explicitly marked unresolved \\
+  I11 & Applicability & Evidence is filtered on scope, not on similarity alone \\
+  I12 & Traceability & Each consequential claim links to the evidence supporting it \\
+  I13 & Support verification & Cited evidence is checked to support the claim at the strength asserted \\
+  I14 & Reproducibility & The assertion can be re-derived from recorded inputs and versions \\
+  I15 & Authorization & Reliance is permitted at the applicable tier, with duties assigned \\
+  I16 & Reconstructability & The full decision path is retained for the required period \\
+  I17 & Controlled failure & Unmet conditions produce qualification, refusal, or escalation \\
+  I18 & Sufficiency & The evidence set is checked for coverage of every condition the claim requires \\
+  I19 & Defeater search & A scoped search for contrary or undermining authority of comparable standing \\
+\end{longtable}
+\normalsize
+
+
+I1--I7 are the ones that do \emph{not} hold; naming them is how the book states what a
+system cannot be assumed to do. I8--I19 are requirements, each tied to a control.
+
+\textbf{Audit chain.} The composed, hash-linked sequence of audit records produced for
+a single interaction by the components that processed it. Written \texttt{chain(i)}.
+
+\textbf{Break-glass.} An emergency mechanism (Chapter \ref{ch:prompt}, \S{}4.5) for adding constraints
+under time pressure. Break-glass constraints may only \emph{tighten}, are time-bound
+(TTL), and are subject to the same audit requirements as any constraint. MDR can
+trigger break-glass as a containment action.
+
+\textbf{Classifier evaluation (soft).} ROC's probabilistic tier (\texttt{$\vDash$\_\allowbreak{}c}): a model scores
+an output for a property (e.g., ``medical advice") and the score is compared with a
+governed threshold. Produces \emph{scored evidence}, distinct from the \emph{hard evidence}
+of deterministic checks.
+
+\textbf{Component (governance component).} A unit of governance modeled as the tuple
+\texttt{g = (S, C, E, A, R)}: the surfaces it governs, its constraints, its evaluation
+procedure, its audit output, and its requirements on other components. The three
+components in this book are EPG, ROC, and MDR.
+
+\textbf{Composite constraint.} An output constraint (\texttt{O\_\allowbreak{}x}) built by combining
+deterministic and classifier evaluations with explicit logic --- for example, a
+PHI check that is satisfied only if both a pattern match and a classifier agree.
+
+\textbf{Composition algebra.} The rules (Chapter \ref{ch:framework}, \S{}12) under which components combine.
+Components compose under the operator \texttt{$\oplus$} and preserve each other's guarantees
+when deployed together.
+
+\textbf{Conflict resolution.} The defined precedence (Chapter \ref{ch:prompt}, \S{}6) that determines the
+outcome when two constraints apply to the same artifact and disagree; upstream
+(enterprise) protections are never overridden by downstream additions.
+
+\textbf{Constraint.} A governed requirement on an artifact, expressed as an obligation
+\texttt{O($\phi$)} or a prohibition \texttt{F($\phi$)} over a property \texttt{$\phi$}.
+
+\textbf{Constraint hierarchy.} EPG's model in which constraints flow enterprise $\succ$
+department $\succ$ project (Chapter \ref{ch:prompt}, \S{}3). Each level may add specificity and tighten,
+but never remove protections established upstream (\emph{inheritance monotonicity}).
+
+\textbf{Control surface.} A point in an AI interaction at which governance can be
+applied. The five surfaces are S\_\allowbreak{}prompt, S\_\allowbreak{}input, S\_\allowbreak{}config, S\_\allowbreak{}output, and
+S\_\allowbreak{}delivery.
+
+\textbf{Decomposition (mandatory).} The requirement (Chapter \ref{ch:prompt}, \S{}5) that a semantic
+constraint be broken into mechanically evaluable checks plus procedural
+attestation, so that it becomes auditable rather than a matter of trust.
+
+\textbf{Deontic modality.} The logical category of a constraint --- obligatory \texttt{O},
+forbidden \texttt{F}, or permitted \texttt{P} --- used by EPG to express what a prompt must, must
+not, or may do.
+
+\textbf{Deterministic evaluation (hard).} ROC's exact tier (\texttt{$\vDash$\_\allowbreak{}d}) and EPG's mechanical
+checks: a rule that either matches or does not (e.g., an SSN regex). Produces
+\emph{hard evidence}.
+
+\textbf{Domain isolation.} The property (Chapter \ref{ch:prompt}, \S{}7) that a department or project
+cannot weaken another domain's protections; lateral authority is bounded to a
+domain's own scope.
+
+\textbf{Dual control.} A separation-of-duties requirement (Chapter \ref{ch:prompt}, \S{}4) that the
+author of a constraint is not its approver, with orthogonal reporting lines for
+critical constraints.
+
+\textbf{Enforcement architecture (EA1--EA4).} The conditions under which a surface is
+\emph{fully} governable --- chokepoint enforcement (EA1), identity binding (EA2), and
+related requirements. Without them, a component's guarantees apply only to
+interactions that voluntarily pass through it.
+
+\textbf{EPG (Enterprise Prompt Governance).} The component that governs S\_\allowbreak{}prompt: the
+instructions sent to a model before inference. Component \texttt{g\_\allowbreak{}EPG}. See Chapter \ref{ch:prompt}.
+
+\textbf{Evaluation record vs. process record.} An \emph{evaluation record} is
+component-signed and carries the actual evaluation result; a \emph{process record} is
+produced by the Governance Supervisor during a component failure and documents
+the failure without evaluation content --- a weaker form of evidence.
+
+\textbf{Fail-closed / fail-open.} A component's failure posture. Fail-closed blocks the
+interaction when the component is unavailable; fail-open lets it proceed
+(fail-open-\emph{flagged} records it as ungoverned). Posture is assigned per risk tier
+and is itself a governed constraint.
+
+\textbf{Ghost interaction (ghost chain).} An interaction that reached the model without
+being recorded by the governance pipeline. The Global Interaction Log and MDR
+exist to make ghosts detectable.
+
+\textbf{GIL (Global Interaction Log).} An independent log that records the existence of
+every interaction before any component processes it, so bypassed or failed
+interactions remain detectable (Chapter \ref{ch:framework}, design requirement).
+
+\textbf{Governability.} The degree to which a control surface can be constrained,
+written \texttt{$\gov(\sigma)$}: \emph{full}, \emph{partial}, or \emph{external}. It bounds what any component
+governing that surface can promise.
+
+\textbf{Governance Supervisor.} The independent element that maintains audit-chain
+continuity when a component fails, emitting supervisor-signed \emph{process records}.
+
+\textbf{Hard vs. soft requirements.} A component's \texttt{R\_\allowbreak{}hard} are the other components it
+requires to function; \texttt{R\_\allowbreak{}soft} are ones that improve it but are not required. All
+three components in this book have \texttt{R\_\allowbreak{}hard = $\emptyset$} --- each is independently
+deployable.
+
+\textbf{Interaction.} A single, non-agentic exchange with an AI model, modeled as the
+tuple \texttt{(x, u, M, $\theta$, o)} --- prompt, user input, model, inference configuration, and
+output (Chapter \ref{ch:framework}, Axiom 1).
+
+\textbf{Interface contract.} The formal agreement \texttt{K(g$_1$, g$_2$)} describing what one
+component provides to another (Chapter \ref{ch:framework}, \S{}8). Contracts carry EPG context to ROC
+and both components' records to MDR.
+
+\textbf{Mechanical evaluation.} EPG's exact tier (\texttt{$\vDash$\_\allowbreak{}m}): keyword, regular-expression,
+and structural checkers that decide constraint satisfaction deterministically.
+
+\textbf{MDR (Monitoring, Detection \& Response).} The cross-cutting component that
+governs S\_\allowbreak{}input and S\_\allowbreak{}config and correlates the audit records of EPG and ROC to
+detect and respond to system-level issues. Component \texttt{g\_\allowbreak{}MDR}. See Chapter \ref{ch:monitoring}.
+
+\textbf{Pass / Flag / Block.} The three decisions of ROC's output pipeline (Chapter \ref{ch:controls},
+\S{}5): deliver as-is, deliver but record a violation, or withhold and substitute a
+fallback.
+
+\textbf{Property ($\phi$) and property vocabulary ($\Phi$).} An atomic, named characteristic a
+constraint ranges over ($\phi$), drawn from a controlled vocabulary ($\Phi$) shared across
+components so their records compose.
+
+\textbf{Redaction / fallback.} ROC's handling of a blocked or non-compliant output ---
+removing offending content, or delivering a safe substitute response in place of
+the model's output.
+
+\textbf{Residual risk.} The compliance risk that remains after governance is applied.
+By the Irreducible Residual Risk theorem (Chapter \ref{ch:framework}, Theorem 4) it is non-zero
+even with all components deployed; governance reduces and evidences it rather than
+eliminating it.
+
+\textbf{Risk tier.} The classification of a workload as \emph{Critical}, \emph{Standard}, or
+\emph{Low}, which selects evaluation timing (real-time blocking vs. asynchronous) and
+failure posture.
+
+\textbf{ROC (Runtime Output Controls).} The component that governs S\_\allowbreak{}output and
+S\_\allowbreak{}delivery: model output before it reaches a user. Component \texttt{g\_\allowbreak{}ROC}. See
+Chapter \ref{ch:controls}.
+
+\textbf{Tamper-evident.} A property of the audit records whereby any modification is
+detectable, via hash-chaining and independent signing (Chapter \ref{ch:framework}, Theorem 3a).
+
+\textbf{Threat model (T1--T11).} The enumerated threats (Chapter \ref{ch:framework}, \S{}2), classified as
+in-scope for the meta-framework (T1--T6) or deferred to ROC and MDR (T7--T11).
+
+\textbf{Threshold ($\tau$) and threshold monotonicity.} The cutoff a classifier score is
+compared against. Thresholds obey the same tightening-only inheritance as
+constraints: a lower level may lower a threshold (more flags) but never raise it
+above the level above.
+
+\textbf{Version stamp / version manifest.} The recorded version of every governed
+element at interaction time (Chapter \ref{ch:framework}, Axiom 5); the manifest is the set of these
+stamps included in an audit record so ``which rules were in effect" is answerable.
+

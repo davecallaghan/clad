@@ -1,0 +1,196 @@
+% !TEX root = ../main.tex
+\section{System Invariants}
+\label{sec:invariants}
+
+Sections~\ref{sec:architecture} and~\ref{sec:canonical-form} argue from
+architecture. This section argues from contract, which is the form a reviewer can
+check without agreeing with me about mechanism.
+
+If you were specifying a component whose assertions you intended to rely on, you
+would write down invariants. Two groups are needed, and the distinction between
+them is the paper's practical claim in compressed form. The first group states
+properties of assertion \emph{behaviour}: things you would assume without thinking
+about them from a database, a rule engine, or a calculation service. All of them
+fail, and none can be made to hold by work on $M$. The second states properties the
+\emph{system} must supply. None of them holds by default, and all of them can be
+engineered.
+
+\subsection{Behavioural invariants: what does not hold}
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.5cm}>{\raggedright\arraybackslash}p{2.9cm}>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{1.1cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
+    \toprule
+    & Invariant & Statement & Holds & What breaks without it \\
+    \midrule
+    I1 & \textbf{Form invariance}
+       & $x \sim_c x'$ implies equivalent decision-relevant outcome
+       & No
+       & Tests do not generalise past the wording tested \\
+    \addlinespace
+    I2 & \textbf{Closure}
+       & $\Out_S(p)$ and $\Out_S(p \rightarrow q)$ imply $\Out_S(q)$
+       & No
+       & Conclusions the system's own premises entail are unavailable \\
+    \addlinespace
+    I3 & \textbf{Decomposition}
+       & $\Out_S(p \wedge q)$ implies $\Out_S(p)$
+       & No
+       & Summaries assert what their parts deny \\
+    \addlinespace
+    I4 & \textbf{Consistency}
+       & Not both $\Out_S(p)$ and $\Out_S(\neg p)$
+       & No
+       & Two users, or one user twice, get opposite answers \\
+    \addlinespace
+    I5 & \textbf{Self-report fidelity}
+       & Claims about what it knows track what it asserts
+       & No
+       & Confidence cannot be used to route or gate \\
+    \addlinespace
+    I6 & \textbf{Correctness}
+       & $\Out_S(p)$ implies $p$
+       & No
+       & Output cannot be relied on unchecked \\
+    \addlinespace
+    I7 & \textbf{Repeatability}
+       & Same input, same session, same assertion
+       & No
+       & A verified answer is not a verified behaviour \\
+    \bottomrule
+  \end{tabular}
+  \caption{Behavioural invariants. I6 is the one everybody already knows fails, and
+    it is the least interesting: nobody deploys these systems believing output is
+    true by construction. I1 and I7 are the ones that invalidate validation.}
+  \label{tab:invariants-behaviour}
+\end{table}
+
+One reading to head off first. These are invariants, so \emph{holds} is a universal
+claim and a single counterexample defeats it. ``No'' in the third column therefore
+means the property is not guaranteed, not that behaviour is always inconsistent. In
+practice these systems satisfy I1--I4 on most inputs most of the time, which is
+precisely why the failures are hard to catch in testing and why a specification cannot
+rely on them. An invariant that holds usually is not an invariant; it is a tendency,
+and nothing downstream can be built on it.
+
+Three further observations, since the pattern matters more than the entries.
+
+\paragraph{I6 failing is priced in; I1 failing is not.} Every deployment I have
+seen assumes the system is sometimes wrong and builds review around it. Almost none
+assumes that a reviewed, approved, tested behaviour will not reproduce under a
+rephrasing. The first is a known unknown that review handles. The second
+invalidates the review.
+
+\paragraph{I2--I4 share one cause.} These are not three independent defects. There
+is no component whose function is to maintain the set of asserted claims---nothing
+that closes it under consequence, decomposes conjunctions, or checks it for
+contradiction. By Section~\ref{sec:what-computed} the asserted ``set'' is not a
+maintained data structure at all; it is whatever successive forward passes emit.
+Absent such a component, I2--I4 have nothing to be true of.
+
+\paragraph{I5 failing has a specific and costly consequence.} A great deal of
+proposed architecture routes on model-reported confidence: escalate when the model
+says it is unsure, proceed when it says it is confident. I5's failure means the
+routing signal is produced by the same process as the content and is not a
+measurement of it. Verbalised confidence can be trained to better aggregate
+calibration \citep{lin2022}, and models have some capacity to evaluate their own
+outputs \citep{kadavath2022}; neither delivers the per-claim reliability a gate
+requires. Aggregate calibration and per-claim boundary recognition are different
+properties, and only the second supports a decision about \emph{this} answer.
+
+That last point generalises, and it is the shape of the whole argument: a property
+that holds on average over a distribution is not a property you can gate on for an
+individual case. Accuracy is such a property, as
+Proposition~\ref{prop:independence} shows. So is calibration.
+
+\subsection{System invariants: what must be supplied}
+
+The constructive claim. These are conditions on $S$, not on $M$. None holds by
+default; each is achievable by architecture; and together they are what must be
+true for a response to cross from ordinary generative assistance into consequential
+decision support.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.7cm}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{4.4cm}@{}}
+    \toprule
+    & Invariant & Requirement & Control that supplies it \\
+    \midrule
+    I8 & \textbf{Source identity}
+       & Every cited source has stable identity and established authenticity
+       & Controlled corpus, ingestion authentication \\
+    \addlinespace
+    I9 & \textbf{Temporal validity}
+       & Source version and effective date are recorded and compared against $t$
+       & Version metadata, corpus release pinning \\
+    \addlinespace
+    I10 & \textbf{Context binding}
+       & $c$ is explicit before assertion, or explicitly marked unknown
+       & Intake resolution, typed request objects \\
+    \addlinespace
+    I11 & \textbf{Applicability}
+       & Evidence is filtered on scope, not similarity alone
+       & Metadata-aware retrieval, scope predicates \\
+    \addlinespace
+    I12 & \textbf{Traceability}
+       & Each consequential claim links to the evidence supporting it
+       & Claim decomposition, claim-level citation \\
+    \addlinespace
+    I13 & \textbf{Support verification}
+       & The cited evidence is checked to support the claim at the strength asserted
+       & Entailment checks, policy logic, human review by tier \\
+    \addlinespace
+    I14 & \textbf{Reproducibility}
+       & The assertion can be re-derived from recorded inputs and versions
+       & Snapshot pinning, deterministic replay \\
+    \addlinespace
+    I15 & \textbf{Authorization}
+       & Reliance is permitted at the applicable tier, with duties separated
+       & Tiered policy, approval gates, access control \\
+    \addlinespace
+    I16 & \textbf{Reconstructability}
+       & The full decision path is retained for the required period
+       & Audit record, retention policy \\
+    \addlinespace
+    I17 & \textbf{Controlled failure}
+       & Unmet conditions produce qualification, refusal, or escalation---not an
+         unqualified answer
+       & Output gating outside $M$ \\
+    \addlinespace
+    I18 & \textbf{Sufficiency}
+       & The evidence set is checked for coverage of every condition the claim requires
+       & Required-field or checklist verification against the rule \\
+    \addlinespace
+    I19 & \textbf{Defeater search}
+       & A scoped search for contrary or undermining authority of equal or higher
+         standing is performed and recorded
+       & Governed defeater query; institution's precedence order \\
+    \bottomrule
+  \end{tabular}
+  \caption{System invariants. I8--I9 are ordinary data governance. I10--I11 are the
+    context work that Section~\ref{sec:cell-v} shows is most often absent.
+    I12--I13 are what distinguishes grounding from citation. I14--I16 are what an
+    audit actually asks for. I17 is what makes the others enforceable rather than
+    advisory. I18--I19 correspond to the coverage and no-defeater conditions of
+    Definition~\ref{def:grounding}, and exist so that every condition in the definition
+    has a system obligation that establishes it.}
+  \label{tab:invariants-system}
+\end{table}
+
+Two points about the second table.
+
+\paragraph{I17 is the load-bearing one.} Without a controlled-failure path, every
+other system invariant degrades into a preference. A system that detects missing
+applicability and answers anyway has not enforced I11; it has measured it. And by
+Section~\ref{sec:missing} the gate cannot live inside $M$, because generated
+refusal is a continuation rather than a branch. I17 is therefore an architectural
+requirement, not a prompt.
+
+\paragraph{Proportionality, not maximalism.} Not every use requires all ten.
+Section~\ref{sec:tiers} makes the controls proportional to the consequence of
+reliance, and a drafting assistant needs none of I13--I19. What does not follow is
+the converse: a system cannot claim auditability because it reports an accuracy
+score, emits citations, or carries a generic disclaimer. Those are compatible with
+failing every invariant in Table~\ref{tab:invariants-system}.

@@ -1,0 +1,184 @@
+% !TEX root = ../main.tex
+\section{Premise: What Generation Does Not Establish}
+\label{sec:premise}
+
+One premise carries the rest of the paper, and it is deliberately modest. A
+system's producing a statement is a different thing from that statement being
+supported by evidence, applicable to the case at hand, checked, and permitted for
+use. Any architect will grant the distinction in every other context: a report that
+renders is not a report that reconciles, and a value that populates a field is not
+a value that passed validation. The premise says only that generated text is
+subject to the same distinction, and that the generation event is not what closes
+it.
+
+The argument below needs no position on what a model understands or represents
+internally. It needs the distinction stated formally, which is the business of this
+section.
+
+\subsection{Notation}
+\label{sec:notation}
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+$M$ & the language model: a parameterised generative function \\
+$S$ & the deployed system: $M$ together with its decoding, retrieval, policy,
+      and control layers \\
+$x$ & an input---a prompt, a structured request, a conversation state \\
+$p, q$ & propositions or claims \\
+$c$ & the resolved context of a decision \\
+$E$ & an evidentiary basis \\
+$V$ & a verification procedure \\
+$I$ & an institution or accountable organisation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The distinction between $M$ and $S$ is load-bearing rather than pedantic. Every
+property this paper identifies as necessary for reliance is a property of $S$, and
+none is a property of $M$. A model has no version of an audit record, an
+authorization, or a resolved context; a system can have all three. Where the
+literature reports a result about models, I say $M$; where the object of
+governance is at issue, I say $S$.
+
+\subsection{The resolved context}
+\label{sec:resolved-context}
+
+A great deal of enterprise information is true only relative to a governing frame.
+Write
+\begin{equation}
+  c = \{\, j,\ t_v,\ f,\ u \,\},
+  \label{eq:context}
+\end{equation}
+where
+
+\begin{center}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{10.6cm}@{}}
+\toprule
+$j$ & jurisdiction or governing regime: the legal, regulatory, or policy authority
+      whose rules apply \\
+$t_v$ & \emph{valid time}: the effective date the assertion is about---the as-of date
+      against which the governing rules are to be assessed \\
+$f$ & material case facts: patient facts, customer facts, transaction facts,
+      product facts, or whatever else is decision-relevant \\
+$u$ & intended use: the decision class, the reliance context, what the answer will
+      be used to do \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A second time dimension is required and it does not belong in $c$. Write $t_k$ for
+\emph{transaction time}: the state of the evidential base the system actually had
+access to---which corpus release, ingested to what date. The distinction is the
+ordinary bitemporal one and it is not decoration.
+
+$t_v$ is a property of the \emph{question}: which date's rules govern this decision.
+$t_k$ is a property of the \emph{answer's provenance}: what the system could have
+known when it answered. Correctness is assessed against $t_v$; reconstruction requires $t_k$; and their
+relation is checkable in \emph{both} directions, which is the whole reason two
+timestamps are needed:
+\begin{align}
+  t_k \prec t_v &\;\Longrightarrow\; \text{the base may omit instruments in force at }
+    t_v \quad \text{(omission)}, \label{eq:bitemporal-stale}\\
+  t_k \succ t_v &\;\Longrightarrow\; \text{the base may contain instruments not in
+    force at } t_v \quad \text{(anachronism)}. \label{eq:bitemporal-anachronism}
+\end{align}
+
+Omission is the familiar case: a rule amended before $t_v$ but ingested after $t_k$
+leaves an assertion ungrounded in a way no inspection of the retrieved evidence will
+reveal, because the missing instrument is missing.
+
+Anachronism is the other half and in regulated work it is the more dangerous of the two,
+because the answer is confidently wrong rather than incompletely right. A corpus current
+to today, answering a question as-of two years ago, will retrieve provisions that had
+not yet been made. Applying a rule to a transaction that preceded it is a familiar and
+serious error in its own right, and the system will produce a clean citation to a real
+instrument while committing it.
+
+Neither failure is prevented by having a recent corpus, and both are prevented by the
+same condition. $\Applicable(E, c)$ must be read to require \emph{interval containment}
+on the temporal component of $c$: the instrument's own validity period includes $t_v$.
+That excludes the not-yet-enacted and the already-superseded together, and it is a
+filter on the evidence rather than a property of the corpus. Temporal validity is
+therefore part of applicability rather than a dimension of its own, which is why the
+seven conditions of Definition~\ref{def:grounded-evidence} do not list it separately. Both directions are also detectable at the aggregate level
+without knowing what any amendment said: compare the corpus ingest watermark against
+the decision date, per source class, and flag either sign of the difference. Systems that record only one timestamp cannot
+perform the comparison, and most record only one.
+
+$\Resolved(c)$ holds when the components of \eqref{eq:context} are explicit rather
+than assumed or inferred without validation. $t_k$ is not resolved by the requester;
+it is recorded by the system, and it belongs to I9 and I14 rather than to I10. The distinction between explicit and inferred is the whole of
+it: a system that guesses the jurisdiction correctly has not resolved the context,
+because nothing in the record establishes that the guess was checked, and an
+auditor cannot distinguish a correct guess from a lucky one.
+
+The truth predicate is correspondingly indexed. $\True(p \mid c)$ is truth relative
+to a resolved context, and the relation that fails is:
+\begin{equation}
+  \True(p \mid j_1, t_1, f_1, u_1)
+  \nentails
+  \True(p \mid j_2, t_2, f_2, u_2).
+  \label{eq:no-transfer}
+\end{equation}
+
+\subsection{The non-entailments}
+
+Write $\Pr_M(\mathrm{utter}(p) \mid x)$ for the probability that $M$, given input
+$x$, produces an assertion with content $p$. The premise is that a high value of
+this quantity does not establish any of the properties on which reliance depends:
+
+\begin{align}
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+    &\nentails \True(p \mid c),            \label{eq:ne-true}\\
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+    &\nentails \Supports(E, p, c),         \label{eq:ne-supported}\\
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+    &\nentails \Applicable(E, c),          \label{eq:ne-applicable}\\
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+    &\nentails \Verified(V, p, c),         \label{eq:ne-verified}\\
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+    &\nentails \Warranted_I(p \mid c).     \label{eq:ne-warranted}
+\end{align}
+
+Compactly, and in the order in which an institution needs them:
+\begin{equation}
+  \Pr_M(\mathrm{utter}(p) \mid x) \text{ high}
+  \nentails \True(p \mid c)
+  \nentails \Supports(E, p, c)
+  \nentails \Warranted_I(p \mid c).
+  \label{eq:ne-chain}
+\end{equation}
+
+These are non-entailments, and the distinction matters because the claim is
+frequently misread as stronger than it is. They do not assert that the properties
+fail to co-occur. A model can and routinely does produce propositions that are
+true, well supported, applicable, verifiable, and fit for reliance. The claim is
+that the generation event is not what establishes those properties, so the
+generation event cannot be what an institution points to when asked to defend
+them. Each arrow in \eqref{eq:ne-chain} marks a gap that something other than the
+model has to close.
+
+Nor is the claim that the properties are unrelated. High generation probability is
+correlated with truth on the distribution the model was fitted to, sometimes
+strongly. Correlation on a training distribution is not entailment, and
+Sections~\ref{sec:architecture} and~\ref{sec:canonical-form} concern what happens
+when the distribution of interest is not that one.
+
+\subsection{What follows}
+
+The premise is weak, and that is its value: it can be granted without conceding
+anything contentious, and it is sufficient for everything in this paper.
+
+Two clarifications, because both are easy to misread from the non-entailments
+alone. The claim is not that model output is unreliable. Output is often excellent,
+and the argument concerns what can be established about an individual assertion
+rather than what can be expected of a population of them. And the claim is not that
+the properties in \eqref{eq:ne-chain} are rare. In a well-built system most
+assertions have all of them. The point is that they are established elsewhere, by
+components that can be pointed to.
+
+That is the whole of the constructive programme. If generation does not establish
+support, applicability, verification, or authorization, then those properties are
+supplied by something in $S$ that is not $M$---and identifying, building, and
+measuring that something is what the rest of this paper is about.
