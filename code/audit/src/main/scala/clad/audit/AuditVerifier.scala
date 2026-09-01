@@ -19,6 +19,10 @@ object AuditVerifier:
   case class InvalidSignature(index: Int, keyId: String) extends VerificationFailure
   case class DigestMismatch(index: Int, recorded: String, recomputed: String) extends VerificationFailure
   case class MissingRecordedDigest(index: Int) extends VerificationFailure
+  case class TruncationDetected(expectedCount: Int, actualCount: Int) extends VerificationFailure
+  case class AnchorHeadMismatch(expected: String, actual: String) extends VerificationFailure
+  case object AnchorSignatureInvalid extends VerificationFailure
+  case object AnchorMissing extends VerificationFailure
 
   def verify(
     records: Vector[SignedAuditRecord],
@@ -75,6 +79,36 @@ object AuditVerifier:
     }
 
     VerificationReport(records.size, chainOk, sigsOk, firstFailure, failures.result())
+
+  /** verify, plus the checks that require knowing what the chain should contain.
+    *
+    * verify alone cannot detect deletion: a truncated chain is internally
+    * consistent. The anchor supplies the expected length and head digest.
+    */
+  def verifyAgainstAnchor(
+    records: Vector[SignedAuditRecord],
+    anchor: Option[SignedChainAnchor],
+    kms: KeyManagementService
+  ): VerificationReport =
+    val base = verify(records, kms)
+    val extra = Vector.newBuilder[VerificationFailure]
+
+    anchor match
+      case None => extra += AnchorMissing
+      case Some(signed) =>
+        if !ChainAnchor.isAuthentic(signed, kms) then extra += AnchorSignatureInvalid
+        if signed.anchor.count != records.size then
+          extra += TruncationDetected(signed.anchor.count, records.size)
+        val actualHead = records.lastOption.map(_.record.digest).getOrElse(ChainAnchor.Genesis)
+        if signed.anchor.headDigest != actualHead then
+          extra += AnchorHeadMismatch(signed.anchor.headDigest, actualHead)
+
+    val added = extra.result()
+    if added.isEmpty then base
+    else base.copy(
+      failures = base.failures ++ added,
+      firstFailureAt = base.firstFailureAt.orElse(Some(records.size))
+    )
 
   def verifyStore[F[_]](
     store: AuditStore[F],

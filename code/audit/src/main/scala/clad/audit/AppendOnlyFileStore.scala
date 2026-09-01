@@ -7,10 +7,14 @@ import java.time.Instant
 import scala.util.{Try, Using}
 import scala.jdk.CollectionConverters.*
 
-class AppendOnlyFileStore[F[_]](directory: Path)(using lift: Lift[F]) extends AuditStore[F]:
+// kms is optional so existing call sites keep compiling. A store without one
+// writes no anchor, and verifyAgainstAnchor reports AnchorMissing for it, which
+// is the correct verdict.
+class AppendOnlyFileStore[F[_]](directory: Path, kms: Option[KeyManagementService] = None)(using lift: Lift[F]) extends AuditStore[F]:
 
   private val chainFile = directory.resolve("chain.jsonl")
   private val lockFile = directory.resolve("chain.jsonl.lock")
+  private val anchorStore = ChainAnchorStore(directory)
 
   // FileChannel locks are per-JVM: a second lock() on an overlapping region throws
   // instead of queueing. This serializes threads in-process; the file lock guards
@@ -32,8 +36,19 @@ class AppendOnlyFileStore[F[_]](directory: Path)(using lift: Lift[F]) extends Au
       try
         ensureDirectory()
         appendUnderFileLock(line)
+        updateAnchor()
       finally writeLock.unlock()
     })
+
+  // Written while writeLock is held, so the anchor cannot drift from the chain.
+  private def updateAnchor(): Unit =
+    kms.foreach { k =>
+      val decoded = Files.readAllLines(chainFile).asScala.toVector
+        .filter(_.nonEmpty)
+        .flatMap(l => AuditRecordCodec.decode(l).toOption)
+      ChainAnchor.sign(ChainAnchor.forChain(decoded, Instant.now()), k)
+        .foreach(anchorStore.write(_).get)
+    }
 
   private def appendUnderFileLock(line: String): Unit =
     var attempt = 0
