@@ -49,11 +49,11 @@ and one of the three artifacts that can drift.
 **Files:**
 - Create: `lean/` — copied from `~/prompt_approach/lean` (source is 116K; `.lake/` build output is excluded)
 - Modify: `.gitignore`
-- Modify: `code/difftest/src/test/scala/clad/difftest/DifferentialTestSpec.scala:11-14`
+- Modify: nothing — see Step 3
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `lean/` at the repository root, containing `Clad.lean`, `Clad/*.lean` (23 files), `lakefile.lean`, `lake-manifest.json`, `lean-toolchain`. The differential test's default executable path becomes `lean/.lake/build/bin/clad-difftest`, relative to the repository root.
+- Produces: `lean/` at the repository root, containing `Clad.lean`, `Clad/*.lean` (23 files), `lakefile.lean`, `lake-manifest.json`, `lean-toolchain`. **No source change is needed**: `DifferentialTestSpec`'s existing default, `../lean/.lake/build/bin/clad-difftest`, already resolves correctly once the directory exists — see Step 3.
 
 - [ ] **Step 1: Copy the sources, excluding build output**
 
@@ -73,35 +73,36 @@ Append to `.gitignore`:
 lean/.lake/
 ```
 
-- [ ] **Step 3: Point the differential test at the in-repo path**
+- [ ] **Step 3: Confirm the existing path is already correct — do not change it**
 
-In `code/difftest/src/test/scala/clad/difftest/DifferentialTestSpec.scala`, replace the
-`leanExePath` definition:
+`DifferentialTestSpec.scala:11-14` defaults to `../lean/.lake/build/bin/clad-difftest`.
+That was previously diagnosed as a wrong path; it is not. `Test / fork` is `false`, so
+tests run in the sbt JVM whose working directory is where sbt was launched — `code/`.
+From there, `../lean` is the repository root's `lean/`.
 
-```scala
-  // The Lean model lives in this repository at lean/. sbt runs with the module
-  // directory as CWD, so the path is relative to code/difftest.
-  val leanExePath: String = sys.env.getOrElse(
-    "LEAN_DIFFTEST_EXE",
-    new File("../../lean/.lake/build/bin/clad-difftest").getAbsolutePath
-  )
-```
+`scripts/run-differential-test.sh` confirms the same layout independently: it builds in
+`$REPO_ROOT/lean` and runs sbt from `$REPO_ROOT/code`.
 
-- [ ] **Step 4: Verify the path resolves from sbt's working directory**
-
-Run: `cd code && sbt -batch "difftest/Test/runMain scala.None" 2>/dev/null; cd ..`
-
-That command is expected to fail — its purpose is only to make sbt print the module's
-working directory. Instead verify directly:
+So the differential test was never mis-pathed. It cancelled because `clad/lean/` did not
+exist — the model was in a different repository. Step 1 fixes that outright.
 
 ```bash
-cd /Users/david.callaghan/clad/code/difftest && \
-  python3 -c "import os; print(os.path.abspath('../../lean/.lake/build/bin/clad-difftest'))" && \
-  cd /Users/david.callaghan/clad
+cd /Users/david.callaghan/clad
+grep -n 'leanExePath' code/difftest/src/test/scala/clad/difftest/DifferentialTestSpec.scala
+cd code && sbt -batch "show difftest/Test/fork" 2>&1 | grep -E '^\[info\] (true|false)'; cd ..
 ```
 
-Expected: `/Users/david.callaghan/clad/lean/.lake/build/bin/clad-difftest`. The binary
-does not exist yet — only the path must be correct.
+Expected: the default path is `../lean/.lake/build/bin/clad-difftest`, and `fork` is
+`false`. Make no edit to the file.
+
+- [ ] **Step 4: Verify the path now resolves to a real directory**
+
+```bash
+  python3 -c "import os; print(os.path.abspath('../lean'), os.path.isdir('../lean'))" &&   cd ..
+```
+
+Expected: `/Users/david.callaghan/clad/lean True`. The binary itself does not exist until
+`lake build` runs; only the directory must be present.
 
 - [ ] **Step 5: Confirm the suite still compiles and the difftest still cancels**
 
@@ -112,7 +113,7 @@ failure — this step only confirms the move broke nothing.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add lean .gitignore code/difftest
+git add lean .gitignore
 git commit -m "feat(lean): move the formal model into this repository
 
 The model was in a private repository under a different GitHub account, so a
@@ -123,8 +124,9 @@ can drift from three to two.
 24 .lean files, 69 distinct theorems and lemmas, zero sorry. Build output is
 gitignored; the model depends on mathlib and eight transitive packages.
 
-The differential test's default executable path now resolves inside this
-repository. It still cancels rather than runs; that is Task 3."
+The differential test needed no change: its existing relative path was correct,
+and it cancelled only because the directory was absent. Diagnosing it as a wrong
+path was a mistake; the defect was a missing checkout."
 ```
 
 ---
