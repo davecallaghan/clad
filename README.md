@@ -153,7 +153,7 @@ The formal specifications that the code implements:
 The research documents are also published as the ebook **_Trust by Design: Governing Enterprise AI with Clad_**:
 
 - **EPUB / PDF** — <!-- TODO: replace with your GitHub Pages or Releases URL --> _(publish link TBD)_
-- **Landing page** — a single-page site lives in [`landing/`](landing/) and deploys to Google Cloud Storage; see [`gcp/README.md`](gcp/README.md). _(public URL TBD after first deploy)_
+- **Landing page** — a single-page site lives in [`ops/landing/`](ops/landing/) and deploys to Google Cloud Storage; see [`ops/gcp/README.md`](ops/gcp/README.md). _(public URL TBD after first deploy)_
 
 ## Validation Status
 

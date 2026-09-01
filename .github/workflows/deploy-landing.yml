@@ -1,5 +1,5 @@
 # Deploy landing/ to the GCS static-website bucket via keyless Workload Identity
-# Federation. One-time setup: run gcp/setup-wif.sh, then add the repository
+# Federation. One-time setup: run ops/gcp/setup-wif.sh, then add the repository
 # variables it prints (Settings > Secrets and variables > Actions > Variables):
 #   GCP_PROJECT_ID, GCS_BUCKET_NAME, GCP_REGION,
 #   GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT
@@ -10,8 +10,8 @@ on:
   push:
     branches: [master]
     paths:
-      - "landing/**"
-      - "gcp/deploy-landing.sh"
+      - "ops/landing/**"
+      - "ops/gcp/deploy-landing.sh"
       - ".github/workflows/deploy-landing.yml"
   workflow_dispatch:
 
@@ -41,4 +41,4 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
           GCS_BUCKET_NAME: ${{ vars.GCS_BUCKET_NAME }}
           GCP_REGION: ${{ vars.GCP_REGION }}
-        run: ./gcp/deploy-landing.sh
+        run: ./ops/gcp/deploy-landing.sh

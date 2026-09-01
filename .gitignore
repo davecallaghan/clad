@@ -29,7 +29,7 @@ build/.chromium/
 .claude/
 
 # local GCP deploy config (contains project id)
-gcp/config.env
+ops/gcp/config.env
 
 # Stale pandoc EPUB output; the LaTeX pipeline is the source of truth
 build/

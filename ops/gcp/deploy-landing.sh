@@ -7,7 +7,7 @@
 #   export GCP_PROJECT_ID=...            # your project
 #   export GCS_BUCKET_NAME=...           # globally-unique, e.g. clad-landing-$GCP_PROJECT_ID
 #   export GCP_REGION=us-central1        # bucket location (used only on creation)
-#   ./gcp/deploy-landing.sh
+#   ./ops/gcp/deploy-landing.sh
 #
 # Prereqs: gcloud + gsutil installed and authenticated (`gcloud auth login`),
 # billing enabled on the project. See gcp/README.md.
@@ -56,8 +56,8 @@ gsutil web set -m index.html -e 404.html "${BUCKET}"
 # rsync mirrors landing/ into the bucket root. -R = recursive.
 # NOTE: add -d to also DELETE bucket objects that no longer exist locally
 #       (clean mirror). Left off here so a stray manual upload isn't nuked.
-echo "Uploading landing/ ..."
-gsutil -m rsync -R landing "${BUCKET}"
+echo "Uploading ops/landing/ ..."
+gsutil -m rsync -R ops/landing "${BUCKET}"
 
 # Short cache on HTML so content updates show up quickly; long cache on assets.
 gsutil -m setmeta -h "Cache-Control:public, max-age=300" "${BUCKET}/index.html" "${BUCKET}/404.html" >/dev/null 2>&1 || true
