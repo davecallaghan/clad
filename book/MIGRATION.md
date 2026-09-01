@@ -31,7 +31,7 @@ chapter using the substitution table in `NOTATION-MAP.md`.
 | `research/appendix-c-templates.md` | Appendix — templates | |
 | `research/glossary.md` | Back matter | Reconcile against `notation.tex`. |
 
-Nothing has been deleted. `research/` and `papers/paper1-grounding/` both remain intact
+Nothing has been deleted. `research/` and `archive/paper1-grounding/` both remain intact
 until their content is converted and checked.
 
 ## Two substantive edits that are not renames

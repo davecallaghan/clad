@@ -36,7 +36,7 @@ build/
 
 # LaTeX build output — regenerable from sources via tools/rebuild-book.sh
 book/build/
-papers/*/build/
+archive/*/build/
 *.aux
 *.bbl
 *.blg
