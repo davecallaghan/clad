@@ -12,6 +12,9 @@
 
 ## Global Constraints
 
+- **Scala 3.3.8** — the current LTS patch (released 2026-06-10), verified published on
+  Maven Central. `build.sbt:1` moves from `3.3.7`. Deliberately not 3.8.4/3.9.0: those
+  are the stable line, not LTS.
 - Scala 3 syntax throughout (indentation-based, `enum`, `given`/`using`). Match the surrounding files; do not introduce braces-style blocks.
 - sbt project names: source module is `audit`, test module is `` `audit-test` `` (backticked in `build.sbt`). Run tests as `sbt "audit-test/testOnly <fqcn>"`.
 - `AuditStore[F[_]]` is effect-polymorphic via `Lift[F]`. Only `Lift[Try]` is given. Do not add a new effect type in this plan.
