@@ -46,13 +46,21 @@ object ConfigLoader:
 
     val allConstraintConfigs = config.constraints.enterprise ++ config.constraints.department ++ config.constraints.project
 
-    val constraints = allConstraintConfigs.flatMap { cc =>
+    // Each parsed constraint is kept paired with the config entry it came from. Looking
+    // the entry back up by property name alone returned the first match in
+    // enterprise-then-department-then-project order, so a project-level override of an
+    // enterprise property silently took the enterprise entry's version and evaluability
+    // — reclassifying a mechanical check as procedural, or stamping the wrong version
+    // into every audit record for that constraint. Constraint itself is the right key:
+    // Obligation and Prohibition are distinct values, so (property, level, type) is
+    // exactly a Constraint.
+    val parsed: Seq[(Constraint, ConstraintConfig)] = allConstraintConfigs.flatMap { cc =>
       parseLevelOpt(cc.level) match
         case Some(level) =>
           val prop = PropertyId.unsafe(cc.property)
           cc.constraintType.toLowerCase match
-            case "obligation" => Some(Constraint.Obligation(prop, level))
-            case "prohibition" => Some(Constraint.Prohibition(prop, level))
+            case "obligation" => Some(Constraint.Obligation(prop, level) -> cc)
+            case "prohibition" => Some(Constraint.Prohibition(prop, level) -> cc)
             case other =>
               errors += ValidationError("constraintType", s"Unknown type: $other")
               None
@@ -60,6 +68,22 @@ object ConfigLoader:
           errors += ValidationError("level", s"Unknown level: ${cc.level}")
           None
     }
+
+    // Two entries for one constraint that disagree about version or evaluability have no
+    // defensible resolution, and building a Map would silently keep whichever came last.
+    parsed.groupBy(_._1).foreach { case (constraint, entries) =>
+      val variants = entries.map(e => (e._2.version, e._2.evaluability.toLowerCase)).distinct
+      if variants.sizeIs > 1 then
+        errors += ValidationError(
+          "constraints",
+          s"${constraint.property.value} at ${constraint.level} is declared more than " +
+            s"once with conflicting version/evaluability: " +
+            variants.map((v, e) => s"$v/$e").mkString(", ")
+        )
+    }
+
+    val configFor: Map[Constraint, ConstraintConfig] = parsed.toMap
+    val constraints = parsed.map(_._1)
 
     val entConstraints = constraints.filter(_.level == Level.Enterprise).toSet
     val deptConstraints = constraints.filter(_.level == Level.Department).toSet
@@ -87,11 +111,20 @@ object ConfigLoader:
         errors += ValidationError("checkers", s"Duplicate checkers: ${err.properties.map(_.value).mkString(", ")}")
         return Left(errors.result())
 
-    val evaluable: Set[EvaluableConstraint] = constraints.map { c =>
-      val cc = allConstraintConfigs.find(_.property == c.property.value).get
-      cc.evaluability.toLowerCase match
-        case "procedural" => ProceduralConstraint(c, cc.version): EvaluableConstraint
-        case _ => MechanicalConstraint(c, cc.version): EvaluableConstraint
+    val evaluable: Set[EvaluableConstraint] = constraints.flatMap { c =>
+      configFor.get(c) match
+        case Some(cc) =>
+          cc.evaluability.toLowerCase match
+            case "procedural" => Some(ProceduralConstraint(c, cc.version): EvaluableConstraint)
+            case _ => Some(MechanicalConstraint(c, cc.version): EvaluableConstraint)
+        case None =>
+          // Unreachable: every constraint here came from an entry in `parsed`. Reported
+          // rather than thrown, because the previous `.get` would have taken the process
+          // down if that ever stopped being true.
+          errors += ValidationError(
+            "constraints", s"no config entry for ${c.property.value} at ${c.level}"
+          )
+          None
     }.toSet
 
     val ehResult = EvaluableHierarchy.build(hierarchy, evaluable, registry)

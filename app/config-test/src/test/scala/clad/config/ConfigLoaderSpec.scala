@@ -51,6 +51,79 @@ class ConfigLoaderSpec extends AnyFlatSpec with Matchers:
     result.head.authorizedLevels should not be empty
   }
 
+  // --- Version and evaluability resolution across levels ---
+
+  /** Same property governed at two levels with different versions. This is the case the
+    * loader got wrong: it looked the config entry back up by property name, so both
+    * constraints took the enterprise entry's version. */
+  val twoLevelJson: String = """{
+    "name": "Two-level override",
+    "version": "1.0",
+    "agents": [],
+    "constraints": {
+      "enterprise": [
+        {
+          "property": "audit_logging",
+          "constraintType": "obligation",
+          "level": "enterprise",
+          "domain": "healthcare",
+          "version": "1.0",
+          "evaluability": "mechanical"
+        }
+      ],
+      "department": [],
+      "project": [
+        {
+          "property": "audit_logging",
+          "constraintType": "obligation",
+          "level": "project",
+          "domain": "healthcare",
+          "version": "2.0",
+          "evaluability": "mechanical"
+        }
+      ]
+    },
+    "checkers": [
+      {
+        "property": "audit_logging",
+        "checkerType": "structural",
+        "config": { "key": "logging", "value": "enabled" }
+      }
+    ],
+    "outputConstraints": [],
+    "thresholds": [],
+    "failurePostures": []
+  }"""
+
+  "ConfigLoader" should "give each level's constraint its own version" in {
+    val config = ConfigLoader.loadFromString(twoLevelJson).toOption.get
+    val engine = ConfigLoader.buildEngine(config).toOption.get
+
+    val report = engine.evaluate("a prompt", Map("logging" -> "enabled")).toOption.get
+    val versionsByLevel = report.audit.entries
+      .map(e => e.constraint.level -> e.constraintVersion).toMap
+
+    // Before: both read 1.0, because the lookup matched on property name and the
+    // enterprise entry came first.
+    versionsByLevel.get(Level.Enterprise) shouldBe Some("1.0")
+    versionsByLevel.get(Level.Project) shouldBe Some("2.0")
+  }
+
+  it should "reject a constraint declared twice with conflicting version" in {
+    val conflicting = twoLevelJson.replace(""""level": "project"""", """"level": "enterprise"""")
+    val config = ConfigLoader.loadFromString(conflicting).toOption.get
+
+    val result = ConfigLoader.buildEngine(config)
+
+    result shouldBe a[Left[?, ?]]
+    result.swap.toOption.get.exists {
+      case ConfigLoader.ValidationError("constraints", msg) =>
+        msg.contains("audit_logging") && msg.contains("more than once")
+      case _ => false
+    } shouldBe true
+  }
+
+
   "ConfigLoader.buildEngine" should "build working GovernanceEngine from config" in {
     val config = ConfigLoader.loadFromString(SampleConfigs.sampleJson).toOption.get
     val result = ConfigLoader.buildEngine(config)
