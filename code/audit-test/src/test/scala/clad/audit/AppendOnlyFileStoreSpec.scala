@@ -151,3 +151,28 @@ class AppendOnlyFileStoreSpec extends AnyFunSuite with Matchers with BeforeAndAf
 
     val result2 = AuditRecordCodec.decode("")
     result2 shouldBe a[Left[_, _]]
+
+  test("persist every record when appends are concurrent"):
+    val store = AppendOnlyFileStore[Try](tempDir)
+    val threadCount = 8
+    val records = (0 until threadCount).map(i =>
+      makeRecord(Instant.parse("2026-04-22T18:00:00Z"), s"sha256:artifact$i")
+    )
+
+    val latch = java.util.concurrent.CountDownLatch(1)
+    val failures = java.util.concurrent.ConcurrentLinkedQueue[Throwable]()
+    val threads = records.map { r =>
+      val runnable: Runnable = () =>
+        latch.await()
+        store.append(r).failed.foreach(failures.add)
+      val t = Thread(runnable)
+      t.start()
+      t
+    }
+    latch.countDown()
+    threads.foreach(_.join(10_000))
+
+    withClue(s"append failures: ${failures.toArray.mkString(", ")}") {
+      failures.isEmpty shouldBe true
+    }
+    store.count.get shouldBe threadCount

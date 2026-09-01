@@ -286,6 +286,15 @@ import java.util.concurrent.locks.ReentrantLock
 Run: `sbt "audit-test/testOnly clad.audit.AppendOnlyFileStoreSpec"`
 Expected: PASS — no failures, `count` is 8.
 
+**Deviation found during execution.** The test failed on a defect the plan did not
+predict: `ensureDirectory()` ran `if !Files.exists(chainFile) then Files.createFile(chainFile)`
+*outside* the lock, so under eight concurrent appends every thread saw the file absent
+and seven failed with `FileAlreadyExistsException`. That race sits upstream of the
+`OverlappingFileLockException` the review found and masks it. The fix therefore also
+removes the exists-then-create pair — the file is created on demand by
+`CREATE + APPEND`, which is idempotent — moves `ensureDirectory()` inside the lock, and
+makes the three read methods tolerate an absent file.
+
 - [ ] **Step 5: Commit**
 
 ```bash
