@@ -5,12 +5,13 @@ namespace Clad
 /-- Theorem 5: Full Solution Audit Completeness (meta-framework §11).
 
 When EPG, ROC and MDR are deployed with the infrastructure guarantees in place, every
-Tier 1 element is covered. The surface aspect is `full_surface_coverage` in
+Tier 1 element is covered. The surface aspect is `pipeline_surface_coverage` in
 Monoid.lean; this wraps it with the conditional infrastructure hypotheses.
 
-The infrastructure hypotheses are opaque `Prop`s carried through unexamined. That is
-deliberate and it is also the limit of the result: what this theorem establishes on
-its own is the surface-coverage conjunct. -/
+Two limits, both deliberate. The infrastructure hypotheses are opaque `Prop`s carried
+through unexamined, so what this theorem establishes on its own is the surface-coverage
+conjunct. And that conjunct is over the five pipeline surfaces: the evidence surface is
+outside the composed guarantee (`evidence_surface_uncovered`). -/
 theorem theorem5_audit_completeness
     (enforcement_holds : Prop)
     (audit_integrity : Prop)
@@ -22,16 +23,18 @@ theorem theorem5_audit_completeness
     (h_contracts : contracts_satisfied) :
     enforcement_holds ∧ audit_integrity ∧ gil_properties ∧ contracts_satisfied ∧
     (EPG.compose ROC >>= (·.compose MDR)) = .ok
-      { surfaces := Finset.univ, constraints := ∅
+      { surfaces := pipelineSurfaces, constraints := ∅
+        evaluators := { ⟨"epg-prompt-evaluator"⟩, ⟨"roc-output-evaluator"⟩, ⟨"mdr-monitor"⟩ }
         hardRequirements := ∅, softRequirements := ∅ } :=
-  ⟨h_enf, h_ai, h_gil, h_contracts, full_surface_coverage⟩
+  ⟨h_enf, h_ai, h_gil, h_contracts, pipeline_surface_coverage⟩
 
 /-- Surface coverage does not depend on the infrastructure hypotheses: it is a purely
 algebraic fact about the three component definitions. -/
 theorem surface_coverage_unconditional :
     (EPG.compose ROC >>= (·.compose MDR)) = .ok
-      { surfaces := Finset.univ, constraints := ∅
+      { surfaces := pipelineSurfaces, constraints := ∅
+        evaluators := { ⟨"epg-prompt-evaluator"⟩, ⟨"roc-output-evaluator"⟩, ⟨"mdr-monitor"⟩ }
         hardRequirements := ∅, softRequirements := ∅ } :=
-  full_surface_coverage
+  pipeline_surface_coverage
 
 end Clad

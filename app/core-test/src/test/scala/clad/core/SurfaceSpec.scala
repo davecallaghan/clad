@@ -1,4 +1,3 @@
-// code/core-test/src/test/scala/clad/core/SurfaceSpec.scala
 package clad.core
 
 import org.scalatest.flatspec.AnyFlatSpec
@@ -6,34 +5,46 @@ import org.scalatest.matchers.should.Matchers
 
 class SurfaceSpec extends AnyFlatSpec with Matchers:
 
-  "Surface" should "have exactly five values" in {
-    Surface.values should have length 5
+  "Surface" should "have six values: the five pipeline surfaces plus evidence" in {
+    Surface.values should have length 6
+    Surface.values.toSet shouldBe Surface.pipeline + Surface.Evidence
   }
 
-  "Surface.governability" should "have an entry for every Surface value" in {
-    Surface.values.foreach { s =>
-      Surface.governability should contain key s
-    }
+  it should "keep the pipeline partition to five" in {
+    // The composed guarantee of EPG + ROC + MDR is stated over these, and only these.
+    Surface.pipeline should have size 5
+    Surface.pipeline should not contain Surface.Evidence
   }
 
-  it should "classify Prompt as Full" in {
-    Surface.governability(Surface.Prompt) shouldBe Governability.Full
+  "Surface.governability" should "be defined for every surface under either deployment" in {
+    for
+      s <- Surface.values
+      e <- EvidenceProvision.values
+    do Surface.governability(s, e) shouldBe a[Governability]
   }
 
-  it should "classify Input as Partial" in {
-    Surface.governability(Surface.Input) shouldBe Governability.Partial
+  it should "classify the pipeline surfaces independently of the evidence deployment" in {
+    val expected = Map(
+      Surface.Prompt   -> Governability.Full,
+      Surface.Input    -> Governability.Partial,
+      Surface.Config   -> Governability.Partial,
+      Surface.Output   -> Governability.Partial,
+      Surface.Delivery -> Governability.Full
+    )
+    for
+      (surface, cls) <- expected
+      deployment <- EvidenceProvision.values
+    do Surface.governability(surface, deployment) shouldBe cls
   }
 
-  it should "classify Config as Partial" in {
-    Surface.governability(Surface.Config) shouldBe Governability.Partial
-  }
-
-  it should "classify Output as Partial" in {
-    Surface.governability(Surface.Output) shouldBe Governability.Partial
-  }
-
-  it should "classify Delivery as Full" in {
-    Surface.governability(Surface.Delivery) shouldBe Governability.Full
+  it should "split the evidence surface's class by deployment choice" in {
+    // The only surface in the framework whose class is a deployment decision rather than
+    // a property of the technology. Retrieval makes the basis identifiable per
+    // interaction; parametric evidence is absorbed in the weights and is not.
+    Surface.governability(Surface.Evidence, EvidenceProvision.Retrieved) shouldBe
+      Governability.Full
+    Surface.governability(Surface.Evidence, EvidenceProvision.Parametric) shouldBe
+      Governability.External
   }
 
   "Governability" should "have exactly three values" in {

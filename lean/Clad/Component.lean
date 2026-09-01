@@ -9,10 +9,27 @@ structure Requirement where
   description : String
   deriving DecidableEq, Repr
 
+/-- Identifies one evaluation function `E_g : artifact(S_g) × C_g → V`. The identity is
+not derivable from the surfaces and constraints: two components could govern the same
+constraint on the same surface through different evaluators. -/
+structure Evaluator where
+  name : String
+  deriving DecidableEq, Repr
+
+/-- A governance component, `g = (S_g, C_g, E_g, A_g, R_g)`.
+
+Four of the five tuple elements are fields: `surfaces` is S, `constraints` is C,
+`evaluators` is E, and R is split into hard and soft requirements.
+
+`A_g` is deliberately absent. Composition sets `A = compose(A_g₁, A_g₂) via shared
+interaction_id`, which is not a binary operation on components — the chain order is fixed
+by pipeline causality, a parameter of neither operand. This is exactly why the framework
+states its monoid result for `(S, C, E)` rather than for the audit component. -/
 @[ext]
 structure ComponentSpec where
   surfaces         : Finset Surface
   constraints      : Finset Constraint
+  evaluators       : Finset Evaluator
   hardRequirements : Finset Requirement
   softRequirements : Finset Requirement
   deriving DecidableEq
@@ -32,6 +49,9 @@ only on components whose surfaces are disjoint, which is what `compose` enforces
 def ComponentSpec.merge (g₁ g₂ : ComponentSpec) : ComponentSpec where
   surfaces         := g₁.surfaces ∪ g₂.surfaces
   constraints      := g₁.constraints ∪ g₂.constraints
+  -- E_g₁ ∪ E_g₂. A function rather than a relation precisely because the surfaces are
+  -- disjoint, which is what `Composable` requires.
+  evaluators       := g₁.evaluators ∪ g₂.evaluators
   hardRequirements := g₁.hardRequirements ∪ g₂.hardRequirements
   softRequirements := g₁.softRequirements ∪ g₂.softRequirements
 
@@ -69,6 +89,7 @@ theorem ComponentSpec.compose_of_composable {g₁ g₂ : ComponentSpec}
 def ComponentSpec.empty : ComponentSpec where
   surfaces         := ∅
   constraints      := ∅
+  evaluators       := ∅
   hardRequirements := ∅
   softRequirements := ∅
 

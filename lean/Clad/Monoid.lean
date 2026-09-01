@@ -104,18 +104,21 @@ theorem ComponentSpec.compose_assoc_of_composable {g₁ g₂ g₃ : ComponentSpe
 /-! ## The three concrete components (meta-framework §11) -/
 
 def EPG : ComponentSpec where
+  evaluators := { ⟨"epg-prompt-evaluator"⟩ }
   surfaces := {Surface.Prompt}
   constraints := ∅
   hardRequirements := ∅
   softRequirements := ∅
 
 def ROC : ComponentSpec where
+  evaluators := { ⟨"roc-output-evaluator"⟩ }
   surfaces := {Surface.Output, Surface.Delivery}
   constraints := ∅
   hardRequirements := ∅
   softRequirements := ∅
 
 def MDR : ComponentSpec where
+  evaluators := { ⟨"mdr-monitor"⟩ }
   surfaces := {Surface.Input, Surface.Config}
   constraints := ∅
   hardRequirements := ∅
@@ -126,13 +129,36 @@ theorem epg_roc_composable : EPG.Composable ROC := by decide
 theorem epg_mdr_composable : EPG.Composable MDR := by decide
 theorem roc_mdr_composable : ROC.Composable MDR := by decide
 
-/-- The composition of the three components is defined, and covers every surface
-(Theorem 5, surface aspect). Both halves matter: a coverage claim about a composite
-that does not exist would be vacuous. -/
-theorem full_surface_coverage :
+/-- The composition of the three components is defined, and covers exactly the five
+pipeline surfaces (Theorem 5, surface aspect).
+
+Both halves matter: a coverage claim about a composite that does not exist would be
+vacuous. And the covered set is `pipelineSurfaces`, not `Finset.univ` — adding the
+evidence surface leaves the composed guarantee "unaffected in what it claims and
+narrowed in what it covers". Stating it over `univ` would be false; stating the
+*equality* rather than a containment is what makes `evidence_surface_uncovered`
+follow. -/
+theorem pipeline_surface_coverage :
     (EPG.compose ROC >>= (·.compose MDR)) = .ok
-      { surfaces := Finset.univ, constraints := ∅
+      { surfaces := pipelineSurfaces, constraints := ∅
+        evaluators := { ⟨"epg-prompt-evaluator"⟩, ⟨"roc-output-evaluator"⟩, ⟨"mdr-monitor"⟩ }
         hardRequirements := ∅, softRequirements := ∅ } := by
   decide
+
+/-- No component governs the evidence surface. A stated result rather than an omission:
+the residual risk attributable to evidence is nameable precisely because it is outside
+the composed guarantee, and whoever introduces a component for it has to change this. -/
+theorem evidence_surface_uncovered :
+    ∀ g, (EPG.compose ROC >>= (·.compose MDR)) = .ok g →
+      Surface.Evidence ∉ g.surfaces := by
+  intro g h
+  rw [pipeline_surface_coverage] at h
+  have : g = { surfaces := pipelineSurfaces, constraints := ∅
+               evaluators := { ⟨"epg-prompt-evaluator"⟩, ⟨"roc-output-evaluator"⟩,
+                               ⟨"mdr-monitor"⟩ }
+               hardRequirements := ∅, softRequirements := ∅ } := by
+    injection h
+  subst this
+  exact evidence_not_pipeline
 
 end Clad

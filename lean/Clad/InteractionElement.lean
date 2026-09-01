@@ -9,6 +9,7 @@ inductive InteractionElement where
   | InferConf   -- θ (inference configuration)
   | RawOutput   -- o (raw model output)
   | Delivered   -- o' (delivered output)
+  | Evidence    -- E (the evidential basis the assertion may rest on)
   deriving DecidableEq, Repr
 
 instance : Fintype InteractionElement where

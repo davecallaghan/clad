@@ -60,7 +60,7 @@ class ComponentCompositionSpec extends AnyFlatSpec with Matchers with ScalaCheck
 
   // --- Known components ---
 
-  "KnownComponents" should "compose EPG + ROC + MDR to cover all surfaces" in {
+  "KnownComponents" should "compose EPG + ROC + MDR to cover the five pipeline surfaces" in {
     val epgRoc = ComponentComposition.compose(KnownComponents.EPG, KnownComponents.ROC)
     epgRoc shouldBe a[Right[_, _]]
     val Right(partial) = epgRoc: @unchecked
@@ -68,7 +68,42 @@ class ComponentCompositionSpec extends AnyFlatSpec with Matchers with ScalaCheck
     val full = ComponentComposition.compose(partial, KnownComponents.MDR)
     full shouldBe a[Right[_, _]]
     val Right(composed) = full: @unchecked
-    composed.surfaces shouldBe Surface.values.toSet
+    // The five pipeline surfaces, and only those. The book states that adding the
+    // evidence surface leaves the composed guarantee "unaffected in what it claims and
+    // narrowed in what it covers"; asserting Surface.values here would quietly widen the
+    // claim to a surface no component governs.
+    composed.surfaces shouldBe Surface.pipeline
+    composed.surfaces should not contain Surface.Evidence
+  }
+
+  // --- The E element of the tuple ---
+
+  "compose" should "union the evaluation functions" in {
+    // E = E_g₁ ∪ E_g₂. Two components governing disjoint surfaces through different
+    // evaluators compose into one that carries both.
+    val Right(epgRoc) = ComponentComposition.compose(
+      KnownComponents.EPG, KnownComponents.ROC): @unchecked
+    val Right(all) = ComponentComposition.compose(epgRoc, KnownComponents.MDR): @unchecked
+
+    all.evaluators.map(_.value) shouldBe
+      Set("epg-prompt-evaluator", "roc-output-evaluator", "mdr-monitor")
+  }
+
+  it should "leave evaluators unchanged when composing with the identity" in {
+    val Right(composed) =
+      ComponentComposition.compose(KnownComponents.EPG, ComponentComposition.empty): @unchecked
+    composed.evaluators shouldBe KnownComponents.EPG.evaluators
+  }
+
+
+  it should "leave the evidence surface ungoverned" in {
+    // Explicit, so the gap is a stated result rather than an omission. Whoever adds a
+    // component for the evidence surface has to change this test.
+    val Right(epgRoc) = ComponentComposition.compose(
+      KnownComponents.EPG, KnownComponents.ROC): @unchecked
+    val Right(all) = ComponentComposition.compose(epgRoc, KnownComponents.MDR): @unchecked
+
+    Surface.values.toSet -- all.surfaces shouldBe Set(Surface.Evidence)
   }
 
   // --- Property-based: Commutativity ---
