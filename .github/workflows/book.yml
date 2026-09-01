@@ -1,0 +1,47 @@
+# Build the book and fail on LaTeX errors, dangling references, or a badly
+# overfull box. The threshold is set just above the current worst box, so
+# regressions fail rather than accumulate.
+name: book
+
+on:
+  push:
+    paths:
+      - "book/**"
+      - "research/**"
+      - "tools/md2tex.py"
+      - "tools/rebuild-book.sh"
+      - "tools/ci/assert-book-clean.sh"
+      - ".github/workflows/book.yml"
+  pull_request:
+    paths:
+      - "book/**"
+      - "research/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install TeX Live
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
+            texlive-science texlive-pictures latexmk
+
+      - name: Build the book
+        run: bash tools/rebuild-book.sh
+
+      - name: Assert the build is clean
+        run: bash tools/ci/assert-book-clean.sh book/build/main.log 40
+
+      - name: Upload the PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: clad-book-pdf
+          path: book/build/main.pdf

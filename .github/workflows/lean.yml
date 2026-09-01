@@ -1,0 +1,47 @@
+# The formal model: cheap facts on every change, a real proof check nightly.
+#
+# Absence of `sorry` is necessary but not sufficient: a file with a type error has
+# no `sorry` and does not compile. Only the proofs job below licenses the claim
+# that the theorems are machine-checked.
+name: lean
+
+on:
+  push:
+    paths:
+      - "lean/**"
+      - ".github/workflows/lean.yml"
+      - "tools/ci/lean-facts.sh"
+  pull_request:
+    paths:
+      - "lean/**"
+  schedule:
+    - cron: "37 4 * * *" # nightly, off the hour
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  facts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Theorem count and sorry check
+        run: bash tools/ci/lean-facts.sh
+
+  proofs:
+    # The expensive half. mathlib plus eight transitive packages, so this runs on
+    # Lean changes and nightly rather than on every push to the repository.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and check the proofs
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: lean
+          build-args: "--wfail"
+          use-mathlib-cache: true
+
+      - name: Confirm the difftest binary was produced
+        run: test -x lean/.lake/build/bin/clad-difftest

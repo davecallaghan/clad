@@ -38,11 +38,11 @@ Each layer produces tamper-evident, version-stamped audit records that compose i
 
 ## Formal Verification
 
-**Clad's governance logic is mathematically proven correct and independently verified against the production code.**
+**Clad's governance logic is specified in Lean 4 and machine-checked.**
 
-The framework includes 76 machine-checked theorems in [Lean 4](https://lean-lang.org/) with zero `sorry` (no unfinished proofs). The proofs cover every master theorem from the formal specifications:
+The model in [`lean/`](lean/) contains 69 theorems and lemmas with zero `sorry` — no unfinished proofs — checked by `lake build` in CI. What this establishes is that the stated properties hold *of the Lean model*. It is not a proof that the Scala implementation is correct: that relationship is what the differential test below is for, and its status is reported by CI rather than asserted here. The results cover:
 
-- **Composition algebra** -- components form a commutative monoid (Theorem 6)
+- **Composition algebra** -- components form a *partial* commutative monoid (Theorem 6); the operation is undefined on overlapping surfaces
 - **Surface completeness** -- EPG + ROC + MDR covers all five control surfaces (Theorem 1)
 - **Tamper-evident audit chains** -- hash-chain integrity with tamper detection (Theorem 3a)
 - **Ghost detection** -- every interaction is classified as governed, degraded, or ghost (Theorem 3b)
@@ -54,7 +54,7 @@ The framework includes 76 machine-checked theorems in [Lean 4](https://lean-lang
 - **Audit completeness** -- every governed interaction produces an audit record (Theorem 5)
 - **Failure semantics** -- fail-closed/fail-open posture is a bijection over actions
 
-**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) that is tested against the Scala production engine on 1,000+ randomly generated constraint hierarchies, detection states, and evaluation contexts. Zero mismatches. This is the same methodology Cedar uses to verify its Rust authorization engine against a Lean specification -- applied here to AI governance for the first time.
+**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) compared against the Scala engine on 1,000 generated constraint hierarchies, detection states and evaluation contexts. Cedar uses this methodology to check its Rust authorization engine against a Lean specification. The comparison's current status is reported by the `app` workflow, which fails if the test is cancelled rather than run.
 
 **Release gate.** No version of Clad ships unless the Lean proofs compile and all differential tests pass.
 

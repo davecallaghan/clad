@@ -1,0 +1,31 @@
+# Verify the factual claims README.md makes about this repository.
+#
+# The book this repository accompanies argues that an assurance claim must be
+# checkable at the point it is asserted. This applies that to our own README.
+name: claims
+
+on:
+  push:
+    paths:
+      - "README.md"
+      - "lean/**"
+      - "tools/ci/check-readme-claims.sh"
+      - ".github/workflows/claims.yml"
+  pull_request:
+    paths:
+      - "README.md"
+      - "lean/**"
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  claims:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check README claims
+        run: bash tools/ci/check-readme-claims.sh
