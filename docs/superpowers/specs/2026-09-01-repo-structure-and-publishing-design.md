@@ -85,6 +85,7 @@ clad/                              (public)
     whitepapers/                   arXiv submissions
   archive/      <- papers/         prior three-paper program, benchmark fetch scripts
   ops/          <- gcp/ landing/   the deployed marketing site
+  lean/                            the formal model, moved in 2026-09-01
   tools/                           both build pipelines
   docs/                            specs, plans, architecture notes
   .github/workflows/               CI
@@ -97,8 +98,10 @@ new directory, and three retirements: `scripts/`, `cover/` (absorbed into `tools
 `research/` keeps its name. It is already public under CC BY 4.0 at that path, and
 renaming it would break the only inbound links that may exist.
 
-The Lean model stays external. It is the one artifact requiring a pinned SHA, which it
-needed anyway.
+The Lean model **moves in**, superseding the earlier plan to keep it external. It was in
+a private repository under a different GitHub account, so a public workflow here could
+not read it without a personal access token. Relocating it removes the secret, the
+pinned SHA, and one of the three artifacts that can drift.
 
 ## §2 Where the two pipelines land
 
@@ -158,7 +161,8 @@ Four workflows replace the single one that deploys the landing page.
 |---|---|---|
 | `app.yml` | push, PR | `sbt test`. **Fails on any cancelled test** — which alone turns the differential test's silent skip into a red build |
 | `book.yml` | push touching `book/`, `research/`, `tools/` | `rebuild-book.sh`, then fail on LaTeX errors, undefined references, or an overfull box above 40pt |
-| `conformance.yml` | push, and nightly | the three-way manifest of the 2026-09-01 conformance spec: book identifiers against Lean theorems against Scala annotations. Fails on any `sorry`, a moved Lean SHA, or a book identifier with no implementation |
+| `lean.yml` | push touching `lean/`, and nightly | two jobs: theorem count and zero-`sorry` on every change; `lake build` with the mathlib cache nightly. Only the second licenses the phrase "machine-checked" — a file with a type error has no `sorry` and does not compile either |
+| `conformance.yml` | push, and nightly | the three-way manifest of the 2026-09-01 conformance spec. **Deferred** to that spec's own plan, which needs the extractors and the `@Conforms` annotation. The Lean relocation below removes its hardest constraint |
 | `claims.yml` | push touching `README.md`, and nightly | every factual claim the README makes: the Lean theorem count, zero `sorry`, and that the differential test ran rather than cancelled |
 
 `claims.yml` is the direct answer to the problem that prompted this section. A book
