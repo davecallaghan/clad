@@ -18,6 +18,7 @@ object AuditVerifier:
   case class BrokenChainLink(index: Int, expected: String, actual: Option[String]) extends VerificationFailure
   case class InvalidSignature(index: Int, keyId: String) extends VerificationFailure
   case class DigestMismatch(index: Int, recorded: String, recomputed: String) extends VerificationFailure
+  case class MissingRecordedDigest(index: Int) extends VerificationFailure
 
   def verify(
     records: Vector[SignedAuditRecord],
@@ -38,11 +39,18 @@ object AuditVerifier:
     records.zipWithIndex.foreach { (signed, idx) =>
       val record = signed.record
 
-      // Check 1: Digest recomputation
+      // Check 1: the digest as written must match a fresh recomputation.
+      // Comparing against record.digest would be vacuous: it is a lazy val over
+      // the same fields recomputeDigest reads, so the two agree by construction.
       val recomputed = recomputeDigest(record)
-      if recomputed != record.digest then
-        recordFailure(idx, DigestMismatch(idx, record.digest, recomputed))
-        chainOk = false
+      signed.recordedDigest match
+        case Some(written) if written != recomputed =>
+          recordFailure(idx, DigestMismatch(idx, written, recomputed))
+          chainOk = false
+        case None =>
+          recordFailure(idx, MissingRecordedDigest(idx))
+          chainOk = false
+        case _ => ()
 
       // Check 2: Chain link
       if idx == 0 then

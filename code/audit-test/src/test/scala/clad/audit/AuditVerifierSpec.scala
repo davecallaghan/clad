@@ -185,3 +185,26 @@ class AuditVerifierSpec extends AnyFlatSpec with Matchers:
     report.isFullyVerified shouldBe true
     report.recordCount shouldBe 0
   }
+
+  it should "report DigestMismatch when persisted content is tampered after signing" in {
+    val signed = SignedAuditRecord.sign(mkRecord(phi, true), kms).toOption.get
+
+    // Tamper a field the digest is computed over, keeping the digest as written.
+    val tampered = signed.copy(record = signed.record.copy(artifactDigest = "sha256:deadbeef"))
+
+    val report = AuditVerifier.verify(Vector(tampered), kms)
+
+    report.failures.collect { case d: AuditVerifier.DigestMismatch => d } should have size 1
+    report.chainIntegral shouldBe false
+    report.isFullyVerified shouldBe false
+  }
+
+  it should "report MissingRecordedDigest for a record written before digests were persisted" in {
+    val signed = SignedAuditRecord.sign(mkRecord(phi, true), kms).toOption.get
+    val legacy = signed.copy(recordedDigest = None)
+
+    val report = AuditVerifier.verify(Vector(legacy), kms)
+
+    report.failures should contain(AuditVerifier.MissingRecordedDigest(0))
+    report.isFullyVerified shouldBe false
+  }

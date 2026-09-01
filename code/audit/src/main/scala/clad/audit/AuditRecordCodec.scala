@@ -54,8 +54,21 @@ object AuditRecordCodec:
   )
 
   private given ReadWriter[SignedAuditRecord] = readwriter[ujson.Value].bimap(
-    sar => ujson.Obj("record" -> writeJs(sar.record), "signature" -> writeJs(sar.signature)),
-    json => SignedAuditRecord(read[AuditRecord](json("record")), read[Signature](json("signature")))
+    sar => ujson.Obj(
+      "record" -> writeJs(sar.record),
+      "signature" -> writeJs(sar.signature),
+      "recordedDigest" -> (sar.recordedDigest match { case Some(d) => ujson.Str(d); case None => ujson.Null })
+    ),
+    // json.obj.get, not json(...): a line written before this field existed must
+    // decode to None rather than throw, so verify can report it as unverifiable.
+    json => SignedAuditRecord(
+      read[AuditRecord](json("record")),
+      read[Signature](json("signature")),
+      json.obj.get("recordedDigest").flatMap {
+        case ujson.Null => None
+        case v => Some(v.str)
+      }
+    )
   )
 
   def encode(record: SignedAuditRecord): String = write(record)
