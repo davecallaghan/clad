@@ -87,6 +87,14 @@ class ComponentCompositionSpec extends AnyFlatSpec with Matchers with ScalaCheck
     }
   }
 
+  it should "report the same overlap in either order when components overlap" in {
+    forAll(Generators.genOverlappingPair) { case (g1, g2) =>
+      (ComponentComposition.compose(g1, g2), ComponentComposition.compose(g2, g1)) match
+        case (Left(e1), Left(e2)) => e1 shouldBe e2
+        case other => fail(s"overlapping components must not compose: $other")
+    }
+  }
+
   // --- Property-based: Associativity ---
 
   "Associativity" should "hold: (g1 + g2) + g3 = g1 + (g2 + g3) for non-overlapping components" in {

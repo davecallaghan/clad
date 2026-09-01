@@ -132,6 +132,18 @@ object Generators:
       g2 <- genComponentSpec.map(_.copy(surfaces = s2))
     yield (g1, g2)
 
+  // Pairs that share at least one surface, i.e. pairs OUTSIDE the domain of the
+  // composition operator. Used to check that composition fails the same way in
+  // both orders — the failure branch of Lean's `ComponentSpec.compose_comm`.
+  val genOverlappingPair: Gen[(ComponentSpec, ComponentSpec)] =
+    for
+      shared <- Gen.atLeastOne(Surface.values.toSeq).map(_.toSet)
+      extra1 <- genSurfaceSubset
+      extra2 <- genSurfaceSubset
+      g1 <- genComponentSpec.map(_.copy(surfaces = shared ++ extra1))
+      g2 <- genComponentSpec.map(_.copy(surfaces = shared ++ extra2))
+    yield (g1, g2)
+
   val genNonOverlappingTriple: Gen[(ComponentSpec, ComponentSpec, ComponentSpec)] =
     val allSurfaces = Surface.values.toList
     for

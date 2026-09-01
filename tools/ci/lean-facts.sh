@@ -17,8 +17,12 @@ SRC=(Clad.lean Clad)
 # `|| true` on both: grep exits 1 when it finds nothing, and for the sorry count
 # finding nothing is the outcome we want. Without it, `set -e -o pipefail` fails
 # the script precisely when the model is clean.
-theorems=$( { grep -rhoE '^[[:space:]]*(theorem|lemma) [A-Za-z_][A-Za-z0-9_'"'"']*' \
-               --include='*.lean' "${SRC[@]}" || true; } | awk '{print $2}' | sort -u | wc -l | tr -d ' ')
+# The name character class MUST include `.`: Lean names are namespaced, and a class
+# without it truncates `ComponentSpec.compose_comm` to `ComponentSpec`, collapsing
+# every theorem in a namespace into a single name. That undercounted this model by
+# 4, the README shipped the undercount, and this script then confirmed it as correct.
+theorems=$( { grep -rhoE "^[[:space:]]*(theorem|lemma) [A-Za-z_][A-Za-z0-9_.'!?]*" \
+                 --include='*.lean' "${SRC[@]}" || true; } | awk '{print $2}' | sort -u | wc -l | tr -d ' ')
 sorries=$( { grep -rhow 'sorry' --include='*.lean' "${SRC[@]}" || true; } | wc -l | tr -d ' ')
 
 echo "theorems=$theorems"

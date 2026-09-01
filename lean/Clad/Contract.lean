@@ -9,22 +9,28 @@ structure InterfaceContract where
   consumer : ComponentSpec
   satisfied : Prop
 
--- Theorem 2: Contract Composability (meta-framework §8)
--- Given Axiom 3 preconditions and satisfied contracts,
--- composed system preserves both individual guarantees
+/-- Theorem 2: Contract Composability (meta-framework §8).
+
+Given Axiom 3's preconditions and satisfied contracts, the composite preserves both
+components' guarantees and governs exactly the union of their surfaces.
+
+The disjointness hypothesis is load-bearing here, where in the previous formulation
+it was not: composition is partial, so without it there is no composite to state a
+guarantee about. -/
 theorem contract_composability
     (g₁ g₂ : ComponentSpec)
     (phi₁ phi₂ : Prop)
     (h_phi₁ : phi₁) (h_phi₂ : phi₂)
-    (h_disjoint : Disjoint g₁.surfaces g₂.surfaces)
+    (h_composable : g₁.Composable g₂)
     (contract : InterfaceContract)
-    (h_satisfied : contract.satisfied)
-    (p1 p2 p3 : Prop) (hp1 : p1) (hp2 : p2) (hp3 : p3) :
-    phi₁ ∧ phi₂ ∧ (g₁.compose g₂).surfaces = g₁.surfaces ∪ g₂.surfaces :=
-  ⟨h_phi₁, h_phi₂, rfl⟩
+    (_h_satisfied : contract.satisfied) :
+    phi₁ ∧ phi₂ ∧ ∃ g, g₁.compose g₂ = .ok g ∧ g.surfaces = g₁.surfaces ∪ g₂.surfaces :=
+  ⟨h_phi₁, h_phi₂, g₁.merge g₂,
+   ComponentSpec.compose_of_composable h_composable, rfl⟩
 
--- The surface union equality follows from compose's definition
-theorem compose_surfaces_eq (g₁ g₂ : ComponentSpec) :
-    (g₁.compose g₂).surfaces = g₁.surfaces ∪ g₂.surfaces := rfl
+/-- The surface union equality, on the domain of the operator. -/
+theorem compose_surfaces_eq {g₁ g₂ : ComponentSpec} (h : g₁.Composable g₂) :
+    ∃ g, g₁.compose g₂ = .ok g ∧ g.surfaces = g₁.surfaces ∪ g₂.surfaces :=
+  ⟨g₁.merge g₂, ComponentSpec.compose_of_composable h, rfl⟩
 
 end Clad

@@ -2,42 +2,107 @@ import Clad.Component
 
 namespace Clad
 
-/-! # Theorem 6: Governance Monoid (meta-framework §12)
+/-! # Theorem 6: Governance Composition (meta-framework §12)
 
-Governance components with composition form a commutative monoid.
-- Lemma 3c: Identity (`compose g empty = g`)
-- Lemma 3b: Commutativity (`compose g₁ g₂ = compose g₂ g₁`)
-- Lemma 3a: Associativity (`compose (compose g₁ g₂) g₃ = compose g₁ (compose g₂ g₃)`)
-- Closure: disjointness of surfaces is preserved through composition
+Governance components under `⊕` form a **partial** commutative monoid. The partiality
+is the substance of the result, not a technicality: two components that govern the
+same surface have no composite, because the composite would place two enforcement
+points on one surface with no rule saying which prevails.
+
+That makes the laws read differently from a total monoid's:
+
+- **Identity** (Lemma 3c) is unconditional — `empty` governs no surface, so it is
+  composable with everything.
+- **Commutativity** (Lemma 3b) is unconditional *including in failure*: when the
+  operands overlap, both orders fail with the same overlap.
+- **Associativity** (Lemma 3a) holds on the domain and only there. Off the domain the
+  two bracketings can fail with *different* overlaps — `(g₁ ⊕ g₂) ⊕ g₃` reports the
+  overlap between `g₁` and `g₂`, while `g₁ ⊕ (g₂ ⊕ g₃)` reports the one between `g₂`
+  and `g₃` — so unconditional associativity is false, and stating it would be an
+  overclaim rather than a stronger theorem.
 -/
+
+/-! ## The underlying union -/
+
+theorem ComponentSpec.merge_comm (g₁ g₂ : ComponentSpec) :
+    g₁.merge g₂ = g₂.merge g₁ := by
+  ext <;> simp [ComponentSpec.merge, Finset.union_comm]
+
+theorem ComponentSpec.merge_assoc (g₁ g₂ g₃ : ComponentSpec) :
+    (g₁.merge g₂).merge g₃ = g₁.merge (g₂.merge g₃) := by
+  ext <;> simp [ComponentSpec.merge, Finset.union_assoc]
+
+theorem ComponentSpec.merge_empty_right (g : ComponentSpec) :
+    g.merge .empty = g := by
+  ext <;> simp [ComponentSpec.merge, ComponentSpec.empty]
+
+theorem ComponentSpec.empty_merge_left (g : ComponentSpec) :
+    ComponentSpec.empty.merge g = g := by
+  ext <;> simp [ComponentSpec.merge, ComponentSpec.empty]
+
+/-! ## The domain of `⊕` -/
+
+theorem ComponentSpec.composable_comm {g₁ g₂ : ComponentSpec} (h : g₁.Composable g₂) :
+    g₂.Composable g₁ := by
+  rw [ComponentSpec.composable_iff_disjoint] at h ⊢
+  exact h.symm
+
+theorem ComponentSpec.composable_empty_right (g : ComponentSpec) :
+    g.Composable .empty := by
+  simp [ComponentSpec.Composable, ComponentSpec.empty]
+
+theorem ComponentSpec.empty_composable_left (g : ComponentSpec) :
+    ComponentSpec.empty.Composable g := by
+  simp [ComponentSpec.Composable, ComponentSpec.empty]
+
+/-- Closure: composing on the left preserves disjointness from a third component.
+This is what lets a composite be extended one component at a time. -/
+theorem ComponentSpec.merge_composable_left {g₁ g₂ g₃ : ComponentSpec}
+    (h₁₃ : g₁.Composable g₃) (h₂₃ : g₂.Composable g₃) :
+    (g₁.merge g₂).Composable g₃ := by
+  rw [ComponentSpec.composable_iff_disjoint] at h₁₃ h₂₃ ⊢
+  simpa [ComponentSpec.merge, Finset.disjoint_union_left] using ⟨h₁₃, h₂₃⟩
+
+theorem ComponentSpec.composable_merge_right {g₁ g₂ g₃ : ComponentSpec}
+    (h₁₂ : g₁.Composable g₂) (h₁₃ : g₁.Composable g₃) :
+    g₁.Composable (g₂.merge g₃) := by
+  rw [ComponentSpec.composable_iff_disjoint] at h₁₂ h₁₃ ⊢
+  simpa [ComponentSpec.merge, Finset.disjoint_union_right] using ⟨h₁₂, h₁₃⟩
+
+/-! ## The monoid laws -/
 
 -- Lemma 3c (Identity)
 theorem ComponentSpec.compose_empty_right (g : ComponentSpec) :
-    g.compose .empty = g := by
-  ext <;> simp [ComponentSpec.compose, ComponentSpec.empty]
+    g.compose .empty = .ok g := by
+  rw [ComponentSpec.compose_of_composable (g.composable_empty_right),
+      ComponentSpec.merge_empty_right]
 
 theorem ComponentSpec.empty_compose_left (g : ComponentSpec) :
-    ComponentSpec.empty.compose g = g := by
-  ext <;> simp [ComponentSpec.compose, ComponentSpec.empty]
+    ComponentSpec.empty.compose g = .ok g := by
+  rw [ComponentSpec.compose_of_composable (ComponentSpec.empty_composable_left g),
+      ComponentSpec.empty_merge_left]
 
--- Lemma 3b (Commutativity)
+-- Lemma 3b (Commutativity), including agreement of the failure payload
 theorem ComponentSpec.compose_comm (g₁ g₂ : ComponentSpec) :
     g₁.compose g₂ = g₂.compose g₁ := by
-  ext <;> simp [ComponentSpec.compose, Finset.union_comm]
+  unfold ComponentSpec.compose
+  by_cases h : g₁.Composable g₂
+  · simp [h, ComponentSpec.composable_comm h, ComponentSpec.merge_comm]
+  · have h' : ¬ g₂.Composable g₁ := fun hc => h (ComponentSpec.composable_comm hc)
+    simp [h, h', Finset.inter_comm]
 
--- Lemma 3a (Associativity)
-theorem ComponentSpec.compose_assoc (g₁ g₂ g₃ : ComponentSpec) :
-    (g₁.compose g₂).compose g₃ = g₁.compose (g₂.compose g₃) := by
-  ext <;> simp [ComponentSpec.compose, Finset.union_assoc]
+-- Lemma 3a (Associativity), on the domain of the operator
+theorem ComponentSpec.compose_assoc_of_composable {g₁ g₂ g₃ : ComponentSpec}
+    (h₁₂ : g₁.Composable g₂) (h₁₃ : g₁.Composable g₃) (h₂₃ : g₂.Composable g₃) :
+    (g₁.compose g₂ >>= (·.compose g₃)) = (g₂.compose g₃ >>= (g₁.compose ·)) := by
+  rw [ComponentSpec.compose_of_composable h₁₂, ComponentSpec.compose_of_composable h₂₃]
+  simp only [bind, Except.bind]
+  rw [ComponentSpec.compose_of_composable (ComponentSpec.merge_composable_left h₁₃ h₂₃),
+      ComponentSpec.compose_of_composable (ComponentSpec.composable_merge_right h₁₂ h₁₃),
+      ComponentSpec.merge_assoc]
 
--- Closure: disjointness preserved through composition
-theorem ComponentSpec.compose_disjoint_preserved {g₁ g₂ g₃ : ComponentSpec}
-    (h₁₃ : Disjoint g₁.surfaces g₃.surfaces)
-    (h₂₃ : Disjoint g₂.surfaces g₃.surfaces) :
-    Disjoint (g₁.compose g₂).surfaces g₃.surfaces := by
-  exact Disjoint.sup_left h₁₃ h₂₃
+/-! ## The three concrete components (meta-framework §11) -/
 
--- Concrete components (meta-framework §11)
 def EPG : ComponentSpec where
   surfaces := {Surface.Prompt}
   constraints := ∅
@@ -56,13 +121,18 @@ def MDR : ComponentSpec where
   hardRequirements := ∅
   softRequirements := ∅
 
--- Pairwise disjointness
-theorem epg_roc_disjoint : Disjoint EPG.surfaces ROC.surfaces := by decide
-theorem epg_mdr_disjoint : Disjoint EPG.surfaces MDR.surfaces := by decide
-theorem roc_mdr_disjoint : Disjoint ROC.surfaces MDR.surfaces := by decide
+-- Pairwise composability: the three components are in the operator's domain
+theorem epg_roc_composable : EPG.Composable ROC := by decide
+theorem epg_mdr_composable : EPG.Composable MDR := by decide
+theorem roc_mdr_composable : ROC.Composable MDR := by decide
 
--- Full surface coverage (Theorem 5, surface aspect)
+/-- The composition of the three components is defined, and covers every surface
+(Theorem 5, surface aspect). Both halves matter: a coverage claim about a composite
+that does not exist would be vacuous. -/
 theorem full_surface_coverage :
-    (EPG.compose ROC |>.compose MDR).surfaces = Finset.univ := by decide
+    (EPG.compose ROC >>= (·.compose MDR)) = .ok
+      { surfaces := Finset.univ, constraints := ∅
+        hardRequirements := ∅, softRequirements := ∅ } := by
+  decide
 
 end Clad

@@ -40,9 +40,9 @@ Each layer produces tamper-evident, version-stamped audit records that compose i
 
 **Clad's governance logic is specified in Lean 4 and machine-checked.**
 
-The model in [`lean/`](lean/) contains 69 theorems and lemmas with zero `sorry` — no unfinished proofs — checked by `lake build` in CI. What this establishes is that the stated properties hold *of the Lean model*. It is not a proof that the Scala implementation is correct: that relationship is what the differential test below is for, and its status is reported by CI rather than asserted here. The results cover:
+The model in [`lean/`](lean/) contains 84 theorems and lemmas with zero `sorry` — no unfinished proofs — checked by `lake build` in CI. What this establishes is that the stated properties hold *of the Lean model*. It is not a proof that the Scala implementation is correct: that relationship is what the differential test below is for, and its status is reported by CI rather than asserted here. The results cover:
 
-- **Composition algebra** -- components form a *partial* commutative monoid (Theorem 6); the operation is undefined on overlapping surfaces
+- **Composition algebra** -- components form a *partial* commutative monoid (Theorem 6). Identity and commutativity hold unconditionally, commutativity including in failure; associativity holds on the operator's domain, and is false off it, since the two bracketings report different overlaps
 - **Surface completeness** -- EPG + ROC + MDR covers all five control surfaces (Theorem 1)
 - **Tamper-evident audit chains** -- hash-chain integrity with tamper detection (Theorem 3a)
 - **Ghost detection** -- every interaction is classified as governed, degraded, or ghost (Theorem 3b)
