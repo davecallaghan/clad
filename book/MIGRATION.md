@@ -67,7 +67,7 @@ layer, and it belongs in the introduction rather than buried in an appendix.
 
 ## Implementation
 
-`../code/` implements a fraction of the governance corpus and none of the epistemic
+`../app/` implements a fraction of the governance corpus and none of the epistemic
 corpus. Deliberately out of scope for now: the argument comes first. Recorded here so the
 gap is not rediscovered later — output governance is wired to an empty constraint set,
 `AuditRecord.linked` is never called from a production path, there are no

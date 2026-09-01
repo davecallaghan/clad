@@ -161,7 +161,7 @@ This framework has been developed through formal design and multi-model adversar
 
 ## License
 
-- **Code** ([`code/`](code/)): [MIT License](LICENSE-CODE.md)
+- **Code** ([`app/`](app/)): [MIT License](LICENSE-CODE.md)
 - **Research & Docs** ([`research/`](research/), [`docs/`](docs/)): [CC BY 4.0](LICENSE-DOCS.md)
 
 ## Author

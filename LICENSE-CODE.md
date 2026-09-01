@@ -1,6 +1,6 @@
 # MIT License
 
-**Applies to:** everything under `code/`
+**Applies to:** everything under `app/`
 
 Copyright (c) 2026 David Callaghan / 2CData
 

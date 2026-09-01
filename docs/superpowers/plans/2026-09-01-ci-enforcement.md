@@ -88,7 +88,7 @@ exist — the model was in a different repository. Step 1 fixes that outright.
 
 ```bash
 cd /Users/david.callaghan/clad
-grep -n 'leanExePath' code/difftest/src/test/scala/clad/difftest/DifferentialTestSpec.scala
+grep -n 'leanExePath' app/difftest/src/test/scala/clad/difftest/DifferentialTestSpec.scala
 cd code && sbt -batch "show difftest/Test/fork" 2>&1 | grep -E '^\[info\] (true|false)'; cd ..
 ```
 
@@ -199,12 +199,12 @@ name: app
 on:
   push:
     paths:
-      - "code/**"
+      - "app/**"
       - ".github/workflows/app.yml"
       - "tools/ci/assert-no-cancelled-tests.sh"
   pull_request:
     paths:
-      - "code/**"
+      - "app/**"
   workflow_dispatch:
 
 permissions:
@@ -223,7 +223,7 @@ jobs:
           cache: sbt
 
       - name: Compile and test
-        working-directory: code
+        working-directory: app
         run: sbt -batch test 2>&1 | tee ../sbt-test.log
 
       - name: Assert no cancelled tests
