@@ -31,6 +31,9 @@ build/.chromium/
 # local GCP deploy config (contains project id)
 gcp/config.env
 
+# Stale pandoc EPUB output; the LaTeX pipeline is the source of truth
+build/
+
 # LaTeX build output — regenerable from sources via tools/rebuild-book.sh
 book/build/
 papers/*/build/
