@@ -93,8 +93,18 @@
 
 % Formal notation inside a statement: keep the alignment the source relies on,
 % and cancel the italics of the plain style so the notation stays legible.
+%
+% Two variants: cladnote keeps typewriter for genuinely column-aligned notation
+% (element glossaries, function-signature tables) where monospace is load-bearing.
+% claddisp uses the body font for everything else -- display formulas, proofs,
+% outlined prose with inline math -- so the second half of the book is no longer
+% set in a different typeface from the first.
 \newenvironment{cladnote}
   {\par\vspace{0.3em}\begingroup\upshape\ttfamily\small\raggedright
+   \setlength{\parindent}{0pt}\leftskip=1.2em}
+  {\par\endgroup\vspace{0.3em}}
+\newenvironment{claddisp}
+  {\par\vspace{0.3em}\begingroup\upshape\small\raggedright
    \setlength{\parindent}{0pt}\leftskip=1.2em}
   {\par\endgroup\vspace{0.3em}}
 
@@ -140,7 +150,6 @@
 \input{chapters/wp1-prompt-governance}
 \input{chapters/wp2-output-controls}
 \input{chapters/mdr-monitoring}
-\input{chapters/conclusion}
 
 \appendix
 \input{appendices/appendix-clad-examples}
@@ -152,8 +161,10 @@
 
 \backmatter
 
-% Limitations and related work sit in back matter rather than as numbered
-% chapters: both are short by nature and neither carries the argument forward.
+% Conclusion, limitations and related work sit in back matter rather than as
+% numbered chapters: all three are short by nature, address the whole book rather
+% than one part, and neither carries the argument forward.
+\input{chapters/conclusion}
 \input{chapters/limitations}
 \input{chapters/related-work}
 \input{appendices/appendix-glossary}

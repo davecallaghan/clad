@@ -8,7 +8,7 @@ By the end of the chapter you will be able to:
 
 \begin{itemize}
   \item position MDR as a detective, cross-cutting layer rather than a fourth preventative control, and state what it can and cannot promise;
-  \item monitor the input and configuration surfaces and the health of the audit chain, including detection of governance bypass (``ghost" interactions);
+  \item monitor the input and configuration surfaces and the health of the audit chain, including detection of governance bypass (``ghost'' interactions);
   \item classify incidents and drive the response workflow --- contain, investigate, remediate, report --- that MDR orchestrates;
   \item describe the audit and integration contracts through which MDR consumes EPG's and ROC's records.
 \end{itemize}
@@ -272,7 +272,7 @@ Regulated industries require formal incident reporting:
 \end{itemize}
 
 
-\textbf{Forensic Evidence Locker.} Upon a P1 or P2 alert, MDR automatically triggers a forensic collection workflow that ``freezes" the relevant governance state into a separate, immutable evidence store:
+\textbf{Forensic Evidence Locker.} Upon a P1 or P2 alert, MDR automatically triggers a forensic collection workflow that ``freezes'' the relevant governance state into a separate, immutable evidence store:
 
 \begin{itemize}
   \item Constraint versions active at the time of incident (from EPG audit records)
@@ -359,7 +359,7 @@ MDR instantiates g\_\allowbreak{}MDR from the meta-framework:
   \item \textbf{Monitoring scope:} extends to all surfaces via audit record consumption
   \item \textbf{R\_\allowbreak{}hard:} $\emptyset$ --- independently deployable
   \item \textbf{R\_\allowbreak{}soft:} audit records from EPG and ROC (enhanced effectiveness, not required for guarantees)
-  \item \textbf{Failure posture:} MDR itself is fail-open --- if MDR goes down, EPG and ROC continue to function (Axiom 3 guarantee independence). MDR's detection guarantees (ghost detection, drift monitoring, adversarial pattern detection) apply ONLY when MDR is operational. During MDR outage, these capabilities are suspended and the outage period is logged as an ``ungoverned monitoring window" in the infrastructure audit trail. EPG and ROC guarantees are unaffected by MDR status.
+  \item \textbf{Failure posture:} MDR itself is fail-open --- if MDR goes down, EPG and ROC continue to function (Axiom 3 guarantee independence). MDR's detection guarantees (ghost detection, drift monitoring, adversarial pattern detection) apply ONLY when MDR is operational. During MDR outage, these capabilities are suspended and the outage period is logged as an ``ungoverned monitoring window'' in the infrastructure audit trail. EPG and ROC guarantees are unaffected by MDR status.
   \item \textbf{Minimal vs full function:} MDR has a minimal independent function (input monitoring via assumption A1, config validation via assumption A2) that operates without EPG/ROC audit feeds. Full detection capability --- constraint drift, classifier degradation, decomposition aging, cross-component correlation --- requires EPG and ROC audit feeds (assumption A4). MDR is independently deployable per R\_\allowbreak{}hard = $\emptyset$, but its advertised coverage for governance-related incidents is contingent on those feeds.
 \end{itemize}
 
@@ -378,7 +378,7 @@ MDR operations require a three-tier staffing model:
 \begin{itemize}
   \item \textbf{Tier 1: SOC analysts (AI-trained):} 2-3 analysts with AI governance training for initial alert triage. These are existing SOC staff with additional training --- not dedicated headcount. They handle P3/P4 alerts and perform initial triage on P1/P2 before escalation. A dedicated AI Governance Runbook (knowledge base) translates ML-specific alerts (classifier threshold probing, score distribution shifts) into actionable security steps that non-ML-expert analysts can execute.
   \item \textbf{Tier 2: AI governance engineers:} 1-2 engineers maintaining MDR detection rules, tuning alert thresholds, managing SIEM/SOAR integration, and handling P3 investigations.
-  \item \textbf{Tier 3: AI security specialist (on-call):} At least one ML-trained security specialist available for P1/P2 escalation. This role requires understanding of classifier behavior, adversarial ML techniques, and model internals. Cannot be replaced by Tier 1 training alone --- alerts like ``classifier threshold boundary probing" or "cross-tenant score distribution anomaly" require ML engineering judgment for accurate disposition.
+  \item \textbf{Tier 3: AI security specialist (on-call):} At least one ML-trained security specialist available for P1/P2 escalation. This role requires understanding of classifier behavior, adversarial ML techniques, and model internals. Cannot be replaced by Tier 1 training alone --- alerts like ``classifier threshold boundary probing'' or ``cross-tenant score distribution anomaly'' require ML engineering judgment for accurate disposition.
   \item \textbf{Incident response capability:} on-call rotation for P1 alerts (15-minute SLA). Tier 3 specialist must be reachable within the P1 SLA window. Can share rotation with existing security incident response if the specialist is cross-trained.
 \end{itemize}
 
@@ -399,7 +399,7 @@ MDR operations require a three-tier staffing model:
 \subsection{Phased Deployment}
 
 
-\textbf{Phase 1 (align with EPG Phase 1):} Deploy audit chain health monitoring and GIL ghost detection. SIEM integration for governance alerts. This provides immediate value: ``is the governance system working?"
+\textbf{Phase 1 (align with EPG Phase 1):} Deploy audit chain health monitoring and GIL ghost detection. SIEM integration for governance alerts. This provides immediate value: ``is the governance system working?''
 
 \textbf{Phase 2 (align with ROC Phase 1):} Add ROC audit consumption. Deploy compliance alert generation. Input monitoring for injection patterns. Configuration drift detection.
 
@@ -425,7 +425,7 @@ MDR is primarily a \textbf{detective and responsive} framework, not a \textbf{pr
 \end{itemize}
 
 
-MDR is the ``nervous system" of the governance solution --- it senses, alerts, and initiates response. It depends on EPG and ROC as the "muscles" that enforce governance at the prompt and output levels. Without the muscles, the nervous system can detect but not prevent. Without the nervous system, the muscles operate blind to cross-interaction patterns and system-level degradation.
+MDR is the ``nervous system'' of the governance solution --- it senses, alerts, and initiates response. It depends on EPG and ROC as the ``muscles'' that enforce governance at the prompt and output levels. Without the muscles, the nervous system can detect but not prevent. Without the nervous system, the muscles operate blind to cross-interaction patterns and system-level degradation.
 
 
 

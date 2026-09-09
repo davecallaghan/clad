@@ -396,8 +396,13 @@ Two qualifications, both load-bearing:
   pair of components, not a property of one, so "components with
   non-overlapping surfaces" does not pick out a set closed under ⊕.
   Concretely: g₁ ⊕ g₂ governs S₁ ∪ S₂, so (g₁ ⊕ g₂) ⊕ g₁ has
-  overlapping surfaces and is undefined. This is a partial commutative
-  monoid — a real structure, and the right one, but not a monoid.
+  overlapping surfaces and is undefined. Formally, ⊕ is a total function
+  into an error-or-result sum: g₁ ⊕ g₂ yields either a composed
+  component (when S_g₁ ∩ S_g₂ = ∅) or a ComposeError carrying the
+  overlapping surfaces — matching the Lean (`Except ComposeError
+  ComponentSpec`) and Scala (`Either[ComposeError, ComponentSpec]`)
+  implementations. This is a partial commutative monoid — a real
+  structure, and the right one, but not a monoid.
 
   Audit composition is not a binary operation on components. The
   definition of ⊕ sets A = compose(A_g₁, A_g₂) via shared

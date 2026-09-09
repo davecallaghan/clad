@@ -187,6 +187,10 @@
 %  7. MODEL PERFORMANCE AND MEASUREMENT
 % ---------------------------------------------------------------------
 \newcommand{\Reliable}{\operatorname{Reliable}}
+% The five measurement macros below were carried over from an earlier draft's
+% evaluation protocol and are not referenced anywhere in the book. They are
+% retained as the declared vocabulary if that section is expanded; delete them
+% freely if the slot is needed.
 \newcommand{\LinguisticPlausibility}{\operatorname{LinguisticPlausibility}}
 \newcommand{\SemanticCoherence}{\operatorname{SemanticCoherence}}
 \newcommand{\BenchmarkAccuracy}{\operatorname{BenchmarkAccuracy}}
@@ -199,3 +203,6 @@
 \newcommand{\nentails}{\;\not\Rightarrow\;}
 \newcommand{\governs}{\succ}                   % enterprise > department > project
 \newcommand{\satisfies}{\vDash}
+% Note: the CLAD chapters write \vDash and \succ directly rather than through
+% \satisfies and \governs, matching the first half's convention. The macros are
+% retained as semantic aliases if a future pass unifies them.

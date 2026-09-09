@@ -32,7 +32,7 @@ Runtime Output Controls (ROC) addresses this gap. Where EPG governs what goes in
 
 ROC is a runtime evaluation and filtering layer that operates between model output generation and output delivery to end users or downstream systems. It provides:
 
-\textbf{Hybrid output evaluation.} Hard output constraints --- such as ``never include Social Security numbers in responses" --- are evaluated using deterministic checks identical in character to EPG's mechanical evaluations. Soft output constraints --- such as "detect potential medical advice" --- are evaluated using classifier-based scoring with configurable thresholds. Both tiers produce auditable evaluation records, but with explicitly different evidentiary properties.
+\textbf{Hybrid output evaluation.} Hard output constraints --- such as ``never include Social Security numbers in responses'' --- are evaluated using deterministic checks identical in character to EPG's mechanical evaluations. Soft output constraints --- such as ``detect potential medical advice'' --- are evaluated using classifier-based scoring with configurable thresholds. Both tiers produce auditable evaluation records, but with explicitly different evidentiary properties.
 
 \textbf{Risk-tiered timing.} Critical workloads (PHI, PCI, safety-critical operations) receive real-time blocking evaluation: no output reaches the end user until ROC has evaluated it. Standard and low-risk workloads receive outputs immediately, with asynchronous evaluation and post-hoc flagging of violations. This balances safety against latency.
 
@@ -65,7 +65,7 @@ EPG ensures the prompt requests compliant behavior. ROC evaluates whether the mo
 \subsection{Honest Probabilism Over False Determinism}
 
 
-Some output evaluations are deterministic: a Social Security number regex either matches or it doesn't. Others are probabilistic: a classifier scoring whether text constitutes ``medical advice" produces a confidence score, not a binary answer. ROC does not pretend probabilistic evaluations are deterministic. It explicitly distinguishes two evaluation tiers --- deterministic and classifier-based --- with different audit properties. A deterministic evaluation is hard evidence ("this output contained an SSN"). A classifier-based evaluation is scored evidence ("this output scored 0.87 on the medical-advice classifier, above the 0.80 threshold"). Both are auditable. Neither is falsely promoted to the other's evidentiary standard.
+Some output evaluations are deterministic: a Social Security number regex either matches or it doesn't. Others are probabilistic: a classifier scoring whether text constitutes ``medical advice'' produces a confidence score, not a binary answer. ROC does not pretend probabilistic evaluations are deterministic. It explicitly distinguishes two evaluation tiers --- deterministic and classifier-based --- with different audit properties. A deterministic evaluation is hard evidence (``this output contained an SSN''). A classifier-based evaluation is scored evidence (``this output scored 0.87 on the medical-advice classifier, above the 0.80 threshold''). Both are auditable. Neither is falsely promoted to the other's evidentiary standard.
 
 \subsection{Speed Is a Safety Property}
 
@@ -98,7 +98,7 @@ Formal property: \texttt{eval\_\allowbreak{}d : O $\times$ R $\to$ \{pass, fail\
 
 Formal property: \texttt{eval\_\allowbreak{}c : O $\times$ K $\to$ [0, 1]} where O is the output and K is the classifier. The evaluation produces a confidence score, not a binary result. A configurable threshold $\tau$\_\allowbreak{}K converts the score to a governance decision: \texttt{score $\geq$ $\tau$\_\allowbreak{}K $\to$ flag} and \texttt{score < $\tau$\_\allowbreak{}K $\to$ below\_\allowbreak{}threshold}.
 
-\textbf{Critical distinction:} A classifier score below threshold is NOT a `\texttt{pass" in the same sense as a deterministic evaluation pass. It means "the classifier did not reach the threshold of suspicion at the configured sensitivity." The audit record must use quantized satisfaction notation --- }o $\vDash$\_\allowbreak{}$\tau$ c\texttt{ --- meaning "output o satisfied constraint c at threshold $\tau$." This is weaker evidence than deterministic satisfaction (}o $\vDash$ c`) and the audit record must make this distinction explicit. Calling a below-threshold score a "pass" is regulatory dishonesty.
+\textbf{Critical distinction:} A classifier score below threshold is NOT a ``pass'' in the same sense as a deterministic evaluation pass. It means ``the classifier did not reach the threshold of suspicion at the configured sensitivity.'' The audit record must use quantized satisfaction notation --- \texttt{o $\vDash$\_\allowbreak{}$\tau$ c} --- meaning ``output o satisfied constraint c at threshold $\tau$.'' This is weaker evidence than deterministic satisfaction (\texttt{o $\vDash$ c}) and the audit record must make this distinction explicit. Calling a below-threshold score a ``pass'' is regulatory dishonesty.
 
 \subsection{Threshold Governance}
 
@@ -111,7 +111,7 @@ Classifier thresholds are governance artifacts, not implementation details. The 
 \end{itemize}
 
 
-Therefore, thresholds are subject to the same governance controls as EPG constraints: they are versioned, owned by a governance domain, require dual-control modification, and are included in the audit record for every evaluation. When a regulator asks ``why did your system approve this output?" the answer includes not just the classifier score but the threshold in effect at that time and who set it.
+Therefore, thresholds are subject to the same governance controls as EPG constraints: they are versioned, owned by a governance domain, require dual-control modification, and are included in the audit record for every evaluation. When a regulator asks ``why did your system approve this output?'' the answer includes not just the classifier score but the threshold in effect at that time and who set it.
 
 Risk-tiered threshold defaults:
 \begin{itemize}
@@ -130,11 +130,11 @@ Risk-tiered threshold defaults:
 
 The two tiers produce audit records with explicitly different evidentiary properties:
 
-\textbf{Deterministic evaluation records} state: ``This output was evaluated against rule R. The result was pass/fail. This is a deterministic, repeatable finding."
+\textbf{Deterministic evaluation records} state: ``This output was evaluated against rule R. The result was pass/fail. This is a deterministic, repeatable finding.''
 
-\textbf{Classifier-based evaluation records} state: ``This output was scored by classifier K (version V) with threshold $\tau$\_\allowbreak{}K. The score was S. The governance decision was flag/below\_\allowbreak{}threshold. This is a probabilistic finding with the stated confidence." A classifier "below\_\allowbreak{}threshold" result is not proof of compliance --- it is one input to a broader control set. For regulated constraints (PHI, financial advice), organizations must maintain external classifier validation reports linked in the classifier governance profile; auditors should reference those reports alongside per-event records.
+\textbf{Classifier-based evaluation records} state: ``This output was scored by classifier K (version V) with threshold $\tau$\_\allowbreak{}K. The score was S. The governance decision was flag/below\_\allowbreak{}threshold. This is a probabilistic finding with the stated confidence.'' A classifier ``below\_\allowbreak{}threshold'' result is not proof of compliance --- it is one input to a broader control set. For regulated constraints (PHI, financial advice), organizations must maintain external classifier validation reports linked in the classifier governance profile; auditors should reference those reports alongside per-event records.
 
-Both records are component-signed, hash-chained, and version-stamped per the meta-framework's audit integrity properties (AI1-AI6). But consumers of audit records --- regulators, auditors, incident responders --- must understand that a classifier-based ``pass" is not the same evidentiary standard as a deterministic "pass." The audit record makes this distinction explicit.
+Both records are component-signed, hash-chained, and version-stamped per the meta-framework's audit integrity properties (AI1-AI6). But consumers of audit records --- regulators, auditors, incident responders --- must understand that a classifier-based ``pass'' is not the same evidentiary standard as a deterministic ``pass.'' The audit record makes this distinction explicit.
 
 \subsection{The Relationship Between Prompt Constraints and Output Controls}
 
@@ -209,7 +209,7 @@ Each classifier has a governance profile:
 
 Evaluations that combine deterministic and classifier-based checks into a single governance decision. These address scenarios where neither tier alone is sufficient.
 
-Example: ``Output must not disclose PHI" decomposes into:
+Example: ``Output must not disclose PHI'' decomposes into:
 
 \begin{itemize}
   \item Deterministic: regex scan for SSN, MRN, date-of-birth patterns (O\_\allowbreak{}d)
@@ -275,7 +275,7 @@ The pipeline produces one of three outcomes for each output:
 
 When an output is blocked, the system must respond --- silence is not acceptable to the end user. Fallback options, configurable per constraint and per risk tier:
 
-\textbf{Safe response substitution.} The blocked output is replaced with a pre-approved safe response: ``I'm unable to provide that information. Please contact [qualified resource]." Safe responses are themselves governed artifacts --- authored, reviewed, and versioned under EPG constraints.
+\textbf{Safe response substitution.} The blocked output is replaced with a pre-approved safe response: ``I'm unable to provide that information. Please contact [qualified resource].'' Safe responses are themselves governed artifacts --- authored, reviewed, and versioned under EPG constraints.
 
 \textbf{Redaction with post-redaction re-evaluation.} For outputs where only a portion is non-compliant (e.g., an otherwise useful response that contains one SSN), the non-compliant portion is redacted and the remainder is delivered with a redaction notice. Redaction rules are deterministic and auditable. For Critical-tier PHI constraints, the composite PHI constraint (O\_\allowbreak{}x) must be re-run on the redacted output. If the redacted output still flags (because residual context enables re-identification --- e.g., rare disease + small location), the output is blocked entirely and a safe response is substituted. Redaction is only acceptable for PHI when the post-redaction re-evaluation passes.
 
@@ -305,7 +305,7 @@ Chapter \ref{ch:framework} identified five threats (T7-T11) that EPG deferred to
 \textbf{Controls:}
 
 \begin{itemize}
-  \item Deterministic (O\_\allowbreak{}d): pattern detection for common injection signatures in outputs --- instruction echoing (``As an AI assistant, I have been told to ignore..."), role-switching markers, system prompt leakage.
+  \item Deterministic (O\_\allowbreak{}d): pattern detection for common injection signatures in outputs --- instruction echoing (``As an AI assistant, I have been told to ignore...''), role-switching markers, system prompt leakage.
   \item Classifier-based (O\_\allowbreak{}c): injection detection classifier trained on known injection/exfiltration output patterns. Scores the likelihood that the output was influenced by injected instructions rather than the governed prompt.
   \item Behavioral: compare output against the prompt's stated constraints. If EPG context is available, ROC can evaluate whether the output satisfies the constraints EPG imposed. An output that violates a constraint the prompt explicitly enforced is a strong signal of injection.
   \item Cross-surface consistency check (Critical tier, requires EPG context): compare the semantic intent of the output against the semantic intent of the prompt using a summarization-to-intent classifier. If \texttt{Intent(output) $\notin$ Intent(prompt)}, the output is flagged as potentially injection-influenced. This detects subtle injection where the model shifts topic or persona without triggering overt pattern detectors.
@@ -349,13 +349,13 @@ Chapter \ref{ch:framework} identified five threats (T7-T11) that EPG deferred to
 \end{itemize}
 
 
-\textbf{Redaction capability:} When PII is detected in an otherwise useful output, ROC can redact the PII elements (replace with ``[REDACTED]" or type-appropriate placeholders) rather than blocking the entire output. Redaction preserves utility while removing the compliance violation.
+\textbf{Redaction capability:} When PII is detected in an otherwise useful output, ROC can redact the PII elements (replace with ``[REDACTED]'' or type-appropriate placeholders) rather than blocking the entire output. Redaction preserves utility while removing the compliance violation.
 
 \textbf{PHI-first policy for HIPAA-scope Critical workloads.} For any HIPAA-covered workload classified as Critical, the following mandatory controls apply:
 \begin{itemize}
-  \item Any classifier PHI score above a conservative alert threshold ($\tau$\_\allowbreak{}alert, lower than the standard flag threshold) must trigger either block/redact or human review routing. ``Flag only" without blocking or human review is not acceptable for PHI in Critical tier.
+  \item Any classifier PHI score above a conservative alert threshold ($\tau$\_\allowbreak{}alert, lower than the standard flag threshold) must trigger either block/redact or human review routing. ``Flag only'' without blocking or human review is not acceptable for PHI in Critical tier.
   \item Documented PHI residual risk must be paired with compensating controls, including a minimum percentage of human-in-the-loop review on outputs --- analogous to EPG's residual gap controls (Chapter \ref{ch:prompt}, \S{}5.6).
-  \item The ``flag and continue" path available for Standard/Low tiers does not apply to PHI in Critical tier. Every PHI suspicion above $\tau$\_\allowbreak{}alert is either blocked, redacted (with post-redaction re-evaluation), or routed to human review.
+  \item The ``flag and continue'' path available for Standard/Low tiers does not apply to PHI in Critical tier. Every PHI suspicion above $\tau$\_\allowbreak{}alert is either blocked, redacted (with post-redaction re-evaluation), or routed to human review.
 \end{itemize}
 
 
@@ -377,7 +377,7 @@ ROC does NOT claim T11 as a control it enforces. It provides detection signals t
 \end{itemize}
 
 
-\textbf{This is explicitly a monitoring function, not a governance control.} ROC's audit record notes the tenant-consistency check result but does not claim to ``govern" cross-tenant isolation. Infrastructure controls (model isolation, data segregation, tenant-specific deployments) are the actual controls for T11.
+\textbf{This is explicitly a monitoring function, not a governance control.} ROC's audit record notes the tenant-consistency check result but does not claim to ``govern'' cross-tenant isolation. Infrastructure controls (model isolation, data segregation, tenant-specific deployments) are the actual controls for T11.
 
 
 

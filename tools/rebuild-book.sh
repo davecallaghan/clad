@@ -1,5 +1,5 @@
 set -e
-cd /Users/david.callaghan/clad
+cd "$(dirname "$0")/.."  # repo root, relative to this script
 python3 - <<'PY'
 import subprocess, re
 # Every markdown-derived file is regenerated from source; the two hand-written

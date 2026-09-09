@@ -49,3 +49,10 @@ archive/*/build/
 
 # Lean build output and mathlib cache
 lean/.lake/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# IDE workspace files
+*.code-workspace

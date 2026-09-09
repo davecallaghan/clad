@@ -44,9 +44,9 @@ Enterprise Prompt Governance (EPG) is a constraint-based governance framework fo
 
 This distinction is foundational. EPG is not a prompt dictation system. It does not maintain a central library of approved prompts. It does not require teams to select from pre-written templates. Instead, EPG establishes a constraint hierarchy that teams must satisfy when building prompts for their specific use cases. A healthcare department might inherit enterprise-wide constraints prohibiting PHI disclosure, add department-specific constraints requiring clinical disclaimer language, then allow individual project teams to craft prompts that satisfy both constraint sets while addressing their unique business requirements.
 
-\textbf{Hierarchical constraint inheritance} implements this model. Constraints flow from enterprise governance teams to department leads to project teams. Each level adds specificity without removing protections established upstream. An enterprise-level constraint might require ``no financial advice" across all AI systems. A finance department constraint might add "all numerical outputs must cite data sources." A trading desk project constraint might further specify "volatility calculations must reference the last 90 days of market data." The project team builds prompts that satisfy all three constraint levels, but retains full flexibility in how those prompts accomplish their specific business objective.
+\textbf{Hierarchical constraint inheritance} implements this model. Constraints flow from enterprise governance teams to department leads to project teams. Each level adds specificity without removing protections established upstream. An enterprise-level constraint might require ``no financial advice'' across all AI systems. A finance department constraint might add ``all numerical outputs must cite data sources.'' A trading desk project constraint might further specify ``volatility calculations must reference the last 90 days of market data.'' The project team builds prompts that satisfy all three constraint levels, but retains full flexibility in how those prompts accomplish their specific business objective.
 
-\textbf{Full audit trail} provides compliance teams with version-stamped, tamper-evident records of every prompt evaluation. When a regulator asks ``what constraints governed this AI system on March 15, 2026," the enterprise produces a cryptographically verifiable record showing the exact constraints in effect, the prompt that was evaluated, the evaluation outcome, and the governance chain that established those constraints. This audit capability transforms AI governance from a trust-based model to a verification-based model.
+\textbf{Full audit trail} provides compliance teams with version-stamped, tamper-evident records of every prompt evaluation. When a regulator asks ``what constraints governed this AI system on March 15, 2026,'' the enterprise produces a cryptographically verifiable record showing the exact constraints in effect, the prompt that was evaluated, the evaluation outcome, and the governance chain that established those constraints. This audit capability transforms AI governance from a trust-based model to a verification-based model.
 
 \textbf{Risk management posture} frames EPG's purpose with precision. EPG reduces the likelihood of violations, enables detection when violations occur, and ensures remediation processes execute when needed. It does not eliminate risk. Risk elimination would require prohibiting useful AI deployment. Instead, EPG implements a defensible risk management posture: governed boundaries that balance operational value against regulatory requirements, combined with detection and remediation capabilities that respond when boundaries are crossed.
 
@@ -86,9 +86,9 @@ EPG operates identically. An enterprise constraint might prohibit disclosure of 
 
 Formally, constraints are predicates---functions that map a prompt to a boolean outcome:
 
-\begin{cladnote}
+\begin{claddisp}
 C : P $\to$ \{true, false\}
-\end{cladnote}
+\end{claddisp}
 
 
 A constraint evaluates a prompt and returns true if the prompt satisfies the constraint, false otherwise. Constraints are not generators. They do not produce prompts. They validate prompts produced by other means.
@@ -98,7 +98,7 @@ This constraint-based model enables EPG to scale across diverse use cases withou
 \subsection{Execution is Always Local}
 
 
-No organization executes an ``enterprise-level prompt." Every prompt that reaches a production AI model is executed by an end user through a specific project deployment.
+No organization executes an ``enterprise-level prompt.'' Every prompt that reaches a production AI model is executed by an end user through a specific project deployment.
 
 This principle reflects operational reality. When a customer service representative uses an AI assistant to draft a response, they are executing a prompt that was built by the customer service project team, constrained by customer service department policies, and further constrained by enterprise-wide governance requirements. But the execution event occurs at project scope. The user does not directly interact with enterprise or department constraints. They interact with a project-level system that was built to satisfy those constraints.
 
@@ -106,9 +106,9 @@ EPG's three-level hierarchy---enterprise, department, project---reflects this ex
 
 Formally, for any prompt x that executes in production:
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ x $\in$ X\_executed : level(x) = project
-\end{cladnote}
+\end{claddisp}
 
 
 This property has significant architectural implications. EPG does not maintain enterprise-level or department-level execution environments. Those levels exist as constraint definition layers, not execution layers. When a project team deploys a prompt to production, they deploy a project-level artifact that has been validated against the complete constraint set inherited from department and enterprise levels. But the deployment itself is scoped to the project.
@@ -122,7 +122,7 @@ EPG reduces the likelihood of governance violations, enables detection when viol
 
 Risk elimination would require prohibiting AI deployment. Any system that generates novel outputs carries inherent risk of producing outputs that violate policy, even when that system operates under well-designed constraints. A healthcare chatbot built with comprehensive HIPAA-aligned prompt constraints may still generate a response that inadvertently reveals protected health information if the model encounters an adversarial input pattern. A financial analysis tool governed by strict disclosure requirements may still produce a statement that could be construed as unauthorized advice if the model misinterprets an ambiguous user query.
 
-EPG implements a defensible risk management posture instead of pursuing unattainable risk elimination. Consider the analogy of Sarbanes-Oxley (SOX) compliance in financial systems. SOX does not prevent financial fraud. It establishes controls that make fraud detectable and traceable. When fraud occurs, SOX-compliant systems provide the audit trail required to identify what happened, who was involved, and what corrective actions are needed. The compliance posture is not ``fraud never occurs." It is "when fraud occurs, we detect it, document it, and remediate it."
+EPG implements a defensible risk management posture instead of pursuing unattainable risk elimination. Consider the analogy of Sarbanes-Oxley (SOX) compliance in financial systems. SOX does not prevent financial fraud. It establishes controls that make fraud detectable and traceable. When fraud occurs, SOX-compliant systems provide the audit trail required to identify what happened, who was involved, and what corrective actions are needed. The compliance posture is not ``fraud never occurs.'' It is ``when fraud occurs, we detect it, document it, and remediate it.''
 
 EPG provides equivalent capabilities for prompt governance:
 
@@ -134,9 +134,9 @@ EPG provides equivalent capabilities for prompt governance:
 
 Formally, EPG guarantees audit completeness, not universal compliance:
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ x $\in$ X\_executed : $\exists$ evaluation\_record(x, C\_effective, timestamp, result)
-\end{cladnote}
+\end{claddisp}
 
 
 Every executed prompt has a corresponding evaluation record showing which constraints were in effect, when the evaluation occurred, and whether the prompt satisfied those constraints. The system does not guarantee that result = true for all prompts. It guarantees that the evaluation occurred and the result is recorded.
@@ -150,7 +150,7 @@ The auditable unit in EPG is the assembled prompt evaluated against the effectiv
 
 This principle reflects a fundamental insight about governance enforcement: process compliance is a proxy for outcome compliance, and proxies fail. A team might meticulously follow a prescribed prompt development process yet produce a prompt that violates critical constraints. Conversely, a team might bypass the prescribed process entirely yet produce a fully compliant prompt. If governance systems audit process rather than artifact, they reward the first team and punish the second, despite the first team producing a governance violation and the second team producing a compliant system.
 
-EPG inverts this model. The evaluation question is not ``did the team use the approved template?" but rather "does the assembled prompt satisfy the effective constraints?" A project team might build prompts through template composition, manual authoring, programmatic generation, or any hybrid approach. EPG remains agnostic to the construction process. It evaluates the construction output.
+EPG inverts this model. The evaluation question is not ``did the team use the approved template?'' but rather ``does the assembled prompt satisfy the effective constraints?'' A project team might build prompts through template composition, manual authoring, programmatic generation, or any hybrid approach. EPG remains agnostic to the construction process. It evaluates the construction output.
 
 This artifact-centric audit model has significant practical advantages:
 
@@ -158,7 +158,7 @@ This artifact-centric audit model has significant practical advantages:
 
 \textbf{It reduces governance overhead.} Process-based governance requires maintaining detailed procedural documentation, training teams on those procedures, and auditing procedural compliance. Artifact-based governance requires defining constraints and evaluating prompts. The latter scales far more efficiently across diverse teams with varying technical capabilities.
 
-\textbf{It provides objective evidence.} A process audit produces subjective assessments: ``the team substantially followed the procedure" or "the team deviated from step 4." An artifact audit produces objective verdicts: "the prompt satisfies constraint C" or "the prompt violates constraint C." Objective verdicts support consistent enforcement and defensible audit responses.
+\textbf{It provides objective evidence.} A process audit produces subjective assessments: ``the team substantially followed the procedure'' or ``the team deviated from step 4.'' An artifact audit produces objective verdicts: ``the prompt satisfies constraint C'' or ``the prompt violates constraint C.'' Objective verdicts support consistent enforcement and defensible audit responses.
 
 This principle shapes EPG's technical architecture in concrete ways. EPG's evaluation engine operates on assembled prompts, not on the source materials that contributed to those prompts. If a prompt is constructed by combining a base template, dynamic user context, and retrieved knowledge base fragments, EPG evaluates the final assembled text that will be sent to the AI model. The composition process is invisible to the evaluation layer.
 
@@ -177,9 +177,9 @@ Consider a concrete example. An enterprise security team establishes a constrain
 
 Formally, the effective constraint set at any level is the union of constraints defined at that level and all levels above:
 
-\begin{cladnote}
+\begin{claddisp}
 C\_effective(project\_p) = C\_enterprise $\cup$ C\_department(p) $\cup$ C\_project(p)
-\end{cladnote}
+\end{claddisp}
 
 
 This union operation ensures constraint sets can only grow, never shrink, as we move down the hierarchy. The lateral domain scoping determines which constraints appear in each C\_\allowbreak{}level set, but the inheritance rule determines how those sets combine.
@@ -254,22 +254,22 @@ EPG employs a deliberately minimal logical framework consisting of exactly two o
 
 \textbf{Prohibition F($\phi$)} expresses that property $\phi$ must not hold. When a constraint declares F(pii\_\allowbreak{}in\_\allowbreak{}test\_\allowbreak{}environments), the system requires that the evaluated prompt does not permit personally identifiable information in test or development contexts. Prohibitions impose negative requirements---things that must be absent or false.
 
-\textbf{Governance annotation $\Permitted$($\phi$)} records that property $\phi$ was considered by the governance team and no restriction was imposed. When a constraint set includes $\Permitted$(industry\_\allowbreak{}terminology), this signals ``we explicitly evaluated whether to restrict industry-specific terminology and decided not to." This annotation serves governance coordination purposes but carries no logical force in constraint evaluation.
+\textbf{Governance annotation $\Permitted$($\phi$)} records that property $\phi$ was considered by the governance team and no restriction was imposed. When a constraint set includes $\Permitted$(industry\_\allowbreak{}terminology), this signals ``we explicitly evaluated whether to restrict industry-specific terminology and decided not to.'' This annotation serves governance coordination purposes but carries no logical force in constraint evaluation.
 
 These three constructs relate in specific ways:
 
-\begin{cladnote}
+\begin{claddisp}
 F($\phi$) $\equiv$ O($\neg$$\phi$)
-\end{cladnote}
+\end{claddisp}
 
 
-A prohibition is logically equivalent to an obligation of the negation. Prohibiting PII disclosure is equivalent to obligating non-disclosure of PII. EPG maintains both operators for expressiveness---it is often clearer to state ``PII must not appear in logs" than to state "the absence of PII in logs must hold"---but treats them as interchangeable during evaluation.
+A prohibition is logically equivalent to an obligation of the negation. Prohibiting PII disclosure is equivalent to obligating non-disclosure of PII. EPG maintains both operators for expressiveness---it is often clearer to state ``PII must not appear in logs'' than to state ``the absence of PII in logs must hold''---but treats them as interchangeable during evaluation.
 
 Critically, P\_\allowbreak{}meta is not the classical deontic permission operator P. In standard deontic logic, permission relates to obligation through the axiom:
 
-\begin{cladnote}
+\begin{claddisp}
 O($\phi$) $\to$ P($\phi$)
-\end{cladnote}
+\end{claddisp}
 
 
 This axiom states that if something is obligatory, it is also permitted. But this axiom does not apply in EPG because P\_\allowbreak{}meta is a governance annotation, not a logical operator. The relationship between obligation and annotation is undefined because they operate in different semantic spaces. Obligations and prohibitions participate in constraint evaluation, inheritance, and conflict detection. Annotations do not.
@@ -278,15 +278,15 @@ This design choice prevents deontic paradoxes that arise when permission is trea
 
 \textbf{Ross's paradox.} In classical deontic logic, if mailing the letter is permitted, and mailing the letter entails burning the letter or mailing it, then burning the letter or mailing it is permitted. This allows deriving permission for actions that should not be permitted through disjunction.
 
-\textbf{Free choice permission.} The statement ``you may have coffee or tea" should permit having coffee and permit having tea, but classical permission operators struggle to capture this intuition without allowing over-permissive inferences.
+\textbf{Free choice permission.} The statement ``you may have coffee or tea'' should permit having coffee and permit having tea, but classical permission operators struggle to capture this intuition without allowing over-permissive inferences.
 
 EPG sidesteps both paradoxes by refusing to treat permission as a logical operator. $\Permitted$($\phi$) does not participate in logical inference. It cannot be combined with other constraints through boolean operators. It does not propagate through inheritance rules. It exists solely to document governance decisions for audit and coordination purposes.
 
 This design choice has a second critical benefit: it ensures contradiction detection remains complete. EPG can definitively determine whether two constraints contradict each other by checking whether any property has both an obligation and a prohibition:
 
-\begin{cladnote}
+\begin{claddisp}
 Contradiction $\equiv$ $\exists$$\phi$ : O($\phi$) $\in$ C\_effective $\wedge$ F($\phi$) $\in$ C\_effective
-\end{cladnote}
+\end{claddisp}
 
 
 If obligation and prohibition could be derived through complex logical inference involving permissions, boolean combinations, and conditional constraints, contradiction detection would become undecidable. By restricting the logical language to atomic obligations and prohibitions, EPG ensures contradictions can be detected in linear time through simple set intersection.
@@ -298,20 +298,20 @@ The properties $\phi$ that appear in obligations and prohibitions are atomic ide
 
 This means the following are well-formed constraints:
 
-\begin{cladnote}
+\begin{claddisp}
 O(hipaa\_disclaimer)\\
 F(pii\_in\_logs)\\
 O(data\_source\_citation)
-\end{cladnote}
+\end{claddisp}
 
 
 But the following are not well-formed constraints:
 
-\begin{cladnote}
+\begin{claddisp}
 O(hipaa\_disclaimer $\wedge$ patient\_consent)\\
 F(pii\_in\_logs $\vee$ phi\_in\_test\_data)\\
 O(data\_minimization $\to$ anonymization)
-\end{cladnote}
+\end{claddisp}
 
 
 Properties are atomic. They cannot be combined with AND, OR, or IMPLIES operators. This restriction is not a limitation of EPG's technical implementation. It is a deliberate design choice that prevents three classes of problems:
@@ -324,20 +324,20 @@ Properties are atomic. They cannot be combined with AND, OR, or IMPLIES operator
 
 When a governance requirement genuinely involves multiple properties, EPG expresses this through multiple atomic constraints:
 
-\begin{cladnote}
+\begin{claddisp}
 O(hipaa\_disclaimer)\\
 O(patient\_consent\_verification)
-\end{cladnote}
+\end{claddisp}
 
 
 This representation makes explicit that both properties are independently required. The evaluation system checks each constraint separately and reports violations independently, providing clearer audit feedback than a single composite constraint would provide.
 
 Contrary-to-duty obligations---requirements that activate when another requirement is violated---are similarly expressed as separate atomic constraints with documented relationships rather than as conditional logical expressions. If enterprise policy requires that when PII appears in an error log, it must be redacted within 24 hours, this is expressed as:
 
-\begin{cladnote}
+\begin{claddisp}
 F(pii\_in\_error\_logs)\\
 O(redaction\_procedure\_documented)
-\end{cladnote}
+\end{claddisp}
 
 
 The relationship between these constraints is recorded in governance metadata, not encoded in logical operators. This approach maintains the simplicity of the evaluation engine while providing sufficient expressiveness for real-world governance requirements.
@@ -359,18 +359,18 @@ Constraints propagate down the hierarchy according to strict inheritance rules t
 
 The effective constraint set at any level is computed as:
 
-\begin{cladnote}
+\begin{claddisp}
 C\_effective(project) = \{c | c is O or F, defined at project, department, or enterprise level\}
-\end{cladnote}
+\end{claddisp}
 
 
 This set excludes all P\_\allowbreak{}meta annotations regardless of where they appear. Annotations are available for governance audit and coordination review but do not participate in prompt evaluation.
 
 The inheritance model implements a monotonic strengthening property: moving down the hierarchy can only add constraints, never remove them. Formally:
 
-\begin{cladnote}
+\begin{claddisp}
 C\_effective(enterprise) $\subseteq$ C\_effective(department) $\subseteq$ C\_effective(project)
-\end{cladnote}
+\end{claddisp}
 
 
 This property ensures that no project team can accidentally or intentionally weaken governance protections established at higher levels. The most permissive constraint set in the organization is the enterprise constraint set. Every department and project constraint set is either equal to or stricter than enterprise constraints.
@@ -396,9 +396,9 @@ However, P\_\allowbreak{}meta does differ from complete absence of constraint:
 
 \textbf{P\_\allowbreak{}meta triggers tension detection.} When a higher level includes $\Permitted$($\phi$) and a lower level includes F($\phi$), the system flags this pattern as a governance tension warranting review. The lower-level prohibition is valid---inheritance rules permit tightening---but the combination suggests possible misalignment between governance levels that should be investigated.
 
-This leads to a critical semantic property: EPG is not permissive-by-default. The absence of F($\phi$) does not mean $\phi$ is permitted. In classical deontic logic with a permission operator, if something is not prohibited, it is permitted. EPG rejects this equivalence. The absence of F($\phi$) means nothing definitive about the permissibility of $\phi$. Only an explicit $\Permitted$($\phi$) signals ``we considered $\phi$ and chose not to restrict it."
+This leads to a critical semantic property: EPG is not permissive-by-default. The absence of F($\phi$) does not mean $\phi$ is permitted. In classical deontic logic with a permission operator, if something is not prohibited, it is permitted. EPG rejects this equivalence. The absence of F($\phi$) means nothing definitive about the permissibility of $\phi$. Only an explicit $\Permitted$($\phi$) signals ``we considered $\phi$ and chose not to restrict it.''
 
-This design choice prevents a common governance failure mode. In permissive-by-default systems, teams interpret the absence of prohibition as permission to proceed. When governance teams fail to enumerate every possible risk, teams deploy systems that technically satisfy the written policies but violate the governance team's intent. EPG's design prevents this failure mode by decoupling ``not prohibited" from "permitted."
+This design choice prevents a common governance failure mode. In permissive-by-default systems, teams interpret the absence of prohibition as permission to proceed. When governance teams fail to enumerate every possible risk, teams deploy systems that technically satisfy the written policies but violate the governance team's intent. EPG's design prevents this failure mode by decoupling ``not prohibited'' from ``permitted.''
 
 Consider the distinction in practice:
 
@@ -416,9 +416,9 @@ This semantic model supports a key governance workflow: progressive policy refin
 
 The tension detection mechanism works as follows:
 
-\begin{cladnote}
+\begin{claddisp}
 Tension $\equiv$ P\_meta($\phi$) at level L\_higher $\wedge$ F($\phi$) at level L\_lower
-\end{cladnote}
+\end{claddisp}
 
 
 When this pattern is detected, EPG generates a governance review notice. The notice does not block deployment---the prohibition is valid under inheritance rules---but alerts governance coordinators to investigate whether the lower-level team misunderstood enterprise intent or whether enterprise policy should be revised to explicitly prohibit $\phi$ rather than annotating it as unrestricted.
@@ -434,11 +434,11 @@ A concrete example demonstrates how the hierarchical constraint model operates i
 
 The enterprise governance team, reporting to the CISO and Chief Compliance Officer, establishes organization-wide constraints:
 
-\begin{cladnote}
+\begin{claddisp}
 O(hipaa\_disclaimer)\\
 F(pii\_in\_logs)\\
 P\_meta(clinical\_terminology)
-\end{cladnote}
+\end{claddisp}
 
 
 The first constraint obligates that all customer-facing AI systems include disclaimer language clarifying HIPAA compliance scope. The second constraint prohibits logging personally identifiable information to system logs, test databases, or analytics platforms. The third annotation documents that the governance team explicitly considered whether to restrict clinical terminology in AI responses and decided not to impose blanket restrictions, recognizing that medical terminology is often necessary for effective healthcare communication.
@@ -447,42 +447,42 @@ The first constraint obligates that all customer-facing AI systems include discl
 
 The Patient Services department, led by the Chief Medical Information Officer, inherits enterprise constraints and adds department-specific requirements:
 
-\begin{cladnote}
+\begin{claddisp}
 Inherited: O(hipaa\_disclaimer), F(pii\_in\_logs)\\
 Added: F(clinical\_terminology), O(empathetic\_tone), O(provider\_referral\_required)
-\end{cladnote}
+\end{claddisp}
 
 
 The department inherits both the disclaimer obligation and the PII logging prohibition. These constraints remain in full force and cannot be modified at department level.
 
 The department adds three new constraints:
 
-\begin{cladnote}
+\begin{claddisp}
 F(clinical\_terminology)
-\end{cladnote}
+\end{claddisp}
 
 
 This prohibition restricts the use of medical jargon in patient-facing communications. While the enterprise governance team chose not to restrict clinical terminology organization-wide---recognizing that provider-facing tools may require precise medical language---the Patient Services department determines that patient-facing systems should avoid terminology that may confuse or alarm patients.
 
 The combination of $\Permitted$(clinical\_\allowbreak{}terminology) at enterprise level and F(clinical\_\allowbreak{}terminology) at department level triggers a governance tension flag. This is not an error. The inheritance rules permit departments to tighten constraints. But the tension flag prompts governance review to ensure the department team understands enterprise intent and that the prohibition aligns with organizational goals. The review confirms that the restriction is appropriate for patient-facing systems even though enterprise policy leaves terminology unrestricted for provider-facing tools.
 
-\begin{cladnote}
+\begin{claddisp}
 O(empathetic\_tone)
-\end{cladnote}
+\end{claddisp}
 
 
 This obligation requires that patient-facing AI communications employ empathetic language that acknowledges patient concerns and emotional state. Healthcare interactions frequently involve stress, uncertainty, and vulnerability. Department policy requires that AI systems reflect this context in their communication style.
 
-\begin{cladnote}
+\begin{claddisp}
 O(provider\_referral\_required)
-\end{cladnote}
+\end{claddisp}
 
 
 This obligation requires that AI responses to clinical questions include explicit referral to healthcare providers. The system must not only refuse to provide diagnosis or treatment advice---which would be captured in a prohibition constraint---but must actively direct patients toward appropriate clinical resources.
 
 The effective constraint set for any Patient Services project is now:
 
-\begin{cladnote}
+\begin{claddisp}
 C\_effective(Patient Services) = \{\\
 ~~~~O(hipaa\_disclaimer),\\
 ~~~~F(pii\_in\_logs),\\
@@ -490,31 +490,31 @@ C\_effective(Patient Services) = \{\\
 ~~~~O(empathetic\_tone),\\
 ~~~~O(provider\_referral\_required)\\
 \}
-\end{cladnote}
+\end{claddisp}
 
 
 \textbf{Project Level: FAQ Bot}
 
 The Patient Services FAQ Bot project team builds an AI system that answers common patient questions about appointment scheduling, insurance coverage, prescription refills, and facility information. The project inherits all enterprise and department constraints and adds project-specific requirements:
 
-\begin{cladnote}
+\begin{claddisp}
 Inherited: O(hipaa\_disclaimer), F(pii\_in\_logs), F(clinical\_terminology), O(empathetic\_tone), O(provider\_referral\_required)\\
 Added: O(scope\_to\_faq\_topics), O(appointment\_scheduling\_context)
-\end{cladnote}
+\end{claddisp}
 
 
 The project team adds two constraints that narrow the AI system's scope:
 
-\begin{cladnote}
+\begin{claddisp}
 O(scope\_to\_faq\_topics)
-\end{cladnote}
+\end{claddisp}
 
 
 This obligation requires that the FAQ bot's prompts include explicit boundaries limiting responses to the defined FAQ topic areas. Questions outside this scope should trigger a polite redirection rather than an attempt to answer with uncertain information. This constraint prevents scope creep where a narrowly-designed FAQ system begins attempting to answer complex questions it was not designed to handle.
 
-\begin{cladnote}
+\begin{claddisp}
 O(appointment\_scheduling\_context)
-\end{cladnote}
+\end{claddisp}
 
 
 This obligation requires that appointment-related responses include context about cancellation policies, rescheduling procedures, and patient rights. This information is legally required in certain jurisdictions and operationally important for patient satisfaction.
@@ -523,7 +523,7 @@ The project team cannot weaken any inherited constraints. If the team attempted 
 
 The effective constraint set for the FAQ Bot project is:
 
-\begin{cladnote}
+\begin{claddisp}
 C\_effective(FAQ Bot) = \{\\
 ~~~~O(hipaa\_disclaimer),\\
 ~~~~F(pii\_in\_logs),\\
@@ -533,7 +533,7 @@ C\_effective(FAQ Bot) = \{\\
 ~~~~O(scope\_to\_faq\_topics),\\
 ~~~~O(appointment\_scheduling\_context)\\
 \}
-\end{cladnote}
+\end{claddisp}
 
 
 This constraint set represents the complete governance boundary for the FAQ Bot. When the project team builds prompts for the FAQ Bot, EPG evaluates those prompts against this seven-constraint set. A prompt that satisfies all seven constraints is compliant and can be deployed to production. A prompt that violates any constraint is rejected and must be revised.
@@ -616,7 +616,7 @@ All constraint lifecycle events are versioned and signed:
 \end{itemize}
 
 
-Constraint version history is subject to the same audit integrity properties as interaction audit records --- immutable storage (AI1), cryptographic chain integrity (AI2), independent record signing (AI3), and independent verification capability (AI4). When a regulator asks ``what constraints were in effect on March 15," the enterprise produces a cryptographically verifiable record of the exact constraint set, including every modification that led to that state.
+Constraint version history is subject to the same audit integrity properties as interaction audit records --- immutable storage (AI1), cryptographic chain integrity (AI2), independent record signing (AI3), and independent verification capability (AI4). When a regulator asks ``what constraints were in effect on March 15,'' the enterprise produces a cryptographically verifiable record of the exact constraint set, including every modification that led to that state.
 
 This connects to the meta-framework's Axiom 5 (temporal identity): constraints are versioned entities whose identity includes their state at a specific point in time. It also connects to enforcement requirement EA4: constraint creation, modification, and deletion require authenticated identity with authorized scope.
 
@@ -648,10 +648,10 @@ Deployment-specific TTLs may be shorter but never longer than these defaults.
 
 The formal exception to the dual-control invariant is explicit:
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ c : $\neg$emergency(c) $\to$ author(c) $\neq$ approver(c)~~~~[standard dual control]\\
 $\forall$ c : emergency(c) $\to$ single-actor permitted, TTL enforced, tightening-only
-\end{cladnote}
+\end{claddisp}
 
 
 
@@ -660,7 +660,7 @@ $\forall$ c : emergency(c) $\to$ single-actor permitted, TTL enforced, tightenin
 \label{sec:prompt-5}
 
 
-Every constraint in the governance system must be evaluable --- it must be possible to determine, with a stable and repeatable answer, whether a given prompt satisfies the constraint. This requirement is non-negotiable for regulated industries where a compliance auditor may ask ``was this prompt compliant?" and expect a definitive answer. This section defines the evaluability taxonomy, the mandatory decomposition protocol for constraints that resist direct evaluation, and the formal controls that prevent decomposition from becoming an accountability escape hatch.
+Every constraint in the governance system must be evaluable --- it must be possible to determine, with a stable and repeatable answer, whether a given prompt satisfies the constraint. This requirement is non-negotiable for regulated industries where a compliance auditor may ask ``was this prompt compliant?'' and expect a definitive answer. This section defines the evaluability taxonomy, the mandatory decomposition protocol for constraints that resist direct evaluation, and the formal controls that prevent decomposition from becoming an accountability escape hatch.
 
 \subsection{Two Evaluability Classes}
 
@@ -669,16 +669,16 @@ Every constraint in the governance system belongs to exactly one of two classes:
 
 \textbf{Mechanically evaluable constraints (C\_\allowbreak{}m)} can be checked programmatically. Their evaluation is deterministic, automated, and repeatable. The same prompt evaluated against the same mechanical constraint produces the same result every time, regardless of who runs the evaluation or when. Examples: PII pattern detection (regex or NER scan), required section presence (string or semantic similarity check), keyword and terminology checks, prompt length limits, required disclaimer presence.
 
-\textbf{Procedurally evidenced constraints (C\_\allowbreak{}p)} require qualified human attestation. Their evaluation is deterministic given the evidence --- a signed attestation from a qualified reviewer is either present or absent, yielding a binary compliance determination. Examples: domain expert review (``a medical affairs officer has reviewed this prompt and attests it does not instruct diagnostic behavior"), legal sign-off, adversarial testing attestation ("red-team testing has been completed and results reviewed").
+\textbf{Procedurally evidenced constraints (C\_\allowbreak{}p)} require qualified human attestation. Their evaluation is deterministic given the evidence --- a signed attestation from a qualified reviewer is either present or absent, yielding a binary compliance determination. Examples: domain expert review (``a medical affairs officer has reviewed this prompt and attests it does not instruct diagnostic behavior''), legal sign-off, adversarial testing attestation (``red-team testing has been completed and results reviewed'').
 
 No constraint exists outside this taxonomy. If a constraint cannot be classified as either mechanically evaluable or procedurally evidenced, it cannot enter the governance system in its current form.
 
 \subsection{Why Semantic Constraints Are Prohibited as First-Class Elements}
 
 
-Consider the constraint ``prompts must not produce medical advice." This is a semantic constraint --- evaluating it requires human judgment about what constitutes "medical advice." Two qualified evaluators may disagree. The same evaluator may reach different conclusions on different days. This non-determinism is fatal for audit completeness.
+Consider the constraint ``prompts must not produce medical advice.'' This is a semantic constraint --- evaluating it requires human judgment about what constitutes ``medical advice.'' Two qualified evaluators may disagree. The same evaluator may reach different conclusions on different days. This non-determinism is fatal for audit completeness.
 
-If a regulator asks ``was this prompt compliant with your medical-advice prohibition on March 15?" and the answer depends on who you ask or when you ask them, the audit trail is not a trail --- it is an opinion. Regulated industries require stable, verifiable compliance determinations. Non-deterministic evaluation cannot provide them.
+If a regulator asks ``was this prompt compliant with your medical-advice prohibition on March 15?'' and the answer depends on who you ask or when you ask them, the audit trail is not a trail --- it is an opinion. Regulated industries require stable, verifiable compliance determinations. Non-deterministic evaluation cannot provide them.
 
 Therefore, semantic constraints are prohibited as first-class elements in the governance system. They must be decomposed into mechanical and procedural components before they can be operationalized.
 
@@ -687,13 +687,13 @@ Therefore, semantic constraints are prohibited as first-class elements in the go
 
 Decomposition transforms a semantic constraint into a set of evaluable constraints through a structured five-step process:
 
-\textbf{Step 1: Identify semantic intent.} A domain expert articulates the full intent of the semantic constraint. For ``must not produce medical advice," the intent might include: no diagnostic language, no treatment recommendations, no dosage guidance, no prognostic statements, explicit disclaimers, and explicit redirection to qualified providers.
+\textbf{Step 1: Identify semantic intent.} A domain expert articulates the full intent of the semantic constraint. For ``must not produce medical advice,'' the intent might include: no diagnostic language, no treatment recommendations, no dosage guidance, no prognostic statements, explicit disclaimers, and explicit redirection to qualified providers.
 
 \textbf{Step 2: Decompose into evaluable components.} The expert separates the intent into what can be automated (mechanical checks) and what requires human judgment (procedural attestations). Diagnostic language patterns can be scanned automatically; the adequacy of the overall framing requires expert review.
 
 \textbf{Step 3: Independent review.} A second domain expert --- not the original author --- reviews the decomposition for adequacy. Does the set of mechanical and procedural components sufficiently capture the original semantic intent? Are there gaps?
 
-\textbf{Step 4: Formal attestation.} The decomposition is formally attested: ``this set of mechanical and procedural constraints is a sufficient representation of the original semantic intent." The attestation is signed and versioned.
+\textbf{Step 4: Formal attestation.} The decomposition is formally attested: ``this set of mechanical and procedural constraints is a sufficient representation of the original semantic intent.'' The attestation is signed and versioned.
 
 \textbf{Step 5: Registration.} The decomposition is registered in the constraint system. The original semantic constraint is preserved as an intent record (C\_\allowbreak{}s) --- a documentation artifact that captures the governance intent but is never evaluated directly.
 
@@ -717,12 +717,12 @@ The goal of decomposition is to establish a soundness relationship: if all mecha
 
 Formally:
 
-\begin{cladnote}
+\begin{claddisp}
 Soundness(c\_s) $\Leftrightarrow$ $\forall$p, evidence :\\
 ~~($\forall$c\_m $\in$ decomp\_m(c\_s) : p $\vDash$\_m c\_m) $\wedge$\\
 ~~($\forall$c\_p $\in$ decomp\_p(c\_s) : evidence $\vDash$\_p c\_p)\\
 ~~$\to$ p $\vDash$\_s c\_s
-\end{cladnote}
+\end{claddisp}
 
 
 This is the goal, not a guarantee. The system distinguishes two operational states:
@@ -746,7 +746,7 @@ When soundness cannot be fully demonstrated --- when the decomposition captures 
 
 \textbf{Maximum gap threshold.} If a decomposition's residual gap exceeds the allowable threshold, the decomposition is rejected and the constraint cannot be operationalized until a better decomposition is found. For Critical-tier constraints, the threshold is quantitative: the decomposition must demonstrate a minimum pass rate against the Gold Standard Prompt Set and regression test suite (deployment-specific, recommended minimum: 95\% for PHI/safety constraints, 90\% for other Critical constraints). For Standard and Low tiers, the threshold is qualitative, assessed by the cross-domain governance body. A documented gap in a Critical constraint is not merely a risk acknowledgment --- without meeting the quantitative threshold and pairing with proportional compensating controls, it is a governance failure that blocks deployment.
 
-\textbf{Compensating control requirement.} Every residual gap must be paired with a specific, actionable compensating control. ``We acknowledge the gap" is not sufficient. A valid compensating control is concrete and measurable: "mechanical checks cover an estimated 80\% of diagnostic language patterns; compensating control: 10\% human-in-the-loop review of outputs for this project, managed by medical affairs, with monthly reporting on findings."
+\textbf{Compensating control requirement.} Every residual gap must be paired with a specific, actionable compensating control. ``We acknowledge the gap'' is not sufficient. A valid compensating control is concrete and measurable: ``mechanical checks cover an estimated 80\% of diagnostic language patterns; compensating control: 10\% human-in-the-loop review of outputs for this project, managed by medical affairs, with monthly reporting on findings.''
 
 \textbf{Cross-domain escalation.} Any decomposition with a residual gap for a Critical-tier constraint must be reviewed and approved by the cross-domain governance body, not just the owning domain. This prevents a single domain from accepting inadequate decompositions for high-risk constraints.
 
@@ -782,7 +782,7 @@ Initial attestation is necessary but not sufficient. Decompositions must be peri
 
 Large language models may be used as development tooling within the decomposition process: triaging which semantic constraints are hardest to decompose, flagging potential gaps in proposed decompositions, and prioritizing which constraints need human review most urgently.
 
-LLMs are not audit mechanisms. Non-deterministic evaluation cannot serve as audit evidence. LLMs are not attestors. ``An AI evaluated this and found it compliant" is not a qualified human judgment. LLM evaluation exists outside the formal governance model. It informs the humans who author decompositions and perform attestations. It does not replace them.
+LLMs are not audit mechanisms. Non-deterministic evaluation cannot serve as audit evidence. LLMs are not attestors. ``An AI evaluated this and found it compliant'' is not a qualified human judgment. LLM evaluation exists outside the formal governance model. It informs the humans who author decompositions and perform attestations. It does not replace them.
 
 
 
@@ -812,7 +812,7 @@ When a new constraint is proposed, the system performs automated conflict detect
 
 \begin{itemize}
   \item \textbf{Modify constraints.} One or both constraints are revised to eliminate the tension. This is the preferred resolution.
-  \item \textbf{Add a precedence rule.} A precedence annotation is added to the Enterprise Precedence Table (\S{}6.5): ``when these two constraints are both applicable and create tension, constraint A takes precedence." The rationale is documented.
+  \item \textbf{Add a precedence rule.} A precedence annotation is added to the Enterprise Precedence Table (\S{}6.5): ``when these two constraints are both applicable and create tension, constraint A takes precedence.'' The rationale is documented.
   \item \textbf{Accept the tension} --- restricted by risk tier:
   \item \textbf{Critical tier: not permitted.} Tension in Critical-tier constraints must resolve to either modification or a precedence rule. Unresolved tension in Critical-tier constraints is a governance failure.
   \item \textbf{Standard tier:} permitted with cross-domain governance body approval and documented compensating controls.
@@ -838,9 +838,9 @@ If a conflict surfaces during prompt evaluation that was not caught at authoring
 
 \textbf{CONTRADICTION} is a formal predicate, mechanically detectable, and complete for the atomic property fragment:
 
-\begin{cladnote}
+\begin{claddisp}
 CONTRADICTION(c$_1$, c$_2$) $\equiv$ c$_1$ = O($\phi$) $\wedge$ c$_2$ = F($\phi$)~~for some atomic $\phi$ $\in$ $\Phi$
-\end{cladnote}
+\end{claddisp}
 
 
 Since properties are atomic and independent (\S{}3.2a), pairwise contradiction detection is complete. Any unsatisfiable pair of O/F constraints over independent atomic properties is detected by this predicate. Multi-constraint unsatisfiability where each pair is individually satisfiable but the set as a whole is not does not arise for the supported fragment --- atomic O/F constraints over independent properties are jointly satisfiable if and only if they are pairwise satisfiable.
@@ -913,7 +913,7 @@ If yes, the new constraint is flagged for cross-domain review and treated as if 
 
 Impact analysis is empirical, not exhaustive. It detects known interaction patterns but cannot prove absence of indirect effects. This is explicitly acknowledged in the formal model.
 
-\textbf{Adversarial diversity requirement.} Gold Standard Prompt Sets must be constructed or audited by a party independent of the constraint authors in that domain. This prevents ``thinning" the set to allow specific constraints to pass impact analysis undetected. The independent party may be the cross-domain governance body, an internal red team, or an external assessor --- but it must not be the team proposing the new constraint.
+\textbf{Adversarial diversity requirement.} Gold Standard Prompt Sets must be constructed or audited by a party independent of the constraint authors in that domain. This prevents ``thinning'' the set to allow specific constraints to pass impact analysis undetected. The independent party may be the cross-domain governance body, an internal red team, or an external assessor --- but it must not be the team proposing the new constraint.
 
 \subsection{Cross-Domain Governance Body}
 
@@ -1051,7 +1051,7 @@ Constraints are governance artifacts with production impact. They require the sa
 \subsection{Constraint Libraries}
 
 
-Pre-decomposed, industry-vetted constraint packages reduce the per-organization authoring burden. A ``HIPAA Prompt Constraints v1.0" package, for example, provides a set of enterprise-level constraints derived from the HIPAA Privacy Rule and Security Rule, with pre-attested decompositions, known residual gaps, and regression test suites.
+Pre-decomposed, industry-vetted constraint packages reduce the per-organization authoring burden. A ``HIPAA Prompt Constraints v1.0'' package, for example, provides a set of enterprise-level constraints derived from the HIPAA Privacy Rule and Security Rule, with pre-attested decompositions, known residual gaps, and regression test suites.
 
 Libraries are versioned using semantic versioning (major.minor.patch), maintained by domain experts, and subject to the same governance lifecycle as custom constraints.
 
@@ -1060,7 +1060,7 @@ Libraries are versioned using semantic versioning (major.minor.patch), maintaine
 \begin{itemize}
   \item Review each constraint and decomposition against their specific technical context
   \item Attest that the decompositions are adequate for their deployment (vendor decomposition may not match local model behavior)
-  \item Run the library's regression test suite against their actual models and prompts. This is mechanically enforced: the system verifies that the test suite has been executed and passed on local infrastructure before transitioning library constraints from ``Registered" to "Active." Paper attestation without test execution is not permitted.
+  \item Run the library's regression test suite against their actual models and prompts. This is mechanically enforced: the system verifies that the test suite has been executed and passed on local infrastructure before transitioning library constraints from ``Registered'' to ``Active.'' Paper attestation without test execution is not permitted.
   \item Minimum coverage: local test execution must cover at least the library's defined regression suite in full. Organizations may add local test cases but may not skip library-defined cases.
 \end{itemize}
 

@@ -60,10 +60,10 @@ flowchart TD
 
 ## Build & Test
 
-Requires Scala 3.3.7 and sbt 1.10.7.
+Requires Scala 3.3.8 and sbt 1.10.7.
 
 ```bash
-cd code
+cd app
 sbt compile          # compile all modules
 sbt test             # run all tests
 sbt "core-test/test" # run tests for a single module
@@ -74,7 +74,7 @@ sbt "core-test/testOnly clad.core.ConstraintSpec"  # run a single test class
 
 | Component | Technology |
 |-----------|-----------|
-| Language | Scala 3.3.7 |
+| Language | Scala 3.3.8 |
 | Build | sbt 1.10.7 |
 | Testing | ScalaTest + ScalaCheck (property-based) |
 | HTTP API | http4s (Ember server) + Cats Effect |

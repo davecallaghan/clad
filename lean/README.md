@@ -4,14 +4,14 @@ Machine-checked proofs of algebraic properties from the Clad governance framewor
 
 ## What's Proved
 
-**Theorem 6 (Governance Monoid, meta-framework §12):** Governance components
-with composition form a commutative monoid.
+**Theorem 6 (Governance Partial Commutative Monoid, meta-framework §12):**
+Governance components with composition form a partial commutative monoid.
 
 | Lemma | Statement | File |
 |-------|-----------|------|
 | 3c (Identity) | `g.compose empty = g` | `Clad/Monoid.lean` |
 | 3b (Commutativity) | `g₁.compose g₂ = g₂.compose g₁` | `Clad/Monoid.lean` |
-| 3a (Associativity) | `(g₁.compose g₂).compose g₃ = g₁.compose (g₂.compose g₃)` | `Clad/Monoid.lean` |
+| 3a (Associativity) | `(g₁.compose g₂ >>= (·.compose g₃)) = (g₂.compose g₃ >>= (g₁.compose ·))` | `Clad/Monoid.lean` |
 | Closure | Disjointness preserved through composition | `Clad/Monoid.lean` |
 | Full Coverage | EPG + ROC + MDR covers all 5 surfaces | `Clad/Monoid.lean` |
 

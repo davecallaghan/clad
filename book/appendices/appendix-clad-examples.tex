@@ -17,7 +17,7 @@ End-to-end examples for the control layers of Part IV.
   \item \texttt{O(hipaa\_\allowbreak{}disclaimer)} --- every prompt must include HIPAA-compliant disclaimer language
   \item \texttt{F(pii\_\allowbreak{}in\_\allowbreak{}logs)} --- prompts must never include instructions that would cause PII to appear in system logs
   \item \texttt{F(medical\_\allowbreak{}diagnosis)} --- prompts must not instruct the model to diagnose conditions
-  \item \texttt{$\Permitted$(clinical\_\allowbreak{}terminology)} --- enterprise has considered clinical terminology and imposes no restriction
+  \item \texttt{$\textbackslash\{\}Permitted$(clinical\_\allowbreak{}terminology)} --- enterprise has considered clinical terminology and imposes no restriction
 \end{itemize}
 
 
@@ -43,12 +43,12 @@ C*(project) = \{O(hipaa\_\allowbreak{}disclaimer), F(pii\_\allowbreak{}in\_\allo
 
 \textbf{Decomposition example: F(medical\_\allowbreak{}diagnosis)}
 
-Semantic intent: ``The AI system must not produce output that could be construed as diagnosing a medical condition."
+Semantic intent: ``The AI system must not produce output that could be construed as diagnosing a medical condition.''
 
 Mechanical components (C\_\allowbreak{}m):
 \begin{itemize}
-  \item Pattern scan for diagnostic language: regex and NER-based detection of diagnostic phrases (``you have," "this indicates," "the symptoms suggest," "diagnosis:")
-  \item Required disclaimer presence: prompt must include explicit instruction ``Do not diagnose conditions or suggest specific diagnoses"
+  \item Pattern scan for diagnostic language: regex and NER-based detection of diagnostic phrases (``you have,'' ``this indicates,'' ``the symptoms suggest,'' ``diagnosis:'')
+  \item Required disclaimer presence: prompt must include explicit instruction ``Do not diagnose conditions or suggest specific diagnoses''
   \item Scope limitation: prompt must include instruction to refuse requests for diagnosis
 \end{itemize}
 
@@ -64,7 +64,7 @@ Residual gap: mechanical checks cover an estimated 85\% of diagnostic language p
 
 \textbf{Conflict example: O(empathetic\_\allowbreak{}tone) vs F(promissory\_\allowbreak{}language)}
 
-The department's obligation for empathetic tone (authored by Patient Experience domain) creates tension with Legal's prohibition on promissory language. Empathetic language like ``we will make sure you get the care you need" could be construed as a promissory commitment.
+The department's obligation for empathetic tone (authored by Patient Experience domain) creates tension with Legal's prohibition on promissory language. Empathetic language like ``we will make sure you get the care you need'' could be construed as a promissory commitment.
 
 Phase 1 resolution: cross-domain review between Patient Experience and Legal. Resolution: add a precedence rule to the Enterprise Precedence Table --- F(promissory\_\allowbreak{}language) takes precedence over O(empathetic\_\allowbreak{}tone). The project team must find empathetic language that does not make promissory commitments. Documented rationale: legal liability outweighs tone preference.
 
@@ -83,7 +83,7 @@ Phase 1 resolution: cross-domain review between Patient Experience and Legal. Re
 \textbf{Department constraints (Institutional Research):}
 \begin{itemize}
   \item Inherits all enterprise constraints
-  \item \texttt{$\Permitted$(investment\_\allowbreak{}thesis\_\allowbreak{}language)} --- the department has considered investment thesis language and does not restrict it for professional audiences
+  \item \texttt{$\textbackslash\{\}Permitted$(investment\_\allowbreak{}thesis\_\allowbreak{}language)} --- the department has considered investment thesis language and does not restrict it for professional audiences
   \item \texttt{O(model\_\allowbreak{}uncertainty\_\allowbreak{}disclosure)} --- prompts must instruct the model to disclose uncertainty and confidence levels
 \end{itemize}
 
@@ -97,9 +97,9 @@ Phase 1 resolution: cross-domain review between Patient Experience and Legal. Re
 
 \textbf{Decomposition example: F(investment\_\allowbreak{}advice\_\allowbreak{}to\_\allowbreak{}retail)}
 
-Semantic intent: ``The AI system must not provide personalized investment recommendations to retail investors."
+Semantic intent: ``The AI system must not provide personalized investment recommendations to retail investors.''
 
-Mechanical components: audience detection (prompt must include explicit audience scoping: ``this tool is for institutional investors only"), keyword patterns for personalized advice language ("you should buy," "I recommend," "based on your portfolio"), required disclaimer presence.
+Mechanical components: audience detection (prompt must include explicit audience scoping: ``this tool is for institutional investors only''), keyword patterns for personalized advice language (``you should buy,'' ``I recommend,'' ``based on your portfolio''), required disclaimer presence.
 
 Procedural components: compliance officer review, quarterly re-attestation, FINRA suitability framework review.
 
@@ -162,11 +162,11 @@ The EPG example above established constraints for a Patient FAQ Chatbot. ROC ext
 \end{table}
 
 
-\textbf{Scenario: Normal operation.} Patient asks ``What are your visiting hours?" Model responds with visiting hours and a HIPAA disclaimer. ROC pipeline: deterministic checks pass (no PII patterns, disclaimer present), classifiers score below thresholds (no medical advice, no PHI). Decision: PASS. Output delivered. Full audit record produced.
+\textbf{Scenario: Normal operation.} Patient asks ``What are your visiting hours?'' Model responds with visiting hours and a HIPAA disclaimer. ROC pipeline: deterministic checks pass (no PII patterns, disclaimer present), classifiers score below thresholds (no medical advice, no PHI). Decision: PASS. Output delivered. Full audit record produced.
 
-\textbf{Scenario: Jailbreak attempt.} Patient crafts input designed to elicit medical diagnosis. Model partially complies despite EPG's F(medical\_\allowbreak{}diagnosis) prompt constraint. ROC pipeline: medical advice classifier scores 0.91 (above 0.80 threshold). Decision: BLOCK. Fallback: safe response substitution (``I'm not able to provide medical advice. Please contact your healthcare provider."). Audit record documents: classifier score, threshold, block decision, fallback delivered.
+\textbf{Scenario: Jailbreak attempt.} Patient crafts input designed to elicit medical diagnosis. Model partially complies despite EPG's F(medical\_\allowbreak{}diagnosis) prompt constraint. ROC pipeline: medical advice classifier scores 0.91 (above 0.80 threshold). Decision: BLOCK. Fallback: safe response substitution (``I'm not able to provide medical advice. Please contact your healthcare provider.''). Audit record documents: classifier score, threshold, block decision, fallback delivered.
 
-\textbf{Scenario: Incidental PII.} Model response references ``your appointment with Dr. Smith on March 15" --- incidental PHI from conversation context. ROC pipeline: PHI NER classifier scores 0.82 (above 0.75). Composite PHI check (O\_\allowbreak{}x, any\_\allowbreak{}flag) triggers. Decision: BLOCK with redaction. Delivered output: "your appointment with [PROVIDER] on [DATE]." Audit record documents redaction with specific PII types detected.
+\textbf{Scenario: Incidental PII.} Model response references ``your appointment with Dr. Smith on March 15'' --- incidental PHI from conversation context. ROC pipeline: PHI NER classifier scores 0.82 (above 0.75). Composite PHI check (O\_\allowbreak{}x, any\_\allowbreak{}flag) triggers. Decision: BLOCK with redaction. Delivered output: ``your appointment with [PROVIDER] on [DATE].'' Audit record documents redaction with specific PII types detected.
 
 \subsection{Financial Services: Investment Research Assistant}
 \label{sec:clad-examples-B-2-2}
@@ -215,7 +215,7 @@ The EPG example above established constraints for a Patient FAQ Chatbot. ROC ext
 \end{table}
 
 
-\textbf{Scenario: Model generates operational command.} Despite EPG's F(operational\_\allowbreak{}commands\_\allowbreak{}without\_\allowbreak{}human\_\allowbreak{}confirmation), model outputs ``Execute load shedding on circuit 7." Deterministic command detection catches the imperative structure. Decision: BLOCK + escalation to human operator. Output is NOT delivered. Audit record documents the attempted command, the block, and the escalation. This is a safety-critical catch --- ROC prevents a potential grid operations violation that EPG's prompt constraint failed to prevent at the model behavior level.
+\textbf{Scenario: Model generates operational command.} Despite EPG's F(operational\_\allowbreak{}commands\_\allowbreak{}without\_\allowbreak{}human\_\allowbreak{}confirmation), model outputs ``Execute load shedding on circuit 7.'' Deterministic command detection catches the imperative structure. Decision: BLOCK + escalation to human operator. Output is NOT delivered. Audit record documents the attempted command, the block, and the escalation. This is a safety-critical catch --- ROC prevents a potential grid operations violation that EPG's prompt constraint failed to prevent at the model behavior level.
 
 
 

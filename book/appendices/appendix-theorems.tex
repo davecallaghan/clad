@@ -46,10 +46,10 @@ Therefore, no interaction element lacks surface assignment, no element is multip
 Given Axiom 3 preconditions P1-P3 hold:
 If components g$_1$ and g$_2$ govern non-overlapping surfaces, then:
 
-\begin{cladnote}
+\begin{claddisp}
 guar(g$_1$) holds regardless of whether g$_2$ is deployed\\
 guar(g$_2$) holds regardless of whether g$_1$ is deployed\\
-\end{cladnote}
+\end{claddisp}
 \end{clem}
 
 \begin{proof}
@@ -66,9 +66,9 @@ If P1-P3 are violated, independence is not guaranteed and must be verified empir
 \begin{ccor}[(Graceful Degradation)]
 Given P1-P3, deploying a subset of governance components provides the guarantees of that subset. No guarantee is weakened by the absence of other components.
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ G' $\subseteq$ G : $\forall$ g $\in$ G' : guar(g) holds in deployment(G')\\
-\end{cladnote}
+\end{claddisp}
 This enables phased adoption: an organization can deploy EPG (prompt governance) alone and receive its full guarantees, then add ROC (output controls) later for additional coverage.
 
 \smallskip\noindent\textbf{Caveat (Soft Dependency Effectiveness).}
@@ -100,7 +100,7 @@ $\wedge$ coverage(g$_1$, g$_2$) = S\_g$_1$ $\cup$ S\_g$_2$~~~~~~~\textemdash{} g
 \end{cthm}
 
 \begin{proof}
-\begin{cladnote}
+\begin{claddisp}
 guar(g$_1$) holds by hypothesis.\\
 guar(g$_2$) holds by hypothesis.\\
 By Lemma 1 (given P1-P3), guarantees are independent.\\
@@ -109,7 +109,7 @@ Contract satisfaction ensures handoff data is available, including\\
 Handoff includes version\_manifest (Axiom 5), preserving temporal audit.\\
 Audit integrity (\S{}6.4, AI1-AI4) ensures records are tamper-evident.\\
 Surface coverage is the union by definition.\\
-\end{cladnote}
+\end{claddisp}
 \end{proof}
 
 
@@ -125,17 +125,17 @@ Given: Axiom 3 (P1-P3), Axiom 4 (observability), Axiom 5 (temporal identity), Au
 
 For a deployed component set G' $\subseteq$ G with satisfied interface contracts, the audit chain for any interaction i covers every governed surface, bounded by the observability frontier and enforcement boundary.
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ i $\in$ I\_governed : $\bigcup$\{A\_g.surface | A\_g $\in$ chain(i)\} = $\bigcup$\{S\_g | g $\in$ G'\}\\
-\end{cladnote}
+\end{claddisp}
 where I\_\allowbreak{}governed = interactions that pass through enforcement points (EA1) and A\_\allowbreak{}g may be either a normal record or a degraded record (\S{}7.2).
 
-\begin{cladnote}
+\begin{claddisp}
 Preconditions:\\
 ~~- All elements in $\bigcup$\{S\_g | g $\in$ G'\} are observable (Axiom 4).\\
 ~~- All interactions pass through enforcement points (EA1-EA2).\\
 ~~- Audit records are tamper-evident (AI1-AI4).\\
-\end{cladnote}
+\end{claddisp}
 Elements beyond the observability boundary, and interactions that bypass enforcement, are not covered. Both contribute ungoverned risk that must be documented per Tier 2 classification (Axiom 1) and detected per EA3 (bypass detection).
 
 \end{cthm}
@@ -166,13 +166,13 @@ For any interaction i at any time t, the audit chain provides:
   \item What was NOT observable: observability\_\allowbreak{}note per record  (Axiom 4)
 \end{itemize}
 
-This is the formal guarantee behind ``show me exactly which rules were in effect when this AI produced that output" --- with the added rigor that the system explicitly declares what it could and could not observe.
+This is the formal guarantee behind ``show me exactly which rules were in effect when this AI produced that output'' --- with the added rigor that the system explicitly declares what it could and could not observe.
 
 \smallskip\noindent\textbf{Important Distinction (Record Types in the Chain).}
-\begin{cladnote}
+\begin{claddisp}
 Audit records in chain(i) are one of two types with different\\
 evidentiary strength:\\
-\end{cladnote}
+\end{claddisp}
 \smallskip\noindent\textbf{Evaluation Record (component-signed, \S{}9.1).}
 Produced by the governance component itself during normal operation.
 Contains actual constraint evaluations (eval(c, artifact(i))).
@@ -197,17 +197,17 @@ The presence of process records should trigger investigation, not be treated as 
 
 
 \begin{clem}[2 (Monotonic Risk Reduction)]
-\begin{cladnote}
+\begin{claddisp}
 Given: Axiom 3 preconditions P1-P3, and that all components are\\
 correctly implemented (no implementation defects that introduce\\
 new vulnerabilities).\\
-\end{cladnote}
+\end{claddisp}
 Deploying additional governance components cannot increase total compliance risk AS MEASURED BY R(i).
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ G' $\subseteq$ G'' $\subseteq$ G : R(i | G'' deployed) $\leq$ R(i | G' deployed)\\
-\end{cladnote}
-\begin{cladnote}
+\end{claddisp}
+\begin{claddisp}
 Scope, and it is a real restriction. R(i) is the probability that the\\
 DELIVERED OUTPUT violates a requirement. Governance creates compliance\\
 risk of a different kind, which this measure cannot represent: an audit\\
@@ -217,13 +217,13 @@ breach exposure in its own right. The regulatory mapping treats this as\\
 a live obligation, not a hypothetical \textemdash{} PHI in logs and audit records\\
 maps to Security \S{}164.308(a)(4), and AI1-AI6 exist partly to discharge\\
 it.\\
-\end{cladnote}
+\end{claddisp}
 So the honest statement of what governance does is not that it lowers risk monotonically. It TRADES output risk for custody risk, deliberately, and the trade is worth making because output risk is unbounded and undetectable while custody risk is bounded, located, and controllable by established means. A privacy officer is right to raise this, and the trade is the answer, not the lemma.
 
 \end{clem}
 
 \begin{proof}
-\begin{cladnote}
+\begin{claddisp}
 Let g $\in$ G'' \textbackslash\{\} G' (a component in the larger set but not the smaller).\\
 By the Risk Reduction definition, deploying g reduces R\_Sg: R\_Sg(i|g) $\leq$ R\_Sg(i|$\neg$g).\\
 By Axiom 3 (given P1-P3), deploying g does not affect the guarantees\\
@@ -231,7 +231,7 @@ By Axiom 3 (given P1-P3), deploying g does not affect the guarantees\\
 ~~any k $\neq$ g's surface.\\
 Total risk R(i) = $\Sigma$R\_S$_k$. One term decreases, others are unchanged.\\
 Therefore R(i) is non-increasing.\\
-\end{cladnote}
+\end{claddisp}
 \smallskip\noindent\textbf{Caveat (Implementation Risk).}
 This lemma assumes correct implementation. In practice, deploying a new component may introduce implementation defects (bugs, misconfigs, new attack surface) that increase risk outside the formal model.
 Implementation risk is addressed by testing, security review, and staged rollout --- not by the governance framework itself.
@@ -240,9 +240,9 @@ The lemma holds for the GOVERNANCE risk model; it does not claim that total OPER
 \end{proof}
 
 \begin{ccor}[(Incremental Value)]
-\begin{cladnote}
+\begin{claddisp}
 Given P1-P3:\\
-\end{cladnote}
+\end{claddisp}
 Each component deployed provides non-negative marginal risk reduction: $\Delta$R(g) = R(i | G' deployed) - R(i | G' $\cup$ \{g\} deployed) $\geq$ 0
 
 This formally justifies phased adoption: every component added improves the risk posture. There is no deployment order that makes things worse.
@@ -256,13 +256,13 @@ This formally justifies phased adoption: every component added improves the risk
 
 
 \begin{cthm}[4 (Irreducible Residual Risk)]
-\begin{cladnote}
+\begin{claddisp}
 Even with all governance components deployed, residual compliance\\
 risk is non-zero.\\
-\end{cladnote}
-\begin{cladnote}
+\end{claddisp}
+\begin{claddisp}
 $\forall$ G fully deployed : R(i | G) > 0\\
-\end{cladnote}
+\end{claddisp}
 \end{cthm}
 
 \begin{proof}
@@ -295,15 +295,15 @@ Given: Axiom 3 (P1-P3), Axiom 4, Axiom 5, enforcement (EA1-EA2), audit integrity
 
 When all three components are deployed with satisfied interface contracts, the composed audit chain covers every Tier 1 element of every governed interaction within the observability boundary.
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ i $\in$ I\_governed :\\
 ~~chain(i) = [Audit\_EPG(i, t), Audit\_ROC(i, t), Audit\_MDR(i, t)]\\
-\end{cladnote}
-\begin{cladnote}
+\end{claddisp}
+\begin{claddisp}
 covers: $\sigma$\_prompt $\cup$ $\sigma$\_output $\cup$ $\sigma$\_delivery $\cup$ $\sigma$\_input $\cup$ $\sigma$\_config\\
 ~~~~~~= \{p, o, o', u, m, $\theta$\}\\
 ~~~~~~= all Tier 1 interaction elements\\
-\end{cladnote}
+\end{claddisp}
 NOT covered by this theorem:
 \begin{itemize}
   \item Tier 2 elements (known but unmodeled --- documented as ungoverned)
@@ -340,17 +340,17 @@ Therefore, the chain covers all Tier 1 elements of governed interactions, and ex
 \begin{clem}[3 (Composition Properties)]
 Given components with non-overlapping surfaces (S\_\allowbreak{}g$_1$ $\cap$ S\_\allowbreak{}g$_2$ = $\emptyset$):
 
-\begin{cladnote}
+\begin{claddisp}
 (a) Associativity:\\
 ~~~~(g$_1$ $\oplus$ g$_2$) $\oplus$ g$_3$ = g$_1$ $\oplus$ (g$_2$ $\oplus$ g$_3$)\\
-\end{cladnote}
+\end{claddisp}
 Proof: Surface union is associative. Constraint union is associative.
 Audit composition via shared interaction\_\allowbreak{}id is associative (chain order is determined by pipeline causality, not composition order).
 
-\begin{cladnote}
+\begin{claddisp}
 (b) Commutativity:\\
 ~~~~g$_1$ $\oplus$ g$_2$ = g$_2$ $\oplus$ g$_1$\\
-\end{cladnote}
+\end{claddisp}
 Proof: Surface union and constraint union are commutative, which gives equality of the S, C and E components directly. (Axiom 3 is not needed here and does not belong in this proof: it concerns preservation of $\Phi$ under composition, which is a different claim from equality of the composed tuple.) The audit component is excluded --- its order is fixed by pipeline causality, not by composition.
 
 (c) Identity: $\exists$ g\_\allowbreak{}$\emptyset$ = ($\emptyset$, $\emptyset$, $\emptyset$, $\emptyset$, $\emptyset$) such that g $\oplus$ g\_\allowbreak{}$\emptyset$ = g
@@ -368,10 +368,10 @@ The abstract governance components form a commutative monoid under $\oplus$ that
 
 Two qualifications, both load-bearing:
 
-Closure fails, and $\oplus$ is partial. Non-overlap is a relation between a pair of components, not a property of one, so ``components with non-overlapping surfaces" does not pick out a set closed under $\oplus$.
-Concretely: g$_1$ $\oplus$ g$_2$ governs S$_1$ $\cup$ S$_2$, so (g$_1$ $\oplus$ g$_2$) $\oplus$ g$_1$ has overlapping surfaces and is undefined. This is a partial commutative monoid --- a real structure, and the right one, but not a monoid.
+Closure fails, and $\oplus$ is partial. Non-overlap is a relation between a pair of components, not a property of one, so ``components with non-overlapping surfaces'' does not pick out a set closed under $\oplus$.
+Concretely: g$_1$ $\oplus$ g$_2$ governs S$_1$ $\cup$ S$_2$, so (g$_1$ $\oplus$ g$_2$) $\oplus$ g$_1$ has overlapping surfaces and is undefined. Formally, $\oplus$ is a total function into an error-or-result sum: g$_1$ $\oplus$ g$_2$ yields either a composed component (when S\_\allowbreak{}g$_1$ $\cap$ S\_\allowbreak{}g$_2$ = $\emptyset$) or a ComposeError carrying the overlapping surfaces --- matching the Lean (\texttt{Except ComposeError ComponentSpec}) and Scala (\texttt{Either[ComposeError, ComponentSpec]}) implementations. This is a partial commutative monoid --- a real structure, and the right one, but not a monoid.
 
-\begin{cladnote}
+\begin{claddisp}
 Audit composition is not a binary operation on components. The\\
 definition of $\oplus$ sets A = compose(A\_g$_1$, A\_g$_2$) via shared\\
 interaction\_id, and chain order is fixed by pipeline causality, which\\
@@ -381,7 +381,7 @@ byte level. Commutativity and associativity therefore hold for surface\\
 and constraint union, which is all the phased-deployment argument\\
 needs; they do not hold for the audit component, and no claim is made\\
 that they do.\\
-\end{cladnote}
+\end{claddisp}
 APPLICATION TO CONCRETE COMPONENTS (EPG, ROC, MDR): The concrete solution components have read-only cross-surface data flows (R\_\allowbreak{}soft) permitted by P3. These flows do not affect guarantee composition (Lemma 1), so the monoid properties hold for guarantees. However, the read-only flows mean that EVALUATION EFFECTIVENESS (not guarantees) depends on deployment composition --- ROC is more effective with EPG's context than without it.
 
 Therefore: guarantee-level composition is commutative and associative.
@@ -405,7 +405,7 @@ These connect the formal model to the business case using classical deductive fo
 \subsection{Syllogism 2 (Necessity of Prompt Governance)}
 
 
-\begin{cladnote}
+\begin{claddisp}
 Major Premise:\\
 ~~Model outputs are conditioned on prompts (Axiom 2, pipeline definition).
 \par\smallskip
@@ -420,13 +420,13 @@ Conclusion:\\
 Contrapositive:\\
 ~~If compliance risk on the prompt surface is managed and auditable,\\
 ~~then prompt governance (or a functional equivalent) is deployed.
-\end{cladnote}
+\end{claddisp}
 
 
 \subsection{Syllogism 3 (Necessity of Output Controls)}
 
 
-\begin{cladnote}
+\begin{claddisp}
 Major Premise:\\
 ~~Prompt governance cannot guarantee output compliance\\
 ~~(Axiom 2, Theorem 4).
@@ -437,13 +437,13 @@ Minor Premise:\\
 Conclusion:\\
 ~~Prompt governance alone is insufficient; output-level controls are\\
 ~~necessary to address the residual risk on the output surface.
-\end{cladnote}
+\end{claddisp}
 
 
 \subsection{Syllogism 4 (Sufficiency of the Composed Solution)}
 
 
-\begin{cladnote}
+\begin{claddisp}
 Major Premise:\\
 ~~The composed solution covers all observable interaction surfaces\\
 ~~(Theorem 5), given Axiom 3 preconditions P1-P3, enforcement\\
@@ -459,7 +459,7 @@ Conclusion:\\
 ~~across the governed portion of the AI interaction pipeline,\\
 ~~within the framework's threat model (T1-T6).
 \par\smallskip
-Scope of ``auditable compliance posture" \textemdash{} what this DOES mean:\\
+Scope of ``auditable compliance posture'' \textemdash{} what this DOES mean:\\
 ~~- Every governed interaction has a tamper-evident audit chain\\
 ~~- Every applicable constraint is evaluated with version stamps\\
 ~~- Every component failure is recorded with declared posture\\
@@ -471,13 +471,13 @@ What this does NOT mean:\\
 ~~- Threats T7-T11 are addressed (requires ROC, MDR)\\
 ~~- Tier 2 and Tier 3 elements are governed (Axiom 1)\\
 ~~- Implementation defects are absent (Lemma 2 caveat)
-\end{cladnote}
+\end{claddisp}
 
 
 \subsection{Syllogism 5 (Observability as Governance Precondition)}
 
 
-\begin{cladnote}
+\begin{claddisp}
 Major Premise:\\
 ~~Governance requires evaluation of governed elements against\\
 ~~constraints (Component Definition, \S{}5.1).
@@ -494,7 +494,7 @@ Implication:\\
 ~~Extending governance coverage requires extending observability first.\\
 ~~Deploying a governance component without ensuring observability of\\
 ~~its surfaces produces a guarantee that is formally vacuous.
-\end{cladnote}
+\end{claddisp}
 
 
 
@@ -573,10 +573,10 @@ A Global Interaction Log records the existence of every AI interaction BEFORE an
 
 Properties: GIL1 (Pre-Component Registration): Every interaction i receives an interaction\_\allowbreak{}id that is registered in the GIL before the interaction enters the governance pipeline. This registration occurs at the enforcement chokepoint (EA1), not within any governance component.
 
-\begin{cladnote}
+\begin{claddisp}
 $\forall$ i $\in$ I\_governed : $\exists$ gil\_entry(i) with timestamp t\_registered\\
 ~~where t\_registered < t\_first\_component\_evaluation\\
-\end{cladnote}
+\end{claddisp}
 GIL2 (Independent Operation): The GIL operates independently of EPG, ROC, and MDR. A failure in any governance component does not affect GIL availability. The GIL has its own fail-closed posture: if the GIL is unavailable, no interaction proceeds.
 
 GIL3 (Completeness Verification): For any time window [t$_1$, t$_2$], it is possible to compare:
@@ -584,7 +584,7 @@ GIL3 (Completeness Verification): For any time window [t$_1$, t$_2$], it is poss
   \item The set of interaction\_\allowbreak{}ids registered in the GIL
   \item The set of interaction\_\allowbreak{}ids present in chain records
 \end{itemize}
-Any GIL entry without a corresponding chain is a ``ghost" --- an interaction that was initiated but not fully governed.
+Any GIL entry without a corresponding chain is a ``ghost'' --- an interaction that was initiated but not fully governed.
 Ghosts MUST be investigated and classified as either: (a) component failure (degraded record should exist) (b) enforcement bypass (security incident --- T4) (c) in-flight interaction (not yet completed)
 
 GIL4 (Integrity): The GIL is subject to the same integrity properties as audit records (AI1-AI6): immutable storage, signed entries, independent verification.
@@ -594,16 +594,16 @@ GIL4 (Integrity): The GIL is subject to the same integrity properties as audit r
 \begin{cthm}[3b (Ghost Detection)]
 Given GIL properties GIL1-GIL4 and Audit Integrity AI1-AI5:
 
-Every interaction that enters the governance pipeline is either: (a) fully governed with a complete audit chain, OR (b) partially governed with degraded records in the chain, OR (c) detectable as a ``ghost" via GIL completeness verification
+Every interaction that enters the governance pipeline is either: (a) fully governed with a complete audit chain, OR (b) partially governed with degraded records in the chain, OR (c) detectable as a ``ghost'' via GIL completeness verification
 
 No interaction that enters the pipeline can be silently ungoverned.
 
-This is deliberately narrower than ``no interaction can be silently ungoverned," which the GIL cannot support. An interaction that never reaches the enforcement chokepoint --- a developer's own API credential, a model deployed outside the governed platform --- receives no GIL entry and produces no chain record. Absent from both sets, it is invisible to GIL3's comparison, which detects interactions that entered and then vanished. Interactions that never entered are the subject of EA3 (\S{}6), where detection is probabilistic, deployment-specific, and depends on network egress controls and credential management rather than on anything the GIL can prove.
+This is deliberately narrower than ``no interaction can be silently ungoverned,'' which the GIL cannot support. An interaction that never reaches the enforcement chokepoint --- a developer's own API credential, a model deployed outside the governed platform --- receives no GIL entry and produces no chain record. Absent from both sets, it is invisible to GIL3's comparison, which detects interactions that entered and then vanished. Interactions that never entered are the subject of EA3 (\S{}6), where detection is probabilistic, deployment-specific, and depends on network egress controls and credential management rather than on anything the GIL can prove.
 
 \end{cthm}
 
 \begin{proof}
-\begin{cladnote}
+\begin{claddisp}
 By GIL1, every governed interaction is registered before processing.\\
 By GIL2, registration is independent of component health.\\
 Case (a): All components operational $\to$ full chain (Theorem 3).\\
@@ -613,13 +613,13 @@ Case (c): Neither full nor degraded records exist $\to$ GIL entry\\
 By GIL4, the GIL itself is tamper-evident.\\
 Therefore, silent ungoverned processing is impossible given\\
 GIL availability.\\
-\end{cladnote}
-\begin{cladnote}
+\end{claddisp}
+\begin{claddisp}
 Note: If the GIL itself is unavailable, GIL2 mandates fail-closed:\\
 no interactions proceed. This makes the GIL a critical-path\\
 dependency \textemdash{} a deliberate architectural choice that prioritizes\\
 governance completeness over availability for governed workloads.\\
-\end{cladnote}
+\end{claddisp}
 \end{proof}
 
 
@@ -644,7 +644,7 @@ In either case, $\exists$ i where S\_\allowbreak{}prompt is unconstrained $\to$ 
 \begin{cthm}[3a (Tamper-Evident Audit Chain)]
 Given properties AI2-AI4, and supposing AI1 has been defeated for a single record, any modification to any audit record in chain(i) is detectable by an independent verifier.
 
-\begin{cladnote}
+\begin{claddisp}
 Note on the premises: AI1 (immutable storage) is the control this\\
 theorem backstops, not one of its premises. Assuming AI1 holds makes\\
 the theorem vacuous \textemdash{} modification would be impossible by hypothesis.\\
@@ -652,7 +652,7 @@ The useful claim is the one an auditor asks for: if immutability is\\
 bypassed for some record, whether by a misconfigured retention policy\\
 or an administrator with lifecycle rights, the chain and the signatures\\
 still reveal it.\\
-\end{cladnote}
+\end{claddisp}
 \end{cthm}
 
 \begin{proof}

@@ -99,7 +99,7 @@ Tier 3 — Unknown / Emergent:
 Governance systems must not assume deterministic model output. The output is sampled from a conditional distribution parameterized by the prompt, user input, model, and inference configuration.
 
 ```
-M : X × U × Θ → Dist(O)
+M : X × U × Θ → Δ(O)
 o ~ M(x, u, θ)
 
 Formally: governance must be correct under the assumption that

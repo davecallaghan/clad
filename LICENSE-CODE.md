@@ -1,6 +1,6 @@
 # MIT License
 
-**Applies to:** everything under `app/`
+**Applies to:** `app/`, `lean/`, `tools/`, `ops/`
 
 Copyright (c) 2026 David Callaghan / 2CData
 

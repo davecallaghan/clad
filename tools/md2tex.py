@@ -89,8 +89,39 @@ def _mono(s):
     a hyphen; ask for the glyph directly instead."""
     return _esc_plain(s).replace('---', r'\textemdash{}')
 
+_CODESPAN = re.compile(r'`([^`]+?)`')
+
+
+def _esc_code(s):
+    """A code span's content, escaped for \\texttt{}.
+
+    Deliberately not _esc_plain: inside a code span a straight quote is a literal
+    character, so curling it is wrong -- and since an opening curl is two
+    backticks, curling here is what corrupted code-span pairing in the first
+    place. Otherwise this is _mono's treatment, because the destination is a
+    typewriter font and it has no --- ligature.
+    """
+    return _mono(s.replace('"', '\x02')).replace('\x02', '"')
+
+
 def esc(t):
-    """Escape LaTeX specials in prose. Leaves $...$ and \\cmd alone."""
+    """Escape LaTeX specials in prose. Leaves $...$ and \\cmd alone.
+
+    Code spans are lifted out FIRST, before any escaping. _esc_plain turns an
+    opening quote into two backticks, so a code-span substitution applied
+    afterwards -- which is what inline() used to do -- pairs a real delimiter
+    against an injected quote glyph and the \\texttt{} boundaries land inside the
+    prose. On page 132 that set an English sentence in typewriter and the formula
+    it described in roman. Lifting spans here also means their content is escaped
+    once, by _esc_code, instead of twice.
+    """
+    spans = []
+
+    def _lift(m):
+        spans.append(_esc_code(m.group(1)))
+        return '\x00%d\x00' % (len(spans) - 1)
+
+    t = _CODESPAN.sub(_lift, t)
     out, i = [], 0
     for m in re.finditer(r'(\$[^$]*\$|\\[a-zA-Z]+(?:\{[^}]*\})*)', t):
         seg = t[i:m.start()]
@@ -100,7 +131,9 @@ def esc(t):
     # zero-width break there is safe -- and necessary, because
     # F(operational_commands_without_human_confirmation) has no other break point
     # and ran 190pt off the margin.
-    return ''.join(out)
+    return re.sub(r'\x00(\d+)\x00',
+                  lambda m: r'\texttt{' + spans[int(m.group(1))] + '}',
+                  ''.join(out))
 
 def _esc_plain(s):
     for a, b in [('\\', r'\textbackslash{}'), ('&', r'\&'), ('%', r'\%'),
@@ -133,8 +166,35 @@ def _esc_plain(s):
                  ('ᵢ','$_i$'), ('ⱼ','$_j$'), ('ₖ','$_k$'), ('ₙ','$_n$'),
                  ('“', '``'), ('”', "''"), ('‘', '`'), ('’', "'")]:
         s = s.replace(a, b)
-    s = s.replace('"', "``", 1) if s.count('"') >= 2 else s
-    return s
+    return _straight_quotes(s)
+
+
+def _straight_quotes(s):
+    """Turn straight double quotes into LaTeX's asymmetric pair, alternating.
+
+    This replaced `s.replace('"', "``", 1) if s.count('"') >= 2 else s`, which
+    curled only the FIRST quote on a line and left every other one straight. On a
+    line with three or more quotes -- and there are 28 of those in research/ --
+    the result was `` ``supported" '' : a proper opening quote closed by a
+    vertical typewriter quote. 110 of them reached the PDF, all in the second half
+    of the book, because the first half is hand-written LaTeX that never went
+    through this function.
+
+    Alternating on a per-line basis is the right granularity: these are all
+    inline scare-quotes and none spans a line. A quote count that is odd leaves
+    the last one opening, which is what LaTeX does with an unbalanced quote
+    anyway, and is visible enough in the PDF to be caught.
+    """
+    if '"' not in s:
+        return s
+    out, opening = [], True
+    for ch in s:
+        if ch == '"':
+            out.append('``' if opening else "''")
+            opening = not opening
+        else:
+            out.append(ch)
+    return ''.join(out)
 
 CLAD_CH = {'1': 'framework', '2': 'prompt', '3': 'controls', '4': 'monitoring'}
 
@@ -208,7 +268,11 @@ def linebreaks(t):
 def inline(t):
     t = re.sub(r'\*\*(.+?)\*\*', r'\\textbf{\1}', t)
     t = re.sub(r'(?<!\*)\*([^*]+?)\*(?!\*)', r'\\emph{\1}', t)
-    t = re.sub(r'`([^`]+?)`', lambda m: r'\texttt{' + m.group(1) + '}', t)
+    # Code spans are handled in esc(), before quote escaping can inject backticks.
+    # Doing it here would now be actively wrong: by this point the only backticks
+    # left are LaTeX opening quotes, and pairing across two of those wraps the
+    # prose between them in \texttt{}. No heading -- the one path that reaches
+    # inline() without esc() -- contains a code span.
     t = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', t)
     return t
 
@@ -315,6 +379,22 @@ def _emit_prose(folded, out):
     out.append('')
 
 
+def _pick_display_env(block):
+    """Choose between cladnote (typewriter, for column-aligned notation) and
+    claddisp (roman, for everything else) based on whether the block has genuine
+    interior column alignment.
+
+    Interior alignment means two non-whitespace regions separated by three or more
+    spaces on the same line -- the pattern of a glossary or signature table:
+        x ∈ X   — the assembled prompt
+    Leading indentation alone (continuation lines, nested bullets) does not
+    justify monospace.
+    """
+    col = sum(1 for l in block
+              if re.search(r'\S {3,}\S', l) and not l.lstrip().startswith('-'))
+    return 'cladnote' if col >= 2 else 'claddisp'
+
+
 def _stmt_part(block, out):
     """Render one part of a statement: prose as prose, aligned notation as an
     indented monospace note. Alignment is load-bearing in these blocks (tier
@@ -346,7 +426,8 @@ def _stmt_part(block, out):
         unpunct = sum(1 for t in body if not re.search(r'[.;:]$', t))
         listish = len(body) > 1 and unpunct * 2 > len(body)
         if listish or any(_is_display(t) for t in body):
-            out.append(r'\begin{cladnote}')
+            env = _pick_display_env(p)
+            out.append(r'\begin{%s}' % env)
             for l in p:
                 w = l
                 for a, b in VERB: w = w.replace(a, b)
@@ -358,7 +439,7 @@ def _stmt_part(block, out):
                 txt = re.sub(r' {2,}', lambda m: '~' * len(m.group(0)),
                              _mono(w[lead:]))
                 out.append('~' * lead + txt + r'\\')
-            out.append(r'\end{cladnote}')
+            out.append(r'\end{%s}' % env)
         else:
             _emit_prose(folded, out)
 
@@ -445,11 +526,12 @@ def convert(src, chapter_label):
                 # they are all set the same way. Only the widest need a
                 # smaller font, which cladnote's \small can be overridden with.
                 if blk:
+                    env = _pick_display_env(blk)
                     widest = max((len(x) for x in blk), default=0)
                     sz = ('' if widest <= 84 else
                           r'\footnotesize' if widest <= 96 else
                           r'\scriptsize' if widest <= 112 else r'\tiny')
-                    out.append(r'\begin{cladnote}' + sz)
+                    out.append(r'\begin{%s}' % env + sz)
                     # Lines within a run are joined by \\; a blank line becomes a
                     # paragraph break. A \\ on an empty line is the LaTeX error
                     # "There's no line here to end".
@@ -472,7 +554,7 @@ def convert(src, chapter_label):
                         run.append('~' * lead + txt)
                     while out and out[-1] == r'\par\smallskip':
                         out.pop()
-                    out.append(r'\end{cladnote}')
+                    out.append(r'\end{%s}' % env)
                     out.append('')
                     i = j + 1; continue
 
@@ -614,11 +696,17 @@ def convert(src, chapter_label):
         # notation). Guard: must not be immediately preceded by a list item, or
         # it is a continuation line rather than a display block.
         if re.match(r'^    \S', ln) and not (out and out[-1].strip().startswith(r'\item')):
-            # Same treatment as a statement's notation: cladnote with real math
-            # symbols. This path applied the ASCII map, which is why
-            # "forall c : not emergency(c)" appeared a few pages after the very
-            # same operators had been set as symbols.
-            out.append(r'\begin{cladnote}')
+            # Same treatment as a statement's notation: cladnote or claddisp
+            # depending on whether the block has genuine column alignment.
+            # Collect the block first so _pick_display_env can see all lines.
+            _4sp_blk = []
+            _4sp_i = i
+            while _4sp_i < len(lines) and (re.match(r'^    ', lines[_4sp_i]) or not lines[_4sp_i].strip()):
+                if lines[_4sp_i].strip():
+                    _4sp_blk.append(lines[_4sp_i][4:])
+                _4sp_i += 1
+            _4sp_env = _pick_display_env(_4sp_blk)
+            out.append(r'\begin{%s}' % _4sp_env)
             run = []
             def _flush(run=run, out=out):
                 if run:
@@ -644,7 +732,7 @@ def convert(src, chapter_label):
             _flush()
             while out and out[-1] == r'\par\smallskip':
                 out.pop()
-            out.append(r'\end{cladnote}'); out.append(''); continue
+            out.append(r'\end{%s}' % _4sp_env); out.append(''); continue
 
         if re.match(r'^\s*[-*]\s+', ln):
             out.append(r'\begin{itemize}')

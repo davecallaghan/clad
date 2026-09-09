@@ -4,12 +4,17 @@
 
 *The governance layer for regulated AI.*
 
-
 ---
 
-Enterprises are deploying AI with no governance that survives regulatory scrutiny. Prompts are ad-hoc, outputs are unfiltered, and audit trails are incomplete. When a regulator asks *"show me exactly which rules governed this AI interaction"* — most organizations have no answer.
+## The Book
 
-Clad is a formally modeled governance framework that provides hierarchical constraints, tamper-evident audit trails, and regulatory crosswalks for enterprise AI under HIPAA, SOX, GLBA, NERC CIP, GDPR, and the EU AI Act.
+The framework is specified in a 219-page book with formal definitions, proofs, and regulatory crosswalks.
+
+[**Download the PDF**](https://github.com/davecallaghan/clad/releases/latest/download/trust-by-design.pdf)
+
+The book covers: why LLM outputs need governance that goes beyond accuracy metrics; a grounded-assertion epistemology for language models; a five-category hallucination taxonomy; nineteen system invariants; hierarchical deontic constraints; tamper-evident audit chains; and regulatory mappings for HIPAA, SOX, GLBA, NERC CIP, GDPR, and the EU AI Act.
+
+The LaTeX source is in [`book/`](book/); the markdown it is generated from is in [`research/`](research/).
 
 ## The Three-Layer Pipeline
 
@@ -42,129 +47,67 @@ Each layer produces tamper-evident, version-stamped audit records that compose i
 
 The model in [`lean/`](lean/) contains 88 theorems and lemmas with zero `sorry` — no unfinished proofs — checked by `lake build` in CI. What this establishes is that the stated properties hold *of the Lean model*. It is not a proof that the Scala implementation is correct: that relationship is what the differential test below is for, and its status is reported by CI rather than asserted here. The results cover:
 
-- **Composition algebra** -- components form a *partial* commutative monoid (Theorem 6). Identity and commutativity hold unconditionally, commutativity including in failure; associativity holds on the operator's domain, and is false off it, since the two bracketings report different overlaps
-- **Surface completeness** -- EPG + ROC + MDR covers all five control surfaces (Theorem 1)
-- **Tamper-evident audit chains** -- hash-chain integrity with tamper detection (Theorem 3a)
-- **Ghost detection** -- every interaction is classified as governed, degraded, or ghost (Theorem 3b)
-- **Deontic logic** -- obligation/prohibition satisfaction semantics with 4 inversion rules
-- **Constraint hierarchy monotonicity** -- enterprise constraints propagate to all lower levels
-- **Residual risk reduction** -- adding components monotonically reduces risk (Theorem 4)
-- **Contract composability** -- independently deployed components preserve guarantees (Theorem 2)
-- **Output evaluation** -- deterministic threshold decisions with exhaustive coverage
-- **Audit completeness** -- every governed interaction produces an audit record (Theorem 5)
-- **Failure semantics** -- fail-closed/fail-open posture is a bijection over actions
+- **Composition algebra** — components form a *partial* commutative monoid (Theorem 6)
+- **Surface completeness** — EPG + ROC + MDR covers all control surfaces (Theorem 1)
+- **Tamper-evident audit chains** — hash-chain integrity with tamper detection (Theorem 3a)
+- **Ghost detection** — every interaction is classified as governed, degraded, or ghost (Theorem 3b)
+- **Deontic logic** — obligation/prohibition satisfaction semantics with 4 inversion rules
+- **Constraint hierarchy monotonicity** — enterprise constraints propagate to all lower levels
+- **Residual risk reduction** — adding components monotonically reduces risk (Theorem 4)
+- **Contract composability** — independently deployed components preserve guarantees (Theorem 2)
+- **Audit completeness** — every governed interaction produces an audit record (Theorem 5)
 
-**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) compared against the Scala engine on 1,000 generated constraint hierarchies, detection states and evaluation contexts. Cedar uses this methodology to check its Rust authorization engine against a Lean specification. The `app` workflow builds the Lean executable and runs the comparison on every change to either side, and fails if the test is cancelled rather than run — which is how it stayed inert between April and September 2026.
-
-**Release gate.** No version of Clad ships unless the Lean proofs compile and all differential tests pass.
-
-*Proven correct. Tested against production. Every release.*
-
-See [`lean/`](lean/) for the full proof library and build instructions.
+**Differential testing.** Following the [AWS Cedar](https://www.amazon.science/publications/cedar-a-new-language-for-expressive-fast-safe-and-analyzable-authorization) pattern, the Lean model includes an executable evaluator (`clad-difftest`) compared against the Scala engine on 1,000 generated constraint hierarchies. No version ships unless the Lean proofs compile and all differential tests pass.
 
 ## What Makes This Different
 
 - **Formal rigor with honest limitations.** Deontic logic, algebraic composition, and formal proofs — with explicit statements of what it guarantees and what it doesn't. Every theorem has preconditions. Every component has a limitations section.
-- **Composable, independently deployable components.** Start with prompt governance, add output controls when ready, layer on monitoring as you mature. Formal proof of component independence (Theorem 6).
-- **Designed for regulated industries.** Not generic "AI ethics." Specific regulatory crosswalks for HIPAA, SOX, GLBA, NERC CIP, the EU AI Act, and NIST AI RMF.
+- **Composable, independently deployable components.** Start with prompt governance, add output controls when ready, layer on monitoring as you mature (Theorem 6).
+- **Designed for regulated industries.** Specific regulatory crosswalks for HIPAA, SOX, GLBA, NERC CIP, the EU AI Act, and NIST AI RMF.
 - **Constraints, not prescriptions.** Like building codes for AI — Clad defines properties your prompts and outputs must satisfy, not how to write them.
 
-## Quick Start
+## Repository Structure
 
-Evaluate a prompt against your governance constraints via the REST API:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/evaluate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Summarize the patient discharge notes for Dr. Smith",
-    "metadata": {"department": "clinical", "project": "discharge-summary"}
-  }'
-```
-
-Response:
-
-```json
-{
-  "allSatisfied": false,
-  "totalConstraints": 5,
-  "satisfiedCount": 4,
-  "unsatisfied": [
-    {
-      "property": "phi-disclosure-prohibition",
-      "constraintType": "prohibition",
-      "level": "enterprise"
-    }
-  ],
-  "auditDigest": "sha256:a1b2c3..."
-}
-```
-
-Or use the MCP server for AI-agent integration:
-
-```bash
-echo '{"jsonrpc":"2.0","method":"tools/call","params":{"name":"clad_evaluate_prompt","arguments":{"prompt":"Summarize patient notes"}},"id":1}' | \
-  sbt "mcp/run -- --config governance.json"
-```
-
-## Modules
-
-| Module | Description |
-|--------|-------------|
-| **core** | Domain model — Level, Constraint (Obligation/Prohibition), PropertyId, Surface, Component composition |
-| **evaluation** | Prompt evaluator — mechanical (keyword/regex/structural checkers) and procedural (human attestation) |
-| **runtime** | GovernanceEngine — builds from config, evaluates prompts, produces audit records |
-| **audit** | Signed hash-chained audit records, append-only file storage, verification |
-| **output** | Output evaluator — deterministic rules + classifier scoring, Pass/Flag/Block pipeline |
-| **integrity** | SupervisedEngine — fail-closed/fail-open posture, GIL, degraded-mode handling |
-| **monitoring** | Event detection (per-event + sliding window), alert taxonomy (P1-P4), EventBus |
-| **config** | JSON config loading, engine construction, RBAC constraint authorization |
-| **api** | HTTP REST API — evaluate, output evaluate, config, constraints, reload, health |
-| **mcp** | MCP server — JSON-RPC over stdin/stdout, 6 governance tools |
+| Directory | Contents |
+|-----------|----------|
+| [`book/`](book/) | LaTeX source for the book (generated from `research/` by `tools/md2tex.py`) |
+| [`research/`](research/) | Markdown source — the authoritative text |
+| [`app/`](app/) | Scala 3 implementation — 11 modules, REST API, MCP server |
+| [`lean/`](lean/) | Lean 4 formal model — 88 theorems, differential test executable |
+| [`tools/`](tools/) | Build tooling — markdown→LaTeX converter, differential test runner, CI scripts |
+| [`ops/`](ops/) | Infrastructure — landing page, GCP deploy config |
 
 ## Build & Test
 
-Requires Scala 3.3.7 and sbt 1.10.7.
+Requires Scala 3.3.8 and sbt 1.10.7.
 
 ```bash
-cd code
+cd app
 sbt compile                    # compile all modules
-sbt test                       # run all tests (91 source files, 60 test files)
-sbt "core-test/testOnly clad.core.ConstraintSpec"  # run a single test
+sbt test                       # run all tests
+```
+
+Build the book (requires a TeX Live installation):
+
+```bash
+bash tools/rebuild-book.sh
 ```
 
 See [docs/architecture.md](docs/architecture.md) for the full module dependency graph and domain type reference.
-
-## Research Documents
-
-The formal specifications that the code implements:
-
-| Document | Description |
-|----------|-------------|
-| [Section 1 — The Architecture of Assurance: Clad's Meta-Framework](research/meta-framework.md) | 5 axioms, 6 theorems, control surface model, threat model (T1-T11), enforcement architecture, failure semantics, audit integrity, composition algebra |
-| [Section 2 — Responsible Prompting: Policies That Let Teams Move Fast, Safely (EPG)](research/wp1-enterprise-prompt-governance.md) | Hierarchical constraints (enterprise ≻ department ≻ project), RBAC, evaluability decomposition, conflict resolution, domain isolation |
-| [Section 3 — Stopping Bad Outputs: Runtime Controls and Fallbacks (ROC)](research/wp2-runtime-output-controls.md) | Two-tier hybrid evaluation (deterministic + classifier), risk-tiered pipeline, threat-specific controls |
-| [Section 4 — Seeing the Whole Picture: MDR — Monitoring, Detection, Response](research/sa-monitoring-detection-response.md) | Cross-component monitoring, incident response, forensic evidence preservation |
-| [Section 5 — Meeting Regulators: Practical Mapping to Key Standards](research/regulatory-mapping-appendix.md) | Crosswalk to NIST AI RMF, EU AI Act, ISO 42001, HIPAA, SOX, GLBA, NERC CIP |
-
-## Read the book
-
-The research documents are also published as the ebook **_Trust by Design: Governing Enterprise AI with Clad_**:
-
-- **EPUB / PDF** — <!-- TODO: replace with your GitHub Pages or Releases URL --> _(publish link TBD)_
-- **Landing page** — a single-page site lives in [`ops/landing/`](ops/landing/) and deploys to Google Cloud Storage; see [`ops/gcp/README.md`](ops/gcp/README.md). _(public URL TBD after first deploy)_
 
 ## Validation Status
 
 This framework has been developed through formal design and multi-model adversarial review. It has **not** been validated through production deployment or empirical testing. The formal properties are architecturally sound but operationally unverified. Pilot deployment with representative workloads is recommended before enterprise rollout.
 
+## Citation
+
+If you use this work, please cite it using the metadata in [`CITATION.cff`](CITATION.cff). GitHub displays a "Cite this repository" button on the landing page. Releases are archived on [Zenodo](https://zenodo.org/) with a DOI.
+
 ## License
 
-- **Code** ([`app/`](app/)): [MIT License](LICENSE-CODE.md)
-- **Research & Docs** ([`research/`](research/), [`docs/`](docs/)): [CC BY 4.0](LICENSE-DOCS.md)
+- **Code** (`app/`, `lean/`, `tools/`, `ops/`): [MIT License](LICENSE-CODE.md)
+- **Book & Research** (`book/`, `research/`, `docs/`): [CC BY 4.0](LICENSE-DOCS.md)
 
 ## Author
 
 David Callaghan — [LinkedIn](https://linkedin.com/in/davecallaghan)
-
-*By [2CData](https://2cdata.com)*

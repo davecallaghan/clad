@@ -1,6 +1,6 @@
 # Creative Commons Attribution 4.0 International (CC BY 4.0)
 
-**Applies to:** everything under `research/` and `docs/`
+**Applies to:** `book/`, `research/`, `docs/`
 
 Copyright (c) 2026 David Callaghan / 2CData
 

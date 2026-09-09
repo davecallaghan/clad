@@ -17,7 +17,7 @@ A constraint library package contains:
 \textbf{Library metadata:}
 \begin{itemize}
   \item Name and version (semantic versioning: major.minor.patch)
-  \item Target industry and regulatory basis (e.g., ``HIPAA Privacy Rule \S{}164.502-\S{}164.514")
+  \item Target industry and regulatory basis (e.g., ``HIPAA Privacy Rule \S{}164.502-\S{}164.514'')
   \item Maintainer organization and contact
   \item Last review date and next scheduled review
   \item Applicable governance levels (recommended)
@@ -100,13 +100,13 @@ Each version requires domain expert attestation from the library maintainer. Org
 
 \textbf{Decomposition example (Constraint \#1: F(phi\_\allowbreak{}disclosure\_\allowbreak{}in\_\allowbreak{}output)):}
 
-Intent record: ``The AI system must not include protected health information in its outputs unless the disclosure is explicitly authorized under a HIPAA-permitted use or disclosure."
+Intent record: ``The AI system must not include protected health information in its outputs unless the disclosure is explicitly authorized under a HIPAA-permitted use or disclosure.''
 
 Mechanical components:
 \begin{itemize}
   \item NER-based PHI detection in prompt instructions (names, dates, MRNs, SSNs, addresses, phone numbers)
   \item Pattern-based detection of prompt instructions that request PHI inclusion
-  \item Required presence of explicit ``Do not include patient-identifying information" instruction
+  \item Required presence of explicit ``Do not include patient-identifying information'' instruction
 \end{itemize}
 
 
@@ -117,7 +117,7 @@ Procedural components:
 \end{itemize}
 
 
-Residual gap: mechanical NER detection covers approximately 90\% of standard PHI patterns. Novel identifiers, contextual PHI (e.g., ``the patient in room 3"), and inference-based re-identification are not fully captured. Compensating control: 10\% HITL review of outputs by trained privacy staff.
+Residual gap: mechanical NER detection covers approximately 90\% of standard PHI patterns. Novel identifiers, contextual PHI (e.g., ``the patient in room 3''), and inference-based re-identification are not fully captured. Compensating control: 10\% HITL review of outputs by trained privacy staff.
 
 \textbf{Regression test suite (partial):}
 \begin{itemize}
