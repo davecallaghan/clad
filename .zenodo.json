@@ -1,0 +1,24 @@
+{
+  "title": "CLAD: Trust by Design — Governing Language Model Assertion in Regulated Enterprises",
+  "description": "A governance framework for enterprise AI. 221-page book with formal proofs, a Scala implementation, Lean 4 verification, and regulatory crosswalks for HIPAA, SOX, GLBA, NERC CIP, GDPR, and the EU AI Act.",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Callaghan, David",
+      "orcid": "0009-0006-4855-7774"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "ai-governance",
+    "data-governance",
+    "data-quality",
+    "enterprise-ai",
+    "formal-verification",
+    "lean4",
+    "llm-governance",
+    "hallucination-detection",
+    "regulatory-compliance"
+  ],
+  "access_right": "open"
+}
