@@ -110,4 +110,4 @@ If you use this work, please cite it using the metadata in [`CITATION.cff`](CITA
 
 ## Author
 
-David Callaghan — [LinkedIn](https://linkedin.com/in/davecallaghan)
+David Callaghan — [LinkedIn](https://www.linkedin.com/in/mrdavidcallaghan)
