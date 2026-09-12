@@ -19,7 +19,7 @@
 
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
-\graphicspath{{figs/}}
+\graphicspath{{./}{figs/}}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{float}
@@ -114,6 +114,17 @@
 \date{\today}
 
 \begin{document}
+
+% Full-bleed cover image — the very first page of the PDF, before front matter.
+% Uses tikz to place the image at the page origin, avoiding the \clearpage that
+% \newgeometry would insert (which pushed the image to page 2).
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \node[anchor=center] at (current page.center)
+    {\includegraphics[width=\paperwidth,height=\paperheight]{cover.png}};
+\end{tikzpicture}
+\clearpage
+
 \frontmatter
 \maketitle
 % Chapters and sections only: subsections ran the contents to nine pages.
