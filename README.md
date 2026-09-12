@@ -2,7 +2,8 @@
 
 **A governance framework for enterprise AI. Hard boundaries. Formal proof. Free book.**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/davecallaghan/clad/releases/latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22729185.svg)](https://doi.org/10.5281/zenodo.22729185)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue)](https://github.com/davecallaghan/clad/releases/latest)
 [![License: Book](https://img.shields.io/badge/book-CC%20BY%204.0-lightgrey)](LICENSE-DOCS.md)
 [![License: Code](https://img.shields.io/badge/code-MIT-green)](LICENSE-CODE.md)
 
