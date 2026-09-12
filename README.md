@@ -1,18 +1,20 @@
-# Trust by Design: Governing Enterprise AI with Clad
+# CLAD — Trust by Design
 
-**Hard boundaries. Formal proof.**
+**A governance framework for enterprise AI. Hard boundaries. Formal proof. Free book.**
 
-*The governance layer for regulated AI.*
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/davecallaghan/clad/releases/latest)
+[![License: Book](https://img.shields.io/badge/book-CC%20BY%204.0-lightgrey)](LICENSE-DOCS.md)
+[![License: Code](https://img.shields.io/badge/code-MIT-green)](LICENSE-CODE.md)
 
 ---
 
-## The Book
+## The Book — Free Download
 
-The framework is specified in a 219-page book with formal definitions, proofs, and regulatory crosswalks.
+The complete framework is a 221-page book covering governance architecture, formal proofs, and regulatory crosswalks for HIPAA, SOX, GLBA, NERC CIP, GDPR, and the EU AI Act.
 
-[**Download the PDF**](https://github.com/davecallaghan/clad/releases/latest/download/trust-by-design.pdf)
+### [Download the PDF](https://github.com/davecallaghan/clad/releases/latest/download/trust-by-design.pdf)
 
-The book covers: why LLM outputs need governance that goes beyond accuracy metrics; a grounded-assertion epistemology for language models; a five-category hallucination taxonomy; nineteen system invariants; hierarchical deontic constraints; tamper-evident audit chains; and regulatory mappings for HIPAA, SOX, GLBA, NERC CIP, GDPR, and the EU AI Act.
+The book covers: why LLM outputs need governance that goes beyond accuracy metrics; a grounded-assertion epistemology for language models; a five-category hallucination taxonomy; nineteen system invariants; hierarchical deontic constraints; tamper-evident audit chains; and end-to-end regulatory mappings.
 
 The LaTeX source is in [`book/`](book/); the markdown it is generated from is in [`research/`](research/).
 
@@ -110,4 +112,6 @@ If you use this work, please cite it using the metadata in [`CITATION.cff`](CITA
 
 ## Author
 
-David Callaghan — [LinkedIn](https://www.linkedin.com/in/mrdavidcallaghan)
+David Callaghan — data and AI engineer focused on governance, quality, and trust infrastructure for production systems.
+
+[LinkedIn](https://www.linkedin.com/in/mrdavidcallaghan) · [ORCID](https://orcid.org/0009-0006-4855-7774) · [GitHub](https://github.com/davecallaghan)
