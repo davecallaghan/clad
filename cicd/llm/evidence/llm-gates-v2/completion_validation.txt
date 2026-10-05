@@ -1,0 +1,43 @@
+{
+ "blind_spots": [
+  "whether an evidence file says what its check claims (existence is checked, content is not)",
+  "checks the claim does not list",
+  "free-text fields (recorded, never scored)"
+ ],
+ "details": {
+  "free_text": {
+   "summary": "Free text, recorded and never scored: 7 gates + ruff_profile + liveness built test-first; see PLAN.md interpretations.",
+   "task": "build LLM-specific CI/CD gates in cicd/llm/"
+  },
+  "not_verified": [
+   "v2 gates (freeze c6c564e) were changed to close the 15 classes the v1 held-out run missed; on a fresh builder-written held-out set they caught 13/27 (v1: 21/36): the fixes closed the known classes, not unseen ones",
+   "v2 held-out misses not fixed: pandas nrows, requests timeout tuple, SQL TABLESAMPLE, textwrap.shorten, DeltaTable merge, aliased writer, majority-vote grade, complete with no checks, evidence outside the repo, capitalised Confirm, rule quote case, warnings ignored, handler returning None, @safeguard decorator removed",
+   "held-out fixtures were written by the builder (at the owner's request), not by the owner: ordering, not blindness",
+   "behavioural_harness R3: no recorded paraphrase pairs supplied (NOT_RUN)",
+   "behavioural_harness R4: no repeat_count with a source configured (NOT_RUN)",
+   "invented_limits budget_below_capacity: model_capacity unset (NOT_RUN)",
+   "invented_limits escalation and ruff_profile ratchet: not exercised in dogfood (no --base given); tested on temporary repos only",
+   "governed_write quarantine_alarm: no run manifest configured (NOT_RUN)",
+   "review_findings: no reviewer input exists for this repository (NOT_RUN in dogfood); escalation ladder state and independence (families unset) NOT_RUN",
+   "provenance on the repository: INEXPRESSIBLE (no governed outputs tracked); checked on the reference pipeline's stored rows only",
+   "live CI behaviour: .github/workflows/llm-gates.yml has not run on GitHub",
+   "branch protection: not verified that llm-gates is a required status check",
+   "behaviour against a real client Databricks pipeline: only the kit's reference pipeline and fixtures were exercised",
+   "whole-repo findings outside cicd/llm/ (invented_limits in app/ and tools/, ruff in tools/) are reported in dogfood.txt and not triaged"
+  ],
+  "status": "complete"
+ },
+ "findings": [],
+ "gate": "completion_evidence",
+ "kind": "deciding",
+ "notes": [],
+ "scope_size": 1,
+ "sub_checks": {
+  "checks": "RUN",
+  "digests": "RUN",
+  "schema": "RUN"
+ },
+ "timestamp": "2026-10-05T13:35:03+00:00",
+ "tree_hash": "4a04b43e7bcdb6879f808d7ec35c6e2474a505d4",
+ "verdict": "SATISFIED"
+}

@@ -1,0 +1,50 @@
+invented_limits [cicd/llm]                       SATISFIED     scope=55   findings=0 sub={'budget_below_capacity': 'NOT_RUN', 'escalation': 'NOT_RUN'}
+invented_limits [whole repo]                     VIOLATED      scope=205  findings=16 sub={'budget_below_capacity': 'NOT_RUN', 'escalation': 'NOT_RUN'}
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:68 truncating_call | .take(...3) with a literal bound
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:77 truncating_call | .take(...3) with a literal bound
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:86 truncating_call | .take(...3) with a literal bound
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:118 truncating_call | .take(...3) with a literal bound
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:119 truncating_call | .take(...2) with a literal bound
+      app/core-test/src/main/scala/clad/core/test/Generators.scala:120 truncating_call | .take(...2) with a literal bound
+      tools/md2tex.py:238 constant_slice | slice with constant bound 1
+      tools/md2tex.py:374 constant_slice | slice with constant bound 2
+      tools/md2tex.py:417 constant_slice | slice with constant bound 1
+      tools/md2tex.py:459 constant_slice | slice with constant bound 1
+      tools/md2tex.py:471 constant_slice | slice with constant bound 1
+      tools/md2tex.py:502 constant_slice | slice with constant bound 3
+      tools/md2tex.py:541 constant_slice | slice with constant bound -1
+      tools/md2tex.py:706 constant_slice | slice with constant bound 4
+      tools/md2tex.py:713 constant_slice | slice with constant bound -1
+      tools/md2tex.py:718 constant_slice | slice with constant bound 4
+governed_write [cicd/llm]                        SATISFIED     scope=29   findings=0 sub={'call_sites': 'RUN', 'signature': 'RUN', 'quarantine_alarm': 'NOT_RUN'}
+governed_write [whole repo]                      SATISFIED     scope=31   findings=0 sub={'call_sites': 'RUN', 'signature': 'RUN', 'quarantine_alarm': 'NOT_RUN'}
+ruff_profile [cicd/llm]                          SATISFIED     scope=49   findings=0 sub={'lint': 'RUN', 'C901': 'RUN', 'ratchet': 'NOT_RUN'}
+ruff_profile [whole repo]                        VIOLATED      scope=51   findings=12 sub={'lint': 'RUN', 'C901': 'RUN', 'ratchet': 'NOT_RUN'}
+      tools/md2tex.py:325 PLR2004 | Magic value used in comparison, consider replacing `3` with a constant variable
+      tools/md2tex.py:395 PLR2004 | Magic value used in comparison, consider replacing `2` with a constant variable
+      tools/md2tex.py:531 PLR2004 | Magic value used in comparison, consider replacing `84` with a constant variable
+      tools/md2tex.py:532 PLR2004 | Magic value used in comparison, consider replacing `96` with a constant variable
+      tools/md2tex.py:533 PLR2004 | Magic value used in comparison, consider replacing `112` with a constant variable
+      tools/md2tex.py:567 PLR2004 | Magic value used in comparison, consider replacing `84` with a constant variable
+      tools/md2tex.py:568 PLR2004 | Magic value used in comparison, consider replacing `96` with a constant variable
+      tools/md2tex.py:569 PLR2004 | Magic value used in comparison, consider replacing `112` with a constant variable
+      tools/md2tex.py:636 PLR2004 | Magic value used in comparison, consider replacing `2` with a constant variable
+      tools/md2tex.py:668 PLR2004 | Magic value used in comparison, consider replacing `4` with a constant variable
+      tools/md2tex.py:669 PLR2004 | Magic value used in comparison, consider replacing `6` with a constant variable
+      tools/md2tex.py:679 PLR2004 | Magic value used in comparison, consider replacing `12` with a constant variable
+safeguard_removal [764c05ad518fe20ca6029a509c5587eba9555268..HEAD] SATISFIED     scope=50   findings=0 sub={}
+behavioural_harness [reference pipeline]         SATISFIED     scope=2    findings=0 sub={'R1': 'RUN', 'R2': 'RUN', 'R3': 'NOT_RUN', 'R4': 'NOT_RUN'}
+provenance [reference pipeline output]           SATISFIED     scope=1    findings=0 sub={}
+provenance [whole repo]                          INEXPRESSIBLE scope=0    findings=0 sub={}
+review_findings [no review input supplied]       NOT_RUN       scope=0    findings=0 sub={}
+completion_evidence [config completion path]     VIOLATED      scope=1    findings=7 sub={'schema': 'RUN', 'checks': 'RUN', 'digests': 'RUN'}
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/completion_evidence.py: claimed sha256:f6f1d055673ab28c18acac9d77052059ff619d0e305f3a258df64a37580b4c43, build manifest has sha256:c4dff7a6414a190a397ace55b32dbfc60392b3d63adfebc8d1e39a92a51d82e2
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/governed_write.py: claimed sha256:36f42d5123503e9274db37a28ffc283430dd6358859a121e59f1a96a5692db5d, build manifest has sha256:407025b295cf6d0e32add804b57a84ebfd984286ccbc67cbc75aee872f3bdb11
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/invented_limits.py: claimed sha256:0bd3ae97e9b84f861b93c65c1428ea57c34fb7c91f38388d86c1cc93f2834291, build manifest has sha256:defb1fc1014fa654d8b644f52e432d0d94b6f3a7b36c926e52b06183b391ca28
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/provenance.py: claimed sha256:676634c11dca5b876831468eb88f3a794a1c46853ccbe8d1e9567b188bc3628e, build manifest has sha256:7c1803d7af393d54449434adb724baff54ac58d3f14551cf5593bde0b5228311
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/review_findings.py: claimed sha256:572fb45ed55e92819e218d99c205e01ef7b70d53f6a5f1c0e8be247a647cce1b, build manifest has sha256:372334d1f96dfbb05e0b52ddfd0bf2ebadcf6c7d69f05ab17c73b0ce8f9305f4
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/ruff_profile.py: claimed sha256:26b1394879fa681ccb205aaca40fff260438a86e7bde5b85ed73c6e18a1e2b76, build manifest has sha256:8c64ece067d946036e1868939be847b6911caeb3821a397800cf5e6f57b1fd21
+      cicd/llm/completion.json:1 digest_mismatch | cicd/llm/gates/safeguard_removal.py: claimed sha256:d9f2255c3ccbd845a68690c601e48cf489fbc2b5c910a397fe253abcba305b4e, build manifest has sha256:636d51dd731504bb13d6c0a47d41bef13842f8a23470661203a1986d95c30ad6
+
+gates 1 and 6 on the kit's own code: invented_limits=SATISFIED, safeguard_removal=SATISFIED -> PASS
+exit=0

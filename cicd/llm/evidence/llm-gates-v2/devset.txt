@@ -1,0 +1,47 @@
+{
+ "fixture_set": "cicd/llm/devset",
+ "freeze_commit": "c6c564ebaaebb1a0961dccbdc9243e3da750792a",
+ "per_gate": {
+  "behavioural_harness": {
+   "caught": 4,
+   "missed": [],
+   "total": 4
+  },
+  "completion_evidence": {
+   "caught": 4,
+   "missed": [],
+   "total": 4
+  },
+  "governed_write": {
+   "caught": 4,
+   "missed": [],
+   "total": 4
+  },
+  "invented_limits": {
+   "caught": 8,
+   "missed": [],
+   "total": 8
+  },
+  "provenance": {
+   "caught": 4,
+   "missed": [],
+   "total": 4
+  },
+  "review_findings": {
+   "caught": 4,
+   "missed": [],
+   "total": 4
+  },
+  "ruff_profile": {
+   "caught": 3,
+   "missed": [],
+   "total": 3
+  },
+  "safeguard_removal": {
+   "caught": 5,
+   "missed": [],
+   "total": 5
+  }
+ }
+}
+exit=0

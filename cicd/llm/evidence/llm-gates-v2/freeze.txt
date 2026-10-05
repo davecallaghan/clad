@@ -1,0 +1,2 @@
+freeze verifies: c6c564ebaaebb1a0961dccbdc9243e3da750792a 14 files, supersedes FREEZE-2026-10-04-b.json
+exit=0

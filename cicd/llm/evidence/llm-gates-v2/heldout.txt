@@ -1,0 +1,68 @@
+{
+ "fixture_set": "/Users/david/workspace/clad/cicd/llm/heldout",
+ "freeze_commit": "c6c564ebaaebb1a0961dccbdc9243e3da750792a",
+ "per_gate": {
+  "behavioural_harness": {
+   "caught": 2,
+   "missed": [
+    "hv_majority_vote_overrides"
+   ],
+   "total": 3
+  },
+  "completion_evidence": {
+   "caught": 1,
+   "missed": [
+    "hv_complete_with_no_checks",
+    "hv_evidence_outside_repo"
+   ],
+   "total": 3
+  },
+  "governed_write": {
+   "caught": 1,
+   "missed": [
+    "hv_delta_merge_api",
+    "hv_writer_bound_to_alias"
+   ],
+   "total": 3
+  },
+  "invented_limits": {
+   "caught": 1,
+   "missed": [
+    "hv_pandas_nrows",
+    "hv_requests_timeout_tuple",
+    "hv_sql_tablesample",
+    "hv_textwrap_shorten"
+   ],
+   "total": 5
+  },
+  "provenance": {
+   "caught": 3,
+   "missed": [],
+   "total": 3
+  },
+  "review_findings": {
+   "caught": 1,
+   "missed": [
+    "hv_confirm_capitalised",
+    "hv_rule_quote_different_case"
+   ],
+   "total": 3
+  },
+  "ruff_profile": {
+   "caught": 2,
+   "missed": [
+    "hv_warnings_ignored"
+   ],
+   "total": 3
+  },
+  "safeguard_removal": {
+   "caught": 2,
+   "missed": [
+    "hv_handler_returns_none",
+    "hv_safeguard_decorator_removed"
+   ],
+   "total": 4
+  }
+ }
+}
+exit=0
