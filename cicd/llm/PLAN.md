@@ -161,3 +161,7 @@ validated by Gate 7.
 6. **Commit trailer.** The spec says `Co-Authored-By: Cline <noreply@cline.bot>`; this build
    was done by Claude, so commits carry `Co-Authored-By: Claude <noreply@anthropic.com>`
    (the trailer the owner specified for the follow-on task) to keep attribution accurate.
+7. **Ungraded marker provenance.** A governed field holding the contract's `ungraded_marker`
+   with origin `code_supplied` is accepted by `provenance`: the marker records that the model
+   emitted nothing (Gate 4, R2) and is not a grade. Any other `code_supplied` value on a field
+   whose contract does not allow it is VIOLATED.
