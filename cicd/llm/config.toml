@@ -1,0 +1,99 @@
+# cicd/llm/config.toml: configuration for the LLM-specific gates.
+#
+# Rule (spec section 2): every numeric value carries a `# source:` comment naming a requirement,
+# a measurement command and its output, or a paper citation. A value nobody has supplied stays
+# UNSET (commented out below), and the sub-check that needs it returns NOT_RUN.
+# Paths are relative to the root being checked (the repository, or a canary directory).
+
+[gates.invented_limits]
+include = [
+  "**/*.py", "**/*.sql", "**/*.scala", "**/*.ts",
+  "**/databricks.yml", "**/databricks.yaml",
+  "**/resources/**/*.yml", "**/resources/**/*.yaml",
+  "**/*.json",
+]
+# Planted violations and test fixtures are violations on purpose; they are checked by liveness.
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+           "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
+           "cicd/llm/templates/**/examples/**"]
+# Files treated as deployment/job manifests for the manifest-timeout sub-check.
+manifest_globs = ["**/databricks.yml", "**/databricks.yaml", "**/resources/**/*.yml",
+                  "**/resources/**/*.yaml", "**/*.json"]
+# Key/parameter names that denote a limit (matched case-insensitively after camelCase is
+# converted to snake_case). Source: spec Gate 1 flag 1.
+key_patterns = ["max_*", "*_limit", "*_cap", "*_budget", "*timeout*", "top_k", "max_tokens"]
+manifest_timeout_patterns = ["*timeout*"]
+# Method calls whose literal argument truncates a collection. Source: spec Gate 1 flag 4.
+truncating_methods = ["head", "limit", "take"]
+# Paths where SQL `LIMIT n` is legitimate (none declared). Source: spec Gate 1 flag 2.
+sql_limit_exclude = []
+# Keys that are token/evidence budgets, compared against model_capacity (flag 6).
+budget_patterns = ["*_budget", "max_tokens", "max_output_tokens", "max_input_tokens"]
+# model_capacity = <unset>  # flag 6 is NOT_RUN until a capacity is supplied with a source.
+allowlist = "cicd/llm/allowlist.toml"
+
+[gates.invented_limits.likely_invented]
+# The definition of a round number in spec Gate 1: powers of ten and their multiples, or human
+# time units. The numbers below ARE that definition, not tuned values.
+round_base = 10           # source: spec Gate 1 ("powers of ten and their multiples"); decimal base
+time_unit_seconds = [60]  # source: spec Gate 1 ("human time units"); seconds per minute (SI). Hours are multiples of it.
+
+[gates.governed_write]
+include = ["**/*.py"]
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/**",
+           "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
+           "cicd/llm/templates/**/examples/**"]
+contract = "cicd/llm/contracts/governed_values.toml"
+# Calls that write rows to a named target. Source: the reference pipeline's sink API
+# (cicd/llm/reference_pipeline.py) and Spark's DataFrameWriter table-write methods.
+writer_functions = ["write_rows", "saveAsTable", "insertInto"]
+# Run manifest carrying per-target quarantine counts (written by write_gate callers). Unset:
+# the quarantine alarm sub-check is NOT_RUN.
+# quarantine_manifest = <unset>
+# [gates.governed_write.expected_quarantine]  # per target: a count AND a source, or absent.
+
+[gates.provenance]
+contract = "cicd/llm/contracts/governed_values.toml"
+# Stored rows to check: `<target>.governed.jsonl`, the target derived from the file name.
+outputs = ["**/*.governed.jsonl"]
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/**",
+           "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
+           "cicd/llm/templates/**/examples/**"]
+
+[gates.behavioural_harness]
+contract = "cicd/llm/contracts/governed_values.toml"
+entry = "cicd.llm.reference_pipeline:run_pipeline"
+target = "findings"
+# Input records the harness feeds to the entry function. Source: the reference pipeline's own
+# fixture; replace with the client pipeline's.
+records = "cicd/llm/reference_records.json"
+# paraphrase_pairs = <unset>  # R3 is NOT_RUN until recorded paraphrase pairs are supplied.
+# repeat_count = <unset>      # R4 is NOT_RUN until a repeat count is supplied with a source.
+
+[gates.review_findings]
+rule_registry = "cicd/llm/rules.toml"
+# Reviewer families. Source: none supplied for this repository, so independence is undeclared.
+# author_family = <unset>
+# independent = <unset>
+# [gates.review_findings.reviewers]  # name = "family"
+
+[gates.safeguard_removal]
+include = ["**/*.py"]
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+           "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
+           "cicd/llm/templates/**/examples/**"]
+# Calls treated as canary calls (in addition to @safeguard / `# safeguard` functions).
+canary_call_patterns = ["*canary*"]
+
+[gates.completion_evidence]
+completion = "cicd/llm/completion.json"
+
+[gates.ruff_profile]
+include = ["**/*.py"]
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+           "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
+           "cicd/llm/templates/**/examples/**"]
+# Each code verified with `ruff rule <code>` (ruff 0.16.10) on 2026-10-04; all five exist.
+rules = ["S110", "BLE001", "E722", "PLR2004", "C901"]
+# Ratchet: may only go down (the gate fails if --base has a lower value).
+c901_max_complexity = 56  # source: `ruff check --isolated --select C901 --config 'lint.mccabe.max-complexity=0' $(git ls-files '*.py')` on master 2026-10-04; highest reported: tools/md2tex.py:489:5 `convert` is too complex (56 > 0)

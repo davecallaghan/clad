@@ -1,0 +1,4 @@
+# Allowlist for invented_limits. Each [[entry]] needs: file, line_hash (core.line_hash of the
+# line), value, justification, source (a requirement ID or link) and approver. An entry missing
+# any of them is VIOLATED. Entries match by content hash, so editing the value invalidates them.
+# An agent cannot supply a source or an approver: ask a human.
