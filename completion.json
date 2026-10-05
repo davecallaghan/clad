@@ -1,8 +1,8 @@
 {
  "task": "guidance and authoring-loop enforcement for the LLM-specific gates",
  "status": "complete",
- "commit": "426d28747bece2d8e20a28796e9903ec5db756b3",
- "tree_hash": "4271c026ccdb510001d66cf9f051e492d2e03ebd",
+ "commit": "7cc962aa93a9961803d28df8c34db352d983920b",
+ "tree_hash": "76843fe7ab22b206ee54b235a89d4ec72a3370bd",
  "artifact_digests": {
   "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
   "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
@@ -76,18 +76,19 @@
    "id": "section_4_measurement_arms_A_B_C",
    "verdict": "NOT_RUN",
    "required": false,
-   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_plan.txt"
+   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_plan.txt",
+   "note": "not run: blocked by the permission classifier; needs the owner to start it"
   }
  ],
  "not_verified": [
-  "section 4 measurement: harness built, not run; needs owner approval, owner-supplied tasks in cicd/llm/eval/tasks/, and permission_mode and max_budget_usd in cicd/llm/eval/eval.toml",
+  "section 4 measurement: settings and three tasks written by the builder at the owner's request; the run was blocked by the Claude Code auto-mode permission classifier ('Create Unsafe Agents') and has not run. The owner must start it: python -m cicd.llm.eval.run_eval --run --owner-approved",
+  "incident: before the harness tests were isolated, a test started 6 real headless sessions with a trivial prompt; records in evidence/llm-guidance/eval_accidental_smoke_run.jsonl, excluded from results",
   "template instantiated against cicd/example/: NOT_RUN, cicd/example/ does not exist on this branch (it exists only as partial work on feat/cicd-kit)",
   "hooks inside a live Claude Code session: tested by sending the documented stdin JSON to the configured commands; not observed in an interactive session",
   "skill auto-loading from descriptions: not observed (needs live sessions; that is what section 4 measures)",
   "hook interpreter: hooks need PyYAML and ruff; with a python3 that lacks them every edit reports a hook error (CICD_LLM_PYTHON or .venv-llm selects the interpreter)",
   "the Stop hook checks the working tree against HEAD, not per-session changes: uncommitted changes from before the session also require a completion claim",
   "eval arms B and C: user-level CLAUDE.md and ~/.claude/skills may still load (declared blind spot)",
-  "gates' held-out phase: no owner-supplied held-out fixtures (heldout_run.py NOT_RUN)",
   "gate sub-checks NOT_RUN in this repo: behavioural_harness R3 and R4, invented_limits budget_below_capacity, governed_write quarantine_alarm, review_findings escalation ladder state and independence",
   "live CI: .github/workflows/llm-gates.yml has not run on GitHub; branch protection not checked",
   "whole-repo findings outside cicd/llm/ (app/, tools/) reported in dogfood.txt, not triaged"

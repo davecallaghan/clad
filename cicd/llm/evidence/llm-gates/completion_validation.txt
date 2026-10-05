@@ -10,7 +10,8 @@
    "task": "build LLM-specific CI/CD gates in cicd/llm/"
   },
   "not_verified": [
-   "held-out phase (spec 5.5): no held-out fixtures supplied by the owner; heldout_run.py reports NOT_RUN",
+   "held-out fixtures were written by the builder (at the owner's request), not by the owner: ordering, not blindness",
+   "15 of 36 held-out faults were missed by the frozen gates; the misses are reported, not fixed (spec 5.5)",
    "behavioural_harness R3: no recorded paraphrase pairs supplied (NOT_RUN)",
    "behavioural_harness R4: no repeat_count with a source configured (NOT_RUN)",
    "invented_limits budget_below_capacity: model_capacity unset (NOT_RUN)",
@@ -35,8 +36,8 @@
   "digests": "RUN",
   "schema": "RUN"
  },
- "timestamp": "2026-10-05T02:38:11+00:00",
- "tree_hash": "4eeef4dcdab98822136ee0976f857cd564839cfa",
+ "timestamp": "2026-10-05T13:03:52+00:00",
+ "tree_hash": "76843fe7ab22b206ee54b235a89d4ec72a3370bd",
  "verdict": "SATISFIED"
 }
 exit=0

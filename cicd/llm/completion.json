@@ -1,8 +1,8 @@
 {
  "task": "build LLM-specific CI/CD gates in cicd/llm/",
  "status": "complete",
- "commit": "5016fc21ac48a6e1c23ec3a5d1ab8c1d597225cc",
- "tree_hash": "4eeef4dcdab98822136ee0976f857cd564839cfa",
+ "commit": "7cc962aa93a9961803d28df8c34db352d983920b",
+ "tree_hash": "76843fe7ab22b206ee54b235a89d4ec72a3370bd",
  "artifact_digests": {
   "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
   "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
@@ -53,13 +53,15 @@
   },
   {
    "id": "heldout_phase",
-   "verdict": "NOT_RUN",
+   "verdict": "VIOLATED",
    "evidence_path": "cicd/llm/evidence/llm-gates/heldout.txt",
-   "required": false
+   "required": false,
+   "note": "ran 2026-10-05 under freeze cc193d4: 21/36 held-out faults caught; 15 missed (listed in heldout.txt)"
   }
  ],
  "not_verified": [
-  "held-out phase (spec 5.5): no held-out fixtures supplied by the owner; heldout_run.py reports NOT_RUN",
+  "held-out fixtures were written by the builder (at the owner's request), not by the owner: ordering, not blindness",
+  "15 of 36 held-out faults were missed by the frozen gates; the misses are reported, not fixed (spec 5.5)",
   "behavioural_harness R3: no recorded paraphrase pairs supplied (NOT_RUN)",
   "behavioural_harness R4: no repeat_count with a source configured (NOT_RUN)",
   "invented_limits budget_below_capacity: model_capacity unset (NOT_RUN)",
