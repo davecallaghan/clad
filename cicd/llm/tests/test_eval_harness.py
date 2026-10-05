@@ -102,8 +102,46 @@ def test_run_one_records_first_verdicts_with_a_fake_claude(make_repo, tmp_path, 
 
 
 def test_report_gives_counts_not_rates():
-    recs = [{"arm": "A", "first": {"verdicts": {"invented_limits": "VIOLATED"}}, "attempts_to_pass": "NOT_RUN"},
-            {"arm": "A", "first": {"verdicts": {"invented_limits": "SATISFIED"}}, "attempts_to_pass": "NOT_RUN"}]
-    cell = run_eval.report(recs)["A"]["invented_limits"]
+    recs = [_rec("t", "A", 1, invented_limits="VIOLATED"), _rec("t", "A", 2, invented_limits="SATISFIED")]
+    cell = run_eval.report(recs)["arms"]["A"]["invented_limits"]
     assert cell["first_attempt"] == "1/2"
     assert not any(isinstance(v, float) for v in cell.values())
+
+
+def _rec(task, arm, n, exit_code=0, **verdicts):
+    return {"task": task, "arm": arm, "repeat": n, "base": "b",
+            "first": {"claude_exit": exit_code, "verdicts": verdicts}, "attempts_to_pass": {}}
+
+
+def test_report_drops_duplicates_and_excludes_failed_sessions():
+    recs = [_rec("t", "A", 1, invented_limits="VIOLATED"), _rec("t", "A", 1, invented_limits="SATISFIED"),
+            _rec("t", "B", 1, exit_code=1, safeguard_removal="INEXPRESSIBLE"),
+            _rec("t", "C", 1, invented_limits="SATISFIED", review_findings="NOT_RUN")]
+    rep = run_eval.report(recs)
+    assert rep["arms"]["A"]["invented_limits"]["first_attempt"] == "1/1"
+    assert rep["excluded_failed_sessions"] == [["t", "B", 1]]
+    assert rep["duplicates_dropped"] == 1
+    assert "B" not in rep["arms"] and "review_findings" not in rep["arms"]["C"]
+
+
+def test_resume_skips_runs_with_a_valid_record(tmp_path, monkeypatch):
+    tasks = tmp_path / "tasks"
+    tasks.mkdir()
+    (tasks / "t.md").write_text("x")
+    ledger = tmp_path / "eval.jsonl"
+    ledger.write_text(json.dumps(_rec("t", "A", 1)) + "\n" + json.dumps(_rec("t", "A", 2, exit_code=1)) + "\n")
+    monkeypatch.setattr(run_eval, "LEDGER", ledger)
+    done, _ = run_eval.latest_valid([json.loads(x) for x in ledger.read_text().splitlines()])
+    remaining = [r for r in run_eval.plan(tasks, {"arms": ["A"], "repeats": 2}) if r not in done]
+    assert remaining == [("t", "A", 2)]
+
+
+def test_a_failed_session_is_recorded_invalid_with_its_output(make_repo, tmp_path, monkeypatch):
+    root = make_repo({"a.py": "x = 1\n"})
+    commit_all(root, "base")
+    fake = tmp_path / "claude"
+    fake.write_text("#!/bin/sh\necho \"You've hit your session limit\"\nexit 1\n")
+    fake.chmod(0o755)
+    monkeypatch.setenv("CICD_LLM_CLAUDE", str(fake))
+    rec = run_eval.run_one(root, "t", "p", "C", 1, {**SETTINGS, "max_attempts": 2})
+    assert rec["valid"] is False and "session limit" in rec["first"]["stdout_tail"]

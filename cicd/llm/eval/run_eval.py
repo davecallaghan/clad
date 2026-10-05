@@ -28,6 +28,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -39,6 +40,9 @@ from cicd.llm.gates import completion_evidence, safeguard_removal
 HERE = Path(__file__).resolve().parent
 LEDGER = core.KIT_DIR / "ledger" / "eval.jsonl"
 REQUIRED = ("permission_mode", "max_budget_usd")
+# Gates a headless session cannot produce input for: reported as such, not counted as failures.
+NO_INPUT_IN_EVAL = ("review_findings",)
+OUTPUT_TAIL = 4000  # characters of claude's stdout/stderr kept per session; enough for its final error line
 
 
 class EvalRefused(Exception):
@@ -133,7 +137,11 @@ def run_one(root: Path, task: str, prompt: str, arm: str, n: int, s: dict) -> di
                 proc = subprocess.run(claude_argv(arm, prompt, s, resume=attempt > 1), cwd=wt,
                                       capture_output=True, text=True, env=env)
                 verdicts = evaluate(wt, arm_base)
-                first = first or {"claude_exit": proc.returncode, "verdicts": verdicts}
+                session = {"claude_exit": proc.returncode, "stdout_tail": proc.stdout[-OUTPUT_TAIL:],
+                           "stderr_tail": proc.stderr[-OUTPUT_TAIL:]}
+                first = first or {**session, "verdicts": verdicts}
+                if proc.returncode != 0:
+                    break  # a session that failed (a usage limit, an error) says nothing about the guidance
                 for g, v in verdicts.items():
                     if v == Verdict.SATISFIED.value and g not in passed_at:
                         passed_at[g] = attempt
@@ -144,21 +152,38 @@ def run_one(root: Path, task: str, prompt: str, arm: str, n: int, s: dict) -> di
         finally:
             core.git(root, "worktree", "remove", "--force", str(wt))
             core.git(root, "branch", "-D", branch)
-    return {"task": task, "arm": arm, "repeat": n, "base": base, "first": first,
+    return {"task": task, "arm": arm, "repeat": n, "base": base, "first": first, "valid": first["claude_exit"] == 0,
             "attempts_to_pass": passed_at if s.get("max_attempts") else Verdict.NOT_RUN.value}
 
 
-def report(records: list[dict]) -> dict:
-    out: dict = defaultdict(lambda: defaultdict(lambda: {"first_attempt_pass": 0, "total": 0, "attempts_to_pass": []}))
+def latest_valid(records: list[dict]) -> tuple[dict, list]:
+    """The last record per (task, arm, repeat); runs whose first session failed are set aside."""
+    last = {}
     for r in records:
+        last[(r["task"], r["arm"], r["repeat"])] = r
+    valid = {k: r for k, r in last.items() if r["first"]["claude_exit"] == 0}
+    return valid, sorted(k for k in last if k not in valid)
+
+
+def report(records: list[dict]) -> dict:
+    """Per arm and gate: first-attempt pass count / total, and the attempt at which each first-attempt
+    failure passed. Counts only, no rates. Duplicates and failed sessions are excluded and listed."""
+    valid, invalid = latest_valid(records)
+    out: dict = defaultdict(lambda: defaultdict(lambda: {"first_attempt_pass": 0, "total": 0, "later_pass_at": []}))
+    for r in valid.values():
         for gate, v in r["first"]["verdicts"].items():
-            cell = out[r["arm"]][gate]
-            cell["total"] += 1
-            cell["first_attempt_pass"] += v == Verdict.SATISFIED.value
-            if isinstance(r["attempts_to_pass"], dict) and gate in r["attempts_to_pass"]:
-                cell["attempts_to_pass"].append(r["attempts_to_pass"][gate])
-    return {arm: {g: {**c, "first_attempt": f"{c['first_attempt_pass']}/{c['total']}"} for g, c in gates.items()}
+            if gate not in NO_INPUT_IN_EVAL:
+                cell = out[r["arm"]][gate]
+                cell["total"] += 1
+                cell["first_attempt_pass"] += v == Verdict.SATISFIED.value
+                atp = r["attempts_to_pass"]
+                if v != Verdict.SATISFIED.value and isinstance(atp, dict) and gate in atp:
+                    cell["later_pass_at"].append(atp[gate])
+    arms = {arm: {g: {**c, "first_attempt": f"{c['first_attempt_pass']}/{c['total']}"} for g, c in sorted(gates.items())}
             for arm, gates in sorted(out.items())}
+    return {"arms": arms, "valid_runs": len(valid), "excluded_failed_sessions": [list(k) for k in invalid],
+            "duplicates_dropped": len(records) - len(valid) - len(invalid),
+            "not_scored": {g: "no input a headless session can produce" for g in NO_INPUT_IN_EVAL}}
 
 
 def main() -> int:
@@ -170,13 +195,19 @@ def main() -> int:
     ap.add_argument("--owner-approved", action="store_true", help="the owner approved spending model usage")
     ap.add_argument("--tasks-dir", type=Path, default=HERE / "tasks")
     ap.add_argument("--settings", type=Path, default=HERE / "eval.toml")
+    ap.add_argument("--resume", action="store_true", help="skip runs that already have a valid record in the ledger")
     a = ap.parse_args()
     s = load_settings(a.settings)
+    # Gates parse every changed file; a third-party docstring escape warning is not a gate result.
+    warnings.simplefilter("ignore", SyntaxWarning)
     if a.report:
         records = [json.loads(line) for line in LEDGER.read_text().splitlines()] if LEDGER.is_file() else []
         print(json.dumps(report(records), indent=1, sort_keys=True))
         return 0 if records else Verdict.NOT_RUN.exit_code
     runs = plan(a.tasks_dir, s)
+    if a.resume and LEDGER.is_file():
+        done, _ = latest_valid([json.loads(x) for x in LEDGER.read_text().splitlines()])
+        runs = [r for r in runs if r not in done]
     if a.plan or not runs:
         print(json.dumps({"runs": runs, "missing_settings": [k for k in REQUIRED if k not in s]}, indent=1))
         return 0 if runs else Verdict.NOT_RUN.exit_code
