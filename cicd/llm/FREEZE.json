@@ -1,0 +1,21 @@
+{
+ "digests": {
+  "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
+  "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
+  "cicd/llm/gates/__init__.py": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "cicd/llm/gates/behavioural_harness.py": "sha256:22064ea1b6215d4caf526737bc7caf245ffa1a1e9889742fa061a64169216cb2",
+  "cicd/llm/gates/completion_evidence.py": "sha256:f6f1d055673ab28c18acac9d77052059ff619d0e305f3a258df64a37580b4c43",
+  "cicd/llm/gates/governed_write.py": "sha256:36f42d5123503e9274db37a28ffc283430dd6358859a121e59f1a96a5692db5d",
+  "cicd/llm/gates/invented_limits.py": "sha256:0bd3ae97e9b84f861b93c65c1428ea57c34fb7c91f38388d86c1cc93f2834291",
+  "cicd/llm/gates/liveness.py": "sha256:a70372c4af2d04bb247adb5d3ae82464bd9a4269847ca00e343e61f8cf21720f",
+  "cicd/llm/gates/provenance.py": "sha256:676634c11dca5b876831468eb88f3a794a1c46853ccbe8d1e9567b188bc3628e",
+  "cicd/llm/gates/review_findings.py": "sha256:572fb45ed55e92819e218d99c205e01ef7b70d53f6a5f1c0e8be247a647cce1b",
+  "cicd/llm/gates/ruff_profile.py": "sha256:26b1394879fa681ccb205aaca40fff260438a86e7bde5b85ed73c6e18a1e2b76",
+  "cicd/llm/gates/safeguard_removal.py": "sha256:d9f2255c3ccbd845a68690c601e48cf489fbc2b5c910a397fe253abcba305b4e",
+  "cicd/llm/governed.py": "sha256:20061d0ca1a28079f1f26953b784da039f80c26fd9ff996f9506b4d61924532a",
+  "cicd/llm/safeguard.py": "sha256:e6c1319aad5b74ef88dbe1cb21d12cb75ca14993f5325849050c6f6273a8e00b"
+ },
+ "frozen_at": "2026-10-04T22:32:24-0400",
+ "git_commit": "694b658b7fff1eaad52e7521b3600e04ade7afff",
+ "note": "Gates frozen before any held-out fixture was supplied. heldout_run.py refuses to run if any digest here has moved."
+}
