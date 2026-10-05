@@ -62,11 +62,9 @@ def check() -> GateResult:
         fired = []
         for c in canaries:
             n_canaries += 1
-            try:
-                verdict = module.run_canary(c).verdict
-            except core.READ_ERRORS as exc:
-                verdict = Verdict.NOT_RUN
-                _flag(findings, f"canaries/{gate_id}/{c.name}", "canary_error", f"{type(exc).__name__}: {exc}")
+            # No try here: an error inside a canary run is loud (a traceback and a non-zero exit),
+            # and a try around a canary call is what safeguard_removal flags.
+            verdict = module.run_canary(c).verdict
             if verdict is Verdict.VIOLATED:
                 fired.append(c.name)
             else:

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 
 from cicd.lib.verdict import Verdict
 from cicd.llm.core import GateResult
@@ -36,9 +37,17 @@ def test_a_gate_that_always_returns_satisfied_fails_liveness(monkeypatch):
     assert {f.rule for f in r.findings} == {"canary_did_not_fire"}
 
 
-def test_a_deleted_canary_fails_liveness(tmp_path, monkeypatch):
+def _canary_copy(tmp_path):
+    """A copy of the canaries inside a git repository, as they are in the real tree (scope is
+    derived with git ls-files, so a copy outside a repository cannot be scanned)."""
     copy = tmp_path / "canaries"
     shutil.copytree(CANARIES, copy)
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    return copy
+
+
+def test_a_deleted_canary_fails_liveness(tmp_path, monkeypatch):
+    copy = _canary_copy(tmp_path)
     shutil.rmtree(copy / "provenance")
     monkeypatch.setattr(liveness, "CANARIES_DIR", copy)
     r = liveness.check()
@@ -47,8 +56,7 @@ def test_a_deleted_canary_fails_liveness(tmp_path, monkeypatch):
 
 
 def test_an_orphan_canary_is_reported(tmp_path, monkeypatch):
-    copy = tmp_path / "canaries"
-    shutil.copytree(CANARIES, copy)
+    copy = _canary_copy(tmp_path)
     (copy / "no_such_gate" / "x").mkdir(parents=True)
     monkeypatch.setattr(liveness, "CANARIES_DIR", copy)
     assert "orphan_canary" in {f.rule for f in liveness.check().findings}

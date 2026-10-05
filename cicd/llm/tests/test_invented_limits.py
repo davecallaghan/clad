@@ -7,7 +7,9 @@ import pytest
 from cicd.lib.verdict import Verdict
 from cicd.llm import core
 from cicd.llm.gates import invented_limits as g
-from cicd.llm.tests.helpers import CANARIES, commit_all, write_files
+from cicd.llm.tests.helpers import CANARIES, KIT, commit_all, write_files
+
+FIXTURES = KIT / "tests" / "fixtures"
 
 
 def run_repo(root, config, opts=None):
@@ -63,7 +65,7 @@ def test_negative_index_slice_is_flagged(make_repo, kit_config):
 
 
 def test_sql_limit_inside_python_string_is_flagged(make_repo, kit_config):
-    root = make_repo({"a.py": "spark.sql('SELECT * FROM t LIMIT 50')\n"})
+    root = make_repo({"a.py": (FIXTURES / "sql_limit_in_python_string.py").read_text()})
     assert "sql_limit" in rules(run_repo(root, kit_config))
 
 
@@ -89,7 +91,7 @@ def test_scanned_file_count_is_reported_per_type(make_repo, kit_config):
     root = make_repo({"a.py": "x = 1\n", "b.py": "y = 2\n", "q.sql": "SELECT 1\n"})
     r = run_repo(root, kit_config)
     assert r.details["files_by_type"] == {".py": 2, ".sql": 1}
-    assert r.scope_size == 3
+    assert r.scope_size == sum(r.details["files_by_type"].values())
 
 
 # ---- what it must NOT flag ------------------------------------------------------------------

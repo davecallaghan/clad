@@ -8,6 +8,7 @@ import sys
 
 import pytest
 
+from cicd.lib.verdict import Verdict
 from cicd.llm import freeze
 from cicd.llm.freeze import FreezeViolation, verify_freeze
 
@@ -48,7 +49,7 @@ def test_heldout_runner_refuses_when_the_freeze_has_moved(tmp_path, monkeypatch)
          "import sys; from pathlib import Path; import cicd.llm.freeze as f; "
          f"f.FREEZE_PATH = Path({str(fake)!r}); import cicd.llm.heldout_run as h; sys.exit(h.main())"],
         cwd=freeze.ROOT, capture_output=True, text=True)
-    assert code.returncode == 2 and "REFUSING TO RUN" in code.stdout
+    assert code.returncode == Verdict.NOT_RUN.exit_code and "REFUSING TO RUN" in code.stdout
 
 
 def _identifiers(heldout_dir):

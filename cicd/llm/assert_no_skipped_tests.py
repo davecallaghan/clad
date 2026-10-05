@@ -23,10 +23,10 @@ def skipped_cases(path: str) -> list[str]:
     return out
 
 
-def main(argv: list[str]) -> int:
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("junit", help="JUnit XML written by pytest --junitxml")
-    path = ap.parse_args(argv[1:]).junit
+    path = ap.parse_args().junit
     total = sum(1 for _ in ET.parse(path).getroot().iter("testcase"))
     if total == 0:
         print("FAIL: the JUnit file records no tests. An empty run is not a passing run.")
@@ -42,4 +42,4 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())

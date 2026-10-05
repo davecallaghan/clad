@@ -27,7 +27,7 @@ def main() -> int:
         record = verify_freeze()
     except FreezeViolation as exc:
         print(f"REFUSING TO RUN: {exc}")
-        return 2
+        return Verdict.NOT_RUN.exit_code
     supplied = {g: fx for g, fx in fixtures().items() if fx}
     if not supplied:
         print(json.dumps({"verdict": Verdict.NOT_RUN.value, "freeze_commit": record["git_commit"],

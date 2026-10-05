@@ -12,6 +12,7 @@ from cicd.llm import core
 from cicd.llm.gates import review_findings as g
 from cicd.llm.tests.helpers import CANARIES, commit_all
 
+THIRD_REPEAT = 3  # constraint-reversion, "Cross-architecture review": the third repeat escalates
 REG = '[rules.R1]\ngate = "invented_limits"\ntext = "Do not introduce a numeric limit."\n'
 SRC = "def load(rows):\n    max_rows = 500\n    return rows[:max_rows]\n"
 
@@ -112,7 +113,7 @@ def test_escalation_ladder_is_not_run_without_state(make_repo, kit_config):
 
 def test_escalation_threshold_is_the_paper_constant():
     """reversion, "Cross-architecture review": human intervention on the third repeat."""
-    assert g.ESCALATE_ON_REPEAT == 3
+    assert g.ESCALATE_ON_REPEAT == THIRD_REPEAT
 
 
 def test_independence_overlap_is_reported_without_a_violation_when_not_claimed(make_repo, kit_config):
