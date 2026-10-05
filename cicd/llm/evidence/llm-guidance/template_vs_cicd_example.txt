@@ -1,0 +1,2 @@
+ls: cicd/example: No such file or directory
+exit=1

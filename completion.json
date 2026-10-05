@@ -1,0 +1,96 @@
+{
+ "task": "guidance and authoring-loop enforcement for the LLM-specific gates",
+ "status": "complete",
+ "commit": "426d28747bece2d8e20a28796e9903ec5db756b3",
+ "tree_hash": "4271c026ccdb510001d66cf9f051e492d2e03ebd",
+ "artifact_digests": {
+  "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
+  "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
+  "cicd/llm/gates/__init__.py": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "cicd/llm/gates/behavioural_harness.py": "sha256:22064ea1b6215d4caf526737bc7caf245ffa1a1e9889742fa061a64169216cb2",
+  "cicd/llm/gates/completion_evidence.py": "sha256:f6f1d055673ab28c18acac9d77052059ff619d0e305f3a258df64a37580b4c43",
+  "cicd/llm/gates/governed_write.py": "sha256:36f42d5123503e9274db37a28ffc283430dd6358859a121e59f1a96a5692db5d",
+  "cicd/llm/gates/invented_limits.py": "sha256:0bd3ae97e9b84f861b93c65c1428ea57c34fb7c91f38388d86c1cc93f2834291",
+  "cicd/llm/gates/liveness.py": "sha256:f5a6dbee2bd7726e8af80de1603f1587581ca546b12083e9da4f9052a7b07d4f",
+  "cicd/llm/gates/provenance.py": "sha256:676634c11dca5b876831468eb88f3a794a1c46853ccbe8d1e9567b188bc3628e",
+  "cicd/llm/gates/review_findings.py": "sha256:572fb45ed55e92819e218d99c205e01ef7b70d53f6a5f1c0e8be247a647cce1b",
+  "cicd/llm/gates/ruff_profile.py": "sha256:26b1394879fa681ccb205aaca40fff260438a86e7bde5b85ed73c6e18a1e2b76",
+  "cicd/llm/gates/safeguard_removal.py": "sha256:d9f2255c3ccbd845a68690c601e48cf489fbc2b5c910a397fe253abcba305b4e",
+  "cicd/llm/governed.py": "sha256:20061d0ca1a28079f1f26953b784da039f80c26fd9ff996f9506b4d61924532a",
+  "cicd/llm/safeguard.py": "sha256:e6c1319aad5b74ef88dbe1cb21d12cb75ca14993f5325849050c6f6273a8e00b"
+ },
+ "build_manifest": "cicd/llm/FREEZE.json",
+ "checks": [
+  {
+   "id": "precondition_freeze_exists_and_verifies",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/precondition_freeze.txt"
+  },
+  {
+   "id": "precondition_liveness",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/liveness.txt"
+  },
+  {
+   "id": "precondition_and_final_mutation_check_zero_survivors",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/mutation_check.txt"
+  },
+  {
+   "id": "pytest_all",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/pytest.txt"
+  },
+  {
+   "id": "no_skipped_tests",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/no_skipped.txt"
+  },
+  {
+   "id": "guidance_tests_incl_hook_canaries",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/guidance_tests.txt"
+  },
+  {
+   "id": "dogfood_gates_1_and_6_on_own_code",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/dogfood.txt"
+  },
+  {
+   "id": "preflight_wall_clock_measured",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/preflight_timing.txt"
+  },
+  {
+   "id": "settings_json_merge_diff_shown",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/llm-guidance/settings_json.diff"
+  },
+  {
+   "id": "template_instantiated_against_cicd_example",
+   "verdict": "NOT_RUN",
+   "required": false,
+   "evidence_path": "cicd/llm/evidence/llm-guidance/template_vs_cicd_example.txt"
+  },
+  {
+   "id": "section_4_measurement_arms_A_B_C",
+   "verdict": "NOT_RUN",
+   "required": false,
+   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_plan.txt"
+  }
+ ],
+ "not_verified": [
+  "section 4 measurement: harness built, not run; needs owner approval, owner-supplied tasks in cicd/llm/eval/tasks/, and permission_mode and max_budget_usd in cicd/llm/eval/eval.toml",
+  "template instantiated against cicd/example/: NOT_RUN, cicd/example/ does not exist on this branch (it exists only as partial work on feat/cicd-kit)",
+  "hooks inside a live Claude Code session: tested by sending the documented stdin JSON to the configured commands; not observed in an interactive session",
+  "skill auto-loading from descriptions: not observed (needs live sessions; that is what section 4 measures)",
+  "hook interpreter: hooks need PyYAML and ruff; with a python3 that lacks them every edit reports a hook error (CICD_LLM_PYTHON or .venv-llm selects the interpreter)",
+  "the Stop hook checks the working tree against HEAD, not per-session changes: uncommitted changes from before the session also require a completion claim",
+  "eval arms B and C: user-level CLAUDE.md and ~/.claude/skills may still load (declared blind spot)",
+  "gates' held-out phase: no owner-supplied held-out fixtures (heldout_run.py NOT_RUN)",
+  "gate sub-checks NOT_RUN in this repo: behavioural_harness R3 and R4, invented_limits budget_below_capacity, governed_write quarantine_alarm, review_findings escalation ladder state and independence",
+  "live CI: .github/workflows/llm-gates.yml has not run on GitHub; branch protection not checked",
+  "whole-repo findings outside cicd/llm/ (app/, tools/) reported in dogfood.txt, not triaged"
+ ],
+ "summary": "Free text, recorded and never scored."
+}

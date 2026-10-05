@@ -1,0 +1,146 @@
+liveness: 8 gates discovered, 36 canaries, 36 fired -> SATISFIED
+{
+ "blind_spots": [
+  "gates nothing invokes (a canary rides inside the control; see the workflow inventory)",
+  "verdicts nothing acts on (branch protection)",
+  "violation classes no canary represents"
+ ],
+ "details": {
+  "canaries": 36,
+  "canaries_fired": 36,
+  "gates_discovered": 8,
+  "gates_with_canaries": 8,
+  "per_gate": {
+   "behavioural_harness": {
+    "canaries": [
+     "assigned_constant",
+     "default_grade",
+     "vacuous"
+    ],
+    "fired": [
+     "assigned_constant",
+     "default_grade",
+     "vacuous"
+    ]
+   },
+   "completion_evidence": {
+    "canaries": [
+     "complete_with_not_run_check",
+     "deploy_without_readback",
+     "digest_mismatch",
+     "missing_evidence_path",
+     "missing_not_verified"
+    ],
+    "fired": [
+     "complete_with_not_run_check",
+     "deploy_without_readback",
+     "digest_mismatch",
+     "missing_evidence_path",
+     "missing_not_verified"
+    ]
+   },
+   "governed_write": {
+    "canaries": [
+     "contract_default_none",
+     "quarantine_alarm",
+     "ungated_write"
+    ],
+    "fired": [
+     "contract_default_none",
+     "quarantine_alarm",
+     "ungated_write"
+    ]
+   },
+   "invented_limits": {
+    "canaries": [
+     "budget_below_capacity",
+     "constant_slice",
+     "limit_key_py",
+     "manifest_only_wrapper_timeout",
+     "manifest_timeout",
+     "sql_limit",
+     "truncating_call"
+    ],
+    "fired": [
+     "budget_below_capacity",
+     "constant_slice",
+     "limit_key_py",
+     "manifest_only_wrapper_timeout",
+     "manifest_timeout",
+     "sql_limit",
+     "truncating_call"
+    ]
+   },
+   "provenance": {
+    "canaries": [
+     "code_supplied_disallowed",
+     "missing_origin",
+     "unknown_origin"
+    ],
+    "fired": [
+     "code_supplied_disallowed",
+     "missing_origin",
+     "unknown_origin"
+    ]
+   },
+   "review_findings": {
+    "canaries": [
+     "corroborated",
+     "escalation",
+     "not_independent"
+    ],
+    "fired": [
+     "corroborated",
+     "escalation",
+     "not_independent"
+    ]
+   },
+   "ruff_profile": {
+    "canaries": [
+     "bare_except",
+     "blind_except",
+     "complexity",
+     "magic_value",
+     "try_except_pass"
+    ],
+    "fired": [
+     "bare_except",
+     "blind_except",
+     "complexity",
+     "magic_value",
+     "try_except_pass"
+    ]
+   },
+   "safeguard_removal": {
+    "canaries": [
+     "contract_gains_default",
+     "deleted_assertion_and_skip",
+     "deleted_canary_call",
+     "discarded_quarantine",
+     "swallowed_exception",
+     "unreachable_guard",
+     "wrapped_safeguard"
+    ],
+    "fired": [
+     "contract_gains_default",
+     "deleted_assertion_and_skip",
+     "deleted_canary_call",
+     "discarded_quarantine",
+     "swallowed_exception",
+     "unreachable_guard",
+     "wrapped_safeguard"
+    ]
+   }
+  }
+ },
+ "findings": [],
+ "gate": "liveness",
+ "kind": "deciding",
+ "notes": [],
+ "scope_size": 8,
+ "sub_checks": {},
+ "timestamp": "2026-10-05T02:56:45+00:00",
+ "tree_hash": "4271c026ccdb510001d66cf9f051e492d2e03ebd",
+ "verdict": "SATISFIED"
+}
+exit=0

@@ -1,0 +1,8 @@
+{
+ "runs": [],
+ "missing_settings": [
+  "permission_mode",
+  "max_budget_usd"
+ ]
+}
+exit=2

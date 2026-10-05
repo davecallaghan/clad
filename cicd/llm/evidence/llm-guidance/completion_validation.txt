@@ -1,0 +1,41 @@
+{
+ "blind_spots": [
+  "whether an evidence file says what its check claims (existence is checked, content is not)",
+  "checks the claim does not list",
+  "free-text fields (recorded, never scored)"
+ ],
+ "details": {
+  "free_text": {
+   "summary": "Free text, recorded and never scored.",
+   "task": "guidance and authoring-loop enforcement for the LLM-specific gates"
+  },
+  "not_verified": [
+   "section 4 measurement: harness built, not run; needs owner approval, owner-supplied tasks in cicd/llm/eval/tasks/, and permission_mode and max_budget_usd in cicd/llm/eval/eval.toml",
+   "template instantiated against cicd/example/: NOT_RUN, cicd/example/ does not exist on this branch (it exists only as partial work on feat/cicd-kit)",
+   "hooks inside a live Claude Code session: tested by sending the documented stdin JSON to the configured commands; not observed in an interactive session",
+   "skill auto-loading from descriptions: not observed (needs live sessions; that is what section 4 measures)",
+   "hook interpreter: hooks need PyYAML and ruff; with a python3 that lacks them every edit reports a hook error (CICD_LLM_PYTHON or .venv-llm selects the interpreter)",
+   "the Stop hook checks the working tree against HEAD, not per-session changes: uncommitted changes from before the session also require a completion claim",
+   "eval arms B and C: user-level CLAUDE.md and ~/.claude/skills may still load (declared blind spot)",
+   "gates' held-out phase: no owner-supplied held-out fixtures (heldout_run.py NOT_RUN)",
+   "gate sub-checks NOT_RUN in this repo: behavioural_harness R3 and R4, invented_limits budget_below_capacity, governed_write quarantine_alarm, review_findings escalation ladder state and independence",
+   "live CI: .github/workflows/llm-gates.yml has not run on GitHub; branch protection not checked",
+   "whole-repo findings outside cicd/llm/ (app/, tools/) reported in dogfood.txt, not triaged"
+  ],
+  "status": "complete"
+ },
+ "findings": [],
+ "gate": "completion_evidence",
+ "kind": "deciding",
+ "notes": [],
+ "scope_size": 1,
+ "sub_checks": {
+  "checks": "RUN",
+  "digests": "RUN",
+  "schema": "RUN"
+ },
+ "timestamp": "2026-10-05T02:58:22+00:00",
+ "tree_hash": "4271c026ccdb510001d66cf9f051e492d2e03ebd",
+ "verdict": "SATISFIED"
+}
+exit=0
