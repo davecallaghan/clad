@@ -1,0 +1,5 @@
+[config.gates.behavioural_harness]
+contract = "contract.toml"
+entry = "pipeline.py:run_pipeline"
+target = "findings"
+records = "records.json"
