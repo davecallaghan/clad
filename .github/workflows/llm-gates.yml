@@ -1,0 +1,51 @@
+# The LLM-specific gates in cicd/llm/: tests, the skipped-test check, the mutation harness and
+# liveness, on every change to the kit and nightly.
+#
+# Each step exists because a control died silently somewhere (constraint-reversion, "Detection
+# surfaces, and how they failed"): a skipped test is not a passing test, a gate whose canary does
+# not fire is not a gate, and a test that survives its mutation is decoration.
+name: llm-gates
+
+on:
+  push:
+    paths:
+      - "cicd/llm/**"
+      - "cicd/lib/**"
+      - ".github/workflows/llm-gates.yml"
+  pull_request:
+    paths:
+      - "cicd/llm/**"
+      - "cicd/lib/**"
+  schedule:
+    - cron: "37 4 * * *" # nightly, off the hour; the same slot as lean.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # safeguard_removal and escalation compare against a base commit
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # the version the kit was built and tested with (3.12.15)
+
+      - name: Install pinned tools
+        run: python -m pip install -r cicd/llm/requirements.txt
+
+      - name: Tests
+        run: python -m pytest cicd/llm/tests -q --junitxml=cicd/llm/ledger/junit.xml
+
+      - name: No skipped tests
+        run: python cicd/llm/assert_no_skipped_tests.py cicd/llm/ledger/junit.xml
+
+      - name: Mutation harness (zero survivors)
+        run: python cicd/llm/mutation_check.py
+
+      - name: Liveness (every canary fires)
+        run: python -m cicd.llm.gates.liveness

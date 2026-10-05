@@ -1,0 +1,5 @@
+# Pinned to the versions the kit was built and tested with (2026-10-04, Python 3.12.15).
+# Runtime: PyYAML only (gates read manifests). Dev: pytest; ruff for the ruff_profile gate.
+pyyaml==6.0.3
+pytest==9.1.1
+ruff==0.16.10
