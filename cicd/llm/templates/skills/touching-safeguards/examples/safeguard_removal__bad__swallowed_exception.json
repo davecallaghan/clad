@@ -1,0 +1,8 @@
+{
+ "files": {
+  "guards.py": "from cicd.llm.safeguard import safeguard\n\n\n@safeguard\ndef check_rows(rows):\n    if not rows:\n        raise ValueError('no rows')\n    return rows\n"
+ },
+ "path": "load.py",
+ "base": "from guards import check_rows\n\n\ndef load(rows):\n    try:\n        return check_rows(rows)\n    except ValueError:\n        raise\n",
+ "head": "from guards import check_rows\n\n\ndef load(rows):\n    try:\n        return check_rows(rows)\n    except Exception:\n        pass\n"
+}

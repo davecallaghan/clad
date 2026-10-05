@@ -1,0 +1,3 @@
+{"document_id": "doc-1", "severity": "high", "severity__origin": "model_emitted", "finding_kind": "red_flag", "finding_kind__origin": "model_emitted"}
+{"document_id": "doc-2", "severity": "medium", "severity__origin": "promoted", "finding_kind": "observation", "finding_kind__origin": "model_emitted"}
+{"document_id": "doc-3", "severity": "ungraded", "severity__origin": "code_supplied", "finding_kind": "ungraded", "finding_kind__origin": "code_supplied"}

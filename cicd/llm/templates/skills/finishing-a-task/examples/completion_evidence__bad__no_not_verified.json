@@ -1,0 +1,17 @@
+{
+ "status": "complete",
+ "commit": "0000000000000000000000000000000000000000",
+ "tree_hash": "1111111111111111111111111111111111111111",
+ "artifact_digests": {},
+ "checks": [
+  {
+   "id": "pytest",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/pytest.txt"
+  }
+ ],
+ "summary": "All tests pass, so the task is done.",
+ "fixture_files": {
+  "evidence/pytest.txt": "12 passed\n"
+ }
+}

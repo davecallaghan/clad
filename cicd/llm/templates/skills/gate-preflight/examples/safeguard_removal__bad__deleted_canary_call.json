@@ -1,0 +1,8 @@
+{
+ "files": {
+  "guards.py": "from cicd.llm.safeguard import safeguard\n\n\n@safeguard\ndef check_rows(rows):\n    if not rows:\n        raise ValueError('no rows')\n    return rows\n"
+ },
+ "path": "run.py",
+ "base": "def run(rows, contract):\n    plant_canary(contract)\n    return check_rows(rows)\n",
+ "head": "def run(rows, contract):\n    return check_rows(rows)\n"
+}

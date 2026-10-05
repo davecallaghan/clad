@@ -1,0 +1,26 @@
+{
+ "status": "complete",
+ "commit": "0000000000000000000000000000000000000000",
+ "tree_hash": "1111111111111111111111111111111111111111",
+ "artifact_digests": {},
+ "checks": [
+  {
+   "id": "preflight",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/preflight.txt"
+  },
+  {
+   "id": "pytest",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/pytest.txt"
+  }
+ ],
+ "not_verified": [
+  "live deployment: no read-back was performed",
+  "behavioural_harness R4: repeat_count unset (NOT_RUN)"
+ ],
+ "fixture_files": {
+  "evidence/preflight.txt": "invented_limits: SATISFIED\n",
+  "evidence/pytest.txt": "12 passed\n"
+ }
+}
