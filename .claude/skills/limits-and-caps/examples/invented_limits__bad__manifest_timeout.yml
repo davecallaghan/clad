@@ -1,0 +1,11 @@
+# Bad: a wrapper job timeout declared only in the bundle's resource file, where no source-level
+# guard looked; the case that survived eight PRs (constraint-reversion, "Observed instances").
+resources:
+  jobs:
+    analyse_wrapper:
+      name: analyse_wrapper
+      timeout_seconds: 14400
+      tasks:
+        - task_key: run_analysis
+          run_job_task:
+            job_id: 1

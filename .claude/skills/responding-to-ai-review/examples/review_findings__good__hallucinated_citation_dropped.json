@@ -1,0 +1,38 @@
+{
+ "source": {
+  "src.py": "def load(rows):\n    max_rows = 500\n    return rows[:max_rows]\n"
+ },
+ "reviews": {
+  "rev_a": {
+   "reviewer": "rev_a",
+   "commit": "WORKTREE",
+   "pr": "1",
+   "round": 1,
+   "findings": [
+    {
+     "id": "a1",
+     "file": "src.py",
+     "line": 2,
+     "quote": "max_rows = 9000",
+     "rule_id": "LLM-LIMITS",
+     "rule_quote": "a cap must come from a requirement",
+     "message": "invented row cap"
+    }
+   ],
+   "verdicts": []
+  },
+  "rev_b": {
+   "reviewer": "rev_b",
+   "commit": "WORKTREE",
+   "pr": "1",
+   "round": 1,
+   "findings": [],
+   "verdicts": [
+    {
+     "finding_id": "a1",
+     "verdict": "confirm"
+    }
+   ]
+  }
+ }
+}

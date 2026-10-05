@@ -25,8 +25,9 @@ build/puppeteer.json
 build/diagrams/
 build/.chromium/
 
-# local Claude Code settings
-.claude/
+# local Claude Code settings (project settings.json and skills are committed: guidance 3.3, 3.5)
+.claude/settings.local.json
+.claude/worktrees/
 
 # local GCP deploy config (contains project id)
 ops/gcp/config.env
