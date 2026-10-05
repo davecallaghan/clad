@@ -57,3 +57,6 @@ __pycache__/
 
 # IDE workspace files
 *.code-workspace
+
+# Python environment for the LLM gate hooks and tests (cicd/llm/setup_env.sh)
+.venv-llm/
