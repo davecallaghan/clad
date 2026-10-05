@@ -1,0 +1,24 @@
+{
+ "status": "complete",
+ "commit": "0000000000000000000000000000000000000000",
+ "tree_hash": "1111111111111111111111111111111111111111",
+ "artifact_digests": {
+  "dist/app.tar": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ "checks": [
+  {
+   "id": "tests",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/tests.txt"
+  },
+  {
+   "id": "mutation",
+   "verdict": "NOT_RUN",
+   "evidence_path": "evidence/tests.txt"
+  }
+ ],
+ "not_verified": [
+  "live deployment"
+ ],
+ "summary": "free text is recorded, never scored"
+}
