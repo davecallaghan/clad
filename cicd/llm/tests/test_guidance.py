@@ -123,7 +123,7 @@ def test_skill_frontmatter_has_name_and_description(skill):
 
 @pytest.mark.parametrize("skill", skill_dirs(), ids=lambda p: p.name)
 def test_each_claimed_gate_has_a_good_and_a_bad_example(skill):
-    have = {examples.parse_name(p)[:2] for p in (skill / "examples").iterdir()}
+    have = {(gate, kind) for gate, kind, _ in map(examples.parse_name, (skill / "examples").iterdir())}
     for gate in claimed_gates(skill):
         assert {(gate, "good"), (gate, "bad")} <= have, f"{skill.name}: {gate}"
 

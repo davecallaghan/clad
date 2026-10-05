@@ -14,6 +14,8 @@ from cicd.llm.eval import run_eval
 from cicd.llm.tests.helpers import KIT, commit_all, write_files
 
 ROOT = KIT.parents[1]
+# The fake claude ignores the budget; a sentinel avoids writing a number nobody chose.
+SETTINGS = {"permission_mode": "acceptEdits", "max_budget_usd": "FIXTURE-NOT-A-BUDGET"}
 
 
 def test_harness_refuses_to_run_without_owner_approval(tmp_path):
@@ -58,7 +60,7 @@ def test_arms_remove_exactly_what_they_must(tmp_path):
 
 
 def test_arm_a_runs_in_safe_mode_and_b_c_exclude_user_settings():
-    s = {"permission_mode": "acceptEdits", "max_budget_usd": 1}
+    s = SETTINGS
     assert "--safe-mode" in run_eval.claude_argv("A", "p", s)
     for arm in ("B", "C"):
         argv = run_eval.claude_argv(arm, "p", s)
@@ -73,7 +75,7 @@ def test_run_one_records_first_verdicts_with_a_fake_claude(make_repo, tmp_path, 
     fake.write_text("#!/bin/sh\nprintf 'max_rows = 500\\n' > a.py\necho '{}'\n")
     fake.chmod(0o755)
     monkeypatch.setenv("CICD_LLM_CLAUDE", str(fake))
-    rec = run_eval.run_one(root, "t1", "do it", "C", 1, {"permission_mode": "acceptEdits", "max_budget_usd": 1})
+    rec = run_eval.run_one(root, "t1", "do it", "C", 1, SETTINGS)
     assert rec["first"]["verdicts"]["invented_limits"] == "VIOLATED"
     assert rec["attempts_to_pass"] == "NOT_RUN"
     assert "eval/t1/C/1" not in subprocess.run(["git", "branch"], cwd=root, capture_output=True, text=True).stdout
