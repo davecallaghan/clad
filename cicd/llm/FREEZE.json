@@ -7,7 +7,7 @@
   "cicd/llm/gates/completion_evidence.py": "sha256:f6f1d055673ab28c18acac9d77052059ff619d0e305f3a258df64a37580b4c43",
   "cicd/llm/gates/governed_write.py": "sha256:36f42d5123503e9274db37a28ffc283430dd6358859a121e59f1a96a5692db5d",
   "cicd/llm/gates/invented_limits.py": "sha256:0bd3ae97e9b84f861b93c65c1428ea57c34fb7c91f38388d86c1cc93f2834291",
-  "cicd/llm/gates/liveness.py": "sha256:a70372c4af2d04bb247adb5d3ae82464bd9a4269847ca00e343e61f8cf21720f",
+  "cicd/llm/gates/liveness.py": "sha256:f5a6dbee2bd7726e8af80de1603f1587581ca546b12083e9da4f9052a7b07d4f",
   "cicd/llm/gates/provenance.py": "sha256:676634c11dca5b876831468eb88f3a794a1c46853ccbe8d1e9567b188bc3628e",
   "cicd/llm/gates/review_findings.py": "sha256:572fb45ed55e92819e218d99c205e01ef7b70d53f6a5f1c0e8be247a647cce1b",
   "cicd/llm/gates/ruff_profile.py": "sha256:26b1394879fa681ccb205aaca40fff260438a86e7bde5b85ed73c6e18a1e2b76",
@@ -15,7 +15,10 @@
   "cicd/llm/governed.py": "sha256:20061d0ca1a28079f1f26953b784da039f80c26fd9ff996f9506b4d61924532a",
   "cicd/llm/safeguard.py": "sha256:e6c1319aad5b74ef88dbe1cb21d12cb75ca14993f5325849050c6f6273a8e00b"
  },
- "frozen_at": "2026-10-04T22:32:24-0400",
- "git_commit": "694b658b7fff1eaad52e7521b3600e04ade7afff",
- "note": "Gates frozen before any held-out fixture was supplied. heldout_run.py refuses to run if any digest here has moved."
+ "frozen_at": "2026-10-04T22:35:32-0400",
+ "git_commit": "cc193d4f4a79c6c1422502282db31c4f88c64cd6",
+ "logic_unchanged_evidence": "Logic DID change in one file: git diff 372cf86f22bf52948cea2574476747aedd5470fb -- cicd/llm/gates/liveness.py shows the try/except around module.run_canary removed (canary errors now propagate). Every other frozen file is byte-identical: compare the digests in FREEZE-2026-10-04-a.json.",
+ "note": "Gates frozen before any held-out fixture was supplied. heldout_run.py refuses to run if any digest here has moved.",
+ "supersede_reason": "Dogfood (spec 5.6) found cicd/llm/gates/liveness.py wrapping run_canary in a try, which safeguard_removal flags; the try was removed. No held-out fixture had been supplied or run under the earlier freeze, so no held-out result is invalidated.",
+ "supersedes": "FREEZE-2026-10-04-a.json"
 }
