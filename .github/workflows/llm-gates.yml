@@ -11,11 +11,15 @@ on:
     paths:
       - "cicd/llm/**"
       - "cicd/lib/**"
+      - "CLAUDE.md"
+      - ".claude/**"
       - ".github/workflows/llm-gates.yml"
   pull_request:
     paths:
       - "cicd/llm/**"
       - "cicd/lib/**"
+      - "CLAUDE.md"
+      - ".claude/**"
   schedule:
     - cron: "37 4 * * *" # nightly, off the hour; the same slot as lean.yml
   workflow_dispatch:
@@ -40,6 +44,9 @@ jobs:
 
       - name: Tests
         run: python -m pytest cicd/llm/tests -q --junitxml=cicd/llm/ledger/junit.xml
+
+      - name: Guidance tests (CLAUDE.md, skills, examples, hooks, template must not drift from the gates)
+        run: python -m pytest cicd/llm/tests/test_guidance.py -q
 
       - name: No skipped tests
         run: python cicd/llm/assert_no_skipped_tests.py cicd/llm/ledger/junit.xml

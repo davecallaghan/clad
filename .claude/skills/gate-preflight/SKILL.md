@@ -13,8 +13,7 @@ indistinguishable from no findings (constraint-reversion, "Detection surfaces, a
 failed"). An undecided check coerced to a boolean becomes a pass (constraint-escape, "Constraint
 semantics": the verdict type raises on Boolean coercion).
 
-Checked by: every gate: invented_limits, governed_write, provenance, behavioural_harness,
-review_findings, safeguard_removal, completion_evidence, ruff_profile.
+Checked by: invented_limits, governed_write, provenance, behavioural_harness, review_findings, safeguard_removal, completion_evidence, ruff_profile (every gate).
 
 ## Procedure
 

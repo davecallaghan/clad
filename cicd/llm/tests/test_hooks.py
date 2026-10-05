@@ -49,22 +49,8 @@ def blocked(r: subprocess.CompletedProcess) -> bool:
     return bool(r.stdout.strip()) and json.loads(r.stdout).get("decision") == "block"
 
 
-# ---- the two canaries the spec requires --------------------------------------------------------
-
-def test_canary_edit_adding_an_invented_limit_is_reported_to_claude(make_repo):
-    root = project(make_repo)
-    write_files(root, {"a.py": "max_rows = 500\n"})
-    r = run_hook("PostToolUse", edit_payload(root / "a.py"))
-    assert r.returncode == BLOCK, r.stderr
-    assert "invented_limits" in r.stderr and "VIOLATED" in r.stderr
-
-
-def test_canary_stop_without_completion_after_a_governed_change_blocks(make_repo):
-    root = project(make_repo)
-    write_files(root, {"a.py": "def total(xs):\n    return sum(xs)\n"})
-    r = run_hook("Stop", stop_payload(root))
-    assert r.returncode == 0 and blocked(r), (r.stdout, r.stderr)
-    assert "completion.json" in json.loads(r.stdout)["reason"]
+# The two canaries the spec requires (edit adding an invented limit; Stop without completion.json
+# after a governed change) live in test_guidance.py, which lists them as guidance 3.7 item 5.
 
 
 # ---- the rest of the hook contract -------------------------------------------------------------

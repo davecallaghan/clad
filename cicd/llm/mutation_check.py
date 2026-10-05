@@ -35,8 +35,8 @@ class Mutation:
     gate: str
     name: str
     path: str
-    old: str
-    new: str
+    old: str  # must be present for the mutation to apply
+    new: str | None  # replacement text; None deletes the file
     expect_fail: str
 
 
@@ -253,6 +253,30 @@ MUTATIONS: tuple[Mutation, ...] = (
              "for rel in set(now) | set(record[\"digests\"])",
              "for rel in set(record[\"digests\"])",
              T + "test_freeze.py::test_a_new_unfrozen_gate_file_is_detected"),
+    # ---- guidance (guidance 3.7 item 6) -------------------------------------------------------
+    Mutation("guidance", "delete a bad example", ".claude/skills/limits-and-caps/examples/invented_limits__bad__invented_row_cap.py",
+             "max_documents = 50", None,
+             T + "test_guidance.py::test_every_linked_example_exists[limits-and-caps]"),
+    Mutation("guidance", "make a good example violate", ".claude/skills/limits-and-caps/examples/invented_limits__good__bound_from_config.py",
+             "    size = settings[\"ingest\"][\"batch_size\"]\n",
+             "    size = settings[\"ingest\"][\"batch_size\"]\n    max_batches = 100\n",
+             T + "test_guidance.py::test_examples_behave_as_named[limits-and-caps/invented_limits__good__bound_from_config.py]"),
+    Mutation("guidance", "a non-negotiable loses its 'does not apply' clause", "CLAUDE.md",
+             " Does not apply when: the target is not in the contract.", "",
+             T + "test_guidance.py::test_each_non_negotiable_states_applicability_and_its_check[LLM-GOVERNED-WRITE]"),
+    Mutation("hooks", "a crashing post-edit hook passes", "cicd/llm/hooks/post_edit.sh",
+             "if [ \"$code\" -ne 0 ] && [ \"$code\" -ne 2 ]; then", "if false; then",
+             T + "test_hooks.py::test_a_crashing_post_edit_hook_is_reported_not_passed"),
+    Mutation("hooks", "the Stop hook ignores stop_hook_active", "cicd/llm/hooks/stop.py",
+             "    if data.get(\"stop_hook_active\"):\n        return 0", "    if False:\n        return 0",
+             T + "test_hooks.py::test_stop_hook_active_is_respected_so_it_cannot_loop"),
+    Mutation("hooks", "a stale completion claim is accepted", "cicd/llm/hooks/stop.py",
+             "    if claim.stat().st_mtime < newest:", "    if False:",
+             T + "test_hooks.py::test_stop_with_a_stale_completion_blocks"),
+    Mutation("preflight", "NOT_RUN no longer fails preflight", "cicd/llm/preflight.py",
+             "    elif any(v in (Verdict.NOT_RUN.value, Verdict.INEXPRESSIBLE.value) for v in verdicts):",
+             "    elif False:",
+             T + "test_preflight.py::test_missing_ruff_is_not_run_and_fails_preflight"),
     # ---- shared contract ----------------------------------------------------------------------
     Mutation("core", "a verdict coerces to bool", "cicd/lib/verdict.py",
              "    def __bool__(self) -> bool:\n        raise TypeError(",
@@ -293,7 +317,9 @@ def main() -> int:
 
     # Refuse to run over a tree a previous (killed) run left mutated; restore on SIGINT/SIGTERM.
     leftovers = [f"{m.path}: {m.name}" for m in MUTATIONS
-                 if m.new in (ROOT / m.path).read_text() and m.old not in (ROOT / m.path).read_text()]
+                 if m.new is not None and (ROOT / m.path).is_file()
+                 and m.new in (ROOT / m.path).read_text() and m.old not in (ROOT / m.path).read_text()]
+    leftovers += [f"{m.path}: {m.name} (file missing)" for m in MUTATIONS if not (ROOT / m.path).is_file()]
     if leftovers:
         print("REFUSING TO RUN: a previous run left mutations in the working tree:")
         print("\n".join(f"  {x}" for x in leftovers))
@@ -316,7 +342,7 @@ def main() -> int:
     results, survivors = [], []
     for i, m in enumerate(MUTATIONS, 1):
         path = ROOT / m.path
-        original = path.read_text()
+        original = path.read_text() if path.is_file() else ""
         if m.old not in original or not collectable(m.expect_fail):
             why = "pattern absent: the code moved" if m.old not in original else "named test does not exist"
             print(f"{i:>2}. NOT APPLICABLE  [{m.gate}] {m.name}: {why}; update this mutation")
@@ -324,7 +350,10 @@ def main() -> int:
             results.append({"gate": m.gate, "name": m.name, "status": "not-applicable"})
         else:
             in_flight[path] = original
-            path.write_text(original.replace(m.old, m.new, 1))
+            if m.new is None:
+                path.unlink()
+            else:
+                path.write_text(original.replace(m.old, m.new, 1))
             try:
                 caught = run_named(m.expect_fail)
             finally:
