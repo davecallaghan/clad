@@ -45,8 +45,8 @@ class EvalRefused(Exception):
     pass
 
 
-def load_settings() -> dict:
-    with open(HERE / "eval.toml", "rb") as fh:
+def load_settings(path: Path | None = None) -> dict:
+    with open(path or HERE / "eval.toml", "rb") as fh:
         return tomllib.load(fh)
 
 
@@ -55,7 +55,14 @@ def tasks(tasks_dir: Path) -> dict[str, str]:
 
 
 def prepare_arm(worktree: Path, arm: str) -> None:
-    """Remove from the worktree what the arm must not have (derived from the tree, not a list)."""
+    """Remove from the worktree what the arm must not have (derived from the tree, not a list).
+
+    Every arm also loses any completion claim already in the tree: the session must write its own,
+    or completion_evidence would score an earlier task's claim (found in a smoke run, 2026-10-05).
+    """
+    claim = worktree / core.load_config()["hooks"]["completion"]
+    if claim.is_file():
+        claim.unlink()
     if arm == "A":
         for md in worktree.rglob("CLAUDE.md"):
             md.unlink()
@@ -74,6 +81,10 @@ def claude_argv(arm: str, prompt: str, s: dict, resume: bool = False) -> list[st
     argv = [os.environ.get("CICD_LLM_CLAUDE", "claude"), "-p", prompt, "--output-format", "json",
             "--permission-mode", s["permission_mode"], "--max-budget-usd", str(s["max_budget_usd"])]
     argv += ["--safe-mode"] if arm == "A" else ["--setting-sources", "project,local"]
+    if s.get("allowed_tools"):
+        argv += ["--allowedTools", *s["allowed_tools"]]
+    if s.get("disallowed_tools"):
+        argv += ["--disallowedTools", *s["disallowed_tools"]]
     if s.get("model"):
         argv += ["--model", s["model"]]
     if resume:
@@ -117,8 +128,10 @@ def run_one(root: Path, task: str, prompt: str, arm: str, n: int, s: dict) -> di
             arm_base = core.git(wt, "rev-parse", "HEAD").strip()
             attempts, first, passed_at = s.get("max_attempts") or 1, None, {}
             for attempt in range(1, attempts + 1):
+                # The worktree has no .venv-llm (it is gitignored); arm C's hooks use the repository's.
+                env = {**os.environ, "CICD_LLM_PYTHON": os.environ.get("CICD_LLM_PYTHON", sys.executable)}
                 proc = subprocess.run(claude_argv(arm, prompt, s, resume=attempt > 1), cwd=wt,
-                                      capture_output=True, text=True)
+                                      capture_output=True, text=True, env=env)
                 verdicts = evaluate(wt, arm_base)
                 first = first or {"claude_exit": proc.returncode, "verdicts": verdicts}
                 for g, v in verdicts.items():
@@ -156,8 +169,9 @@ def main() -> int:
     mode.add_argument("--report", action="store_true")
     ap.add_argument("--owner-approved", action="store_true", help="the owner approved spending model usage")
     ap.add_argument("--tasks-dir", type=Path, default=HERE / "tasks")
+    ap.add_argument("--settings", type=Path, default=HERE / "eval.toml")
     a = ap.parse_args()
-    s = load_settings()
+    s = load_settings(a.settings)
     if a.report:
         records = [json.loads(line) for line in LEDGER.read_text().splitlines()] if LEDGER.is_file() else []
         print(json.dumps(report(records), indent=1, sort_keys=True))

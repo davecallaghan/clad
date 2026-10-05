@@ -14,22 +14,39 @@ from cicd.llm.eval import run_eval
 from cicd.llm.tests.helpers import KIT, commit_all, write_files
 
 ROOT = KIT.parents[1]
+
+
+def harness(*args, tmp_path, settings: str | None = None) -> subprocess.CompletedProcess:
+    """Run the harness CLI so that it can never reach a real model: `claude` is a fake that fails,
+    and the settings file is the test's own."""
+    fake = tmp_path / "no-claude"
+    fake.write_text("#!/bin/sh\necho 'a test reached claude' >&2\nexit 99\n")
+    fake.chmod(0o755)
+    cfg = tmp_path / "eval.toml"
+    cfg.write_text(settings if settings is not None else 'repeats = 2\narms = ["A", "B", "C"]\n')
+    env = {**os.environ, "CICD_LLM_CLAUDE": str(fake)}
+    return subprocess.run([sys.executable, "-m", "cicd.llm.eval.run_eval", *args, "--settings", str(cfg)],
+                          cwd=ROOT, capture_output=True, text=True, env=env)
 # The fake claude ignores the budget; a sentinel avoids writing a number nobody chose.
 SETTINGS = {"permission_mode": "acceptEdits", "max_budget_usd": "FIXTURE-NOT-A-BUDGET"}
 
 
 def test_harness_refuses_to_run_without_owner_approval(tmp_path):
-    (tmp_path / "t1.md").write_text("Add a feature.")
-    r = subprocess.run([sys.executable, "-m", "cicd.llm.eval.run_eval", "--run", "--tasks-dir", str(tmp_path)],
-                       cwd=ROOT, capture_output=True, text=True)
+    tasks = tmp_path / "tasks"
+    tasks.mkdir()
+    (tasks / "t1.md").write_text("Add a feature.")
+    r = harness("--run", "--tasks-dir", str(tasks), tmp_path=tmp_path,
+                settings='repeats = 2\narms = ["A"]\npermission_mode = "acceptEdits"\nmax_budget_usd = 1.0\n')
     assert r.returncode == Verdict.NOT_RUN.exit_code and "owner" in r.stderr
 
 
 def test_harness_refuses_when_required_settings_are_unset(tmp_path):
-    (tmp_path / "t1.md").write_text("Add a feature.")
-    r = subprocess.run([sys.executable, "-m", "cicd.llm.eval.run_eval", "--run", "--owner-approved",
-                        "--tasks-dir", str(tmp_path)], cwd=ROOT, capture_output=True, text=True)
+    tasks = tmp_path / "tasks"
+    tasks.mkdir()
+    (tasks / "t1.md").write_text("Add a feature.")
+    r = harness("--run", "--owner-approved", "--tasks-dir", str(tasks), tmp_path=tmp_path)
     assert r.returncode == Verdict.NOT_RUN.exit_code and "permission_mode" in r.stderr
+    assert "a test reached claude" not in r.stderr
 
 
 def test_plan_is_tasks_times_arms_times_repeats(tmp_path):
@@ -41,8 +58,9 @@ def test_plan_is_tasks_times_arms_times_repeats(tmp_path):
 
 
 def test_no_tasks_is_not_run(tmp_path):
-    r = subprocess.run([sys.executable, "-m", "cicd.llm.eval.run_eval", "--plan", "--tasks-dir", str(tmp_path)],
-                       cwd=ROOT, capture_output=True, text=True)
+    empty = tmp_path / "tasks"
+    empty.mkdir()
+    r = harness("--plan", "--tasks-dir", str(empty), tmp_path=tmp_path)
     assert r.returncode == Verdict.NOT_RUN.exit_code
 
 
@@ -53,7 +71,9 @@ def test_arms_remove_exactly_what_they_must(tmp_path):
         shutil.copy(ROOT / "CLAUDE.md", wt / "CLAUDE.md")
         (wt / "cicd" / "llm").mkdir(parents=True)
         shutil.copy(KIT / "CLAUDE.md", wt / "cicd" / "llm" / "CLAUDE.md")
+        (wt / "completion.json").write_text("{}")
         run_eval.prepare_arm(wt, arm)
+        assert not (wt / "completion.json").exists(), "an earlier task's claim must not be scored"
         hooks = "hooks" in json.loads((wt / ".claude" / "settings.json").read_text())
         state = (bool(list(wt.rglob("CLAUDE.md"))), (wt / ".claude" / "skills").exists(), hooks)
         assert state == {"A": (False, False, False), "B": (True, True, False), "C": (True, True, True)}[arm]

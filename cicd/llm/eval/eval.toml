@@ -1,12 +1,17 @@
-# Settings for the guidance evaluation (guidance section 4). Unset values are not chosen by the
-# builder: the harness refuses to run until the owner sets the ones marked REQUIRED.
+# Settings for the guidance evaluation (guidance section 4).
+# On 2026-10-05 the owner asked the builder to make every configuration choice instead of waiting;
+# values marked "builder's choice" are those choices, recorded as such.
 
-# Spec section 4: "twice per arm".
 repeats = 2  # source: guidance spec, section 4 ("twice per arm")
 arms = ["A", "B", "C"]  # source: guidance spec, section 4
 
-# REQUIRED before running: how headless sessions may act in their throwaway worktree.
-# permission_mode = <unset>        # e.g. one of the documented --permission-mode values
-# max_budget_usd = <unset>         # REQUIRED: passed as --max-budget-usd per session
-# model = <unset>                  # optional: --model; unset uses the account default (recorded)
-# max_attempts = <unset>           # optional: unset measures first attempts only; attempts-to-pass is NOT_RUN
+# How headless sessions may act in their throwaway worktree (builder's choice, 2026-10-05):
+# edits are accepted; shell use is limited to Python, preflight and read-only git; push is denied
+# because the repository has a GitHub remote.
+permission_mode = "acceptEdits"
+allowed_tools = ["Bash(python *)", "Bash(python3 *)", "Bash(cicd/llm/preflight.sh*)", "Bash(git diff*)",
+                 "Bash(git status*)", "Bash(git log*)", "Bash(ls *)"]
+disallowed_tools = ["Bash(git push*)", "Bash(git remote*)"]
+max_budget_usd = 1.0  # source: builder's choice at the owner's request, 2026-10-05; caps each session
+max_attempts = 2      # source: builder's choice at the owner's request, 2026-10-05; first attempt plus one retry with gate findings
+# model = <unset>     # the account default is used and recorded per run
