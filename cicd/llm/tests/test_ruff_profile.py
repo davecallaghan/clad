@@ -74,3 +74,17 @@ def test_lowering_the_ratchet_is_satisfied(make_repo, kit_config):
 def test_empty_scope_is_inexpressible(make_repo, kit_config):
     root = make_repo({"README.md": "x\n"})
     assert run_repo(root, kit_config).verdict is Verdict.INEXPRESSIBLE
+
+
+def test_missing_ruff_is_not_run_never_satisfied(make_repo, kit_config, monkeypatch):
+    root = make_repo({"m.py": "x = 1\n"})
+    real = g.importlib.util.find_spec
+    monkeypatch.setattr(g.importlib.util, "find_spec", lambda name: None if name == "ruff" else real(name))
+    assert run_repo(root, kit_config).verdict is Verdict.NOT_RUN
+
+
+def test_a_noqa_naming_the_exact_code_does_not_hide_it(make_repo, kit_config):
+    """Added after mutation 'let noqa hide findings' survived: the earlier test's `# noqa: S110`
+    never covered the E722 it asserted, so it passed with or without --ignore-noqa."""
+    root = make_repo({"m.py": "def f(p):\n    try:\n        return open(p).read()\n    except:  # noqa: E722\n        return ''\n"})
+    assert "E722" in codes(run_repo(root, kit_config))

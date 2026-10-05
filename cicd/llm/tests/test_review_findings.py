@@ -146,3 +146,15 @@ def test_no_findings_dir_is_not_run(make_repo, kit_config):
     cfg = core.deep_merge(kit_config, {"gates": {"review_findings": {"rule_registry": "rules.toml"}}})
     r = g.run(cfg, g.review_scope(root, cfg, {}), {})
     assert r.verdict is Verdict.NOT_RUN
+
+
+def test_a_reviewer_confirming_its_own_finding_is_not_corroboration(make_repo, kit_config):
+    root = make_repo({"src.py": SRC, "rules.toml": REG})
+    sha = commit_all(root, "reviewed")
+    (root / "reviews").mkdir()
+    (root / "reviews" / "a.json").write_text(
+        review("a", sha, [finding()], [{"finding_id": "a1", "verdict": "confirm"}]))
+    (root / "reviews" / "b.json").write_text(review("b", sha))
+    r = run_dir(root, kit_config)
+    assert r.details["reported"] == 0
+    assert r.verdict is Verdict.SATISFIED
