@@ -1,0 +1,6 @@
+resources:
+  jobs:
+    ingest:
+      tasks:
+        - task_key: ingest
+          max_retries: 3

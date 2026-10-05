@@ -1,0 +1,2 @@
+[config.gates.provenance]
+contract = "contract.toml"

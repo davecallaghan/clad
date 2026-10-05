@@ -13,7 +13,7 @@ include = [
   "**/*.json",
 ]
 # Planted violations and test fixtures are violations on purpose; they are checked by liveness.
-exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/fixtures/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
            "cicd/llm/templates/**/examples/**"]
 # Files treated as deployment/job manifests for the manifest-timeout sub-check.
@@ -43,7 +43,7 @@ time_unit_seconds = [60]  # source: spec Gate 1 ("human time units"); seconds pe
 
 [gates.governed_write]
 include = ["**/*.py"]
-exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/**",
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
            "cicd/llm/templates/**/examples/**"]
 contract = "cicd/llm/contracts/governed_values.toml"
@@ -59,7 +59,7 @@ writer_functions = ["write_rows", "saveAsTable", "insertInto"]
 contract = "cicd/llm/contracts/governed_values.toml"
 # Stored rows to check: `<target>.governed.jsonl`, the target derived from the file name.
 outputs = ["**/*.governed.jsonl"]
-exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/**",
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
            "cicd/llm/templates/**/examples/**"]
 
@@ -82,7 +82,7 @@ rule_registry = "cicd/llm/rules.toml"
 
 [gates.safeguard_removal]
 include = ["**/*.py"]
-exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/fixtures/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
            "cicd/llm/templates/**/examples/**"]
 # Calls treated as canary calls (in addition to @safeguard / `# safeguard` functions).
@@ -93,7 +93,7 @@ completion = "cicd/llm/completion.json"
 
 [gates.ruff_profile]
 include = ["**/*.py"]
-exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtures/**",
+exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/fixtures/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
            "cicd/llm/templates/**/examples/**"]
 # Each code verified with `ruff rule <code>` (ruff 0.16.10) on 2026-10-04; all five exist.

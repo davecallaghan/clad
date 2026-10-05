@@ -1,0 +1,2 @@
+[config.gates.completion_evidence]
+completion = "completion.json"

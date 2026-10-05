@@ -1,0 +1,18 @@
+# Governed values contract (spec Gate 2). For each write target: its governed fields, the
+# allowed domain (an enumeration) and the allowed origins, plus the explicit marker stored when
+# the model emits no value (spec Gate 4, R2).
+#
+# This contract governs the kit's reference pipeline (cicd/llm/reference_pipeline.py). A client
+# repository replaces it with its own targets. Origins are drawn from exactly three
+# (constraint-reversion, "Three origins, not two"): model_emitted, code_supplied, promoted.
+
+[targets.findings]
+ungraded_marker = "ungraded"
+
+[targets.findings.fields.severity]
+domain = ["high", "medium", "low"]
+origins = ["model_emitted", "promoted"]
+
+[targets.findings.fields.finding_kind]
+domain = ["red_flag", "observation", "gap"]
+origins = ["model_emitted", "promoted"]

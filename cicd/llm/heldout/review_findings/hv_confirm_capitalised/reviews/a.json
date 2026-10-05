@@ -1,0 +1,1 @@
+{"reviewer": "a", "commit": "WORKTREE", "pr": "v2", "round": 1, "findings": [{"id": "q1", "file": "etl.py", "line": 2, "quote": "timeout = 600", "rule_id": "LLM-LIMITS", "rule_quote": "a cap must come from a requirement", "message": "invented timeout"}], "verdicts": []}

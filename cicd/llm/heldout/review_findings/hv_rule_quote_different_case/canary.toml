@@ -1,0 +1,4 @@
+[config.gates.review_findings]
+rule_registry = "rules.toml"
+[opts]
+findings_dir = "reviews"
