@@ -98,3 +98,15 @@ def test_preflight_sh_runs_end_to_end(make_repo, tmp_path):
     assert r.returncode == Verdict.VIOLATED.exit_code, r.stderr
     assert "invented_limits" in r.stdout and "VIOLATED" in r.stdout
     assert (tmp_path / "p.json").is_file()
+
+
+def test_a_symlinked_root_still_finds_its_files(make_repo, tmp_path, monkeypatch):
+    """Found by the eval harness test: on macOS /var is a symlink to /private/var, and paths under
+    an unresolved root were reported as outside the repository and silently not checked."""
+    root = repo_with_change(make_repo, {"a.py": "max_rows = 500\n"})
+    link = tmp_path / "linked"
+    link.symlink_to(root)
+    monkeypatch.chdir(root)
+    code, report = preflight.run_paths(link, [str(root / "a.py")])
+    assert report["outside_repo"] == []
+    assert code == Verdict.VIOLATED.exit_code

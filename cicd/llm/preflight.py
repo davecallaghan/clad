@@ -36,6 +36,7 @@ def changed_paths(root: Path) -> list[str]:
 
 
 def normalise(root: Path, paths: list[str]) -> tuple[list[str], list[str]]:
+    root = root.resolve()  # both sides resolved: /var and /private/var are one directory on macOS
     inside, outside = [], []
     for p in paths:
         full = (Path.cwd() / p).resolve() if not Path(p).is_absolute() else Path(p).resolve()

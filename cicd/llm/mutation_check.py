@@ -277,6 +277,9 @@ MUTATIONS: tuple[Mutation, ...] = (
              "    elif any(v in (Verdict.NOT_RUN.value, Verdict.INEXPRESSIBLE.value) for v in verdicts):",
              "    elif False:",
              T + "test_preflight.py::test_missing_ruff_is_not_run_and_fails_preflight"),
+    Mutation("preflight", "the repository root is not resolved", "cicd/llm/preflight.py",
+             "    root = root.resolve()  # both sides resolved", "    root = root  # both sides resolved",
+             T + "test_preflight.py::test_a_symlinked_root_still_finds_its_files"),
     # ---- shared contract ----------------------------------------------------------------------
     Mutation("core", "a verdict coerces to bool", "cicd/lib/verdict.py",
              "    def __bool__(self) -> bool:\n        raise TypeError(",
