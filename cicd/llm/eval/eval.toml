@@ -1,0 +1,12 @@
+# Settings for the guidance evaluation (guidance section 4). Unset values are not chosen by the
+# builder: the harness refuses to run until the owner sets the ones marked REQUIRED.
+
+# Spec section 4: "twice per arm".
+repeats = 2  # source: guidance spec, section 4 ("twice per arm")
+arms = ["A", "B", "C"]  # source: guidance spec, section 4
+
+# REQUIRED before running: how headless sessions may act in their throwaway worktree.
+# permission_mode = <unset>        # e.g. one of the documented --permission-mode values
+# max_budget_usd = <unset>         # REQUIRED: passed as --max-budget-usd per session
+# model = <unset>                  # optional: --model; unset uses the account default (recorded)
+# max_attempts = <unset>           # optional: unset measures first attempts only; attempts-to-pass is NOT_RUN
