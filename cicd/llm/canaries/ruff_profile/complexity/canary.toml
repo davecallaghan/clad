@@ -1,0 +1,2 @@
+[config.gates.ruff_profile]
+c901_max_complexity = 1  # source: canary fixture; exercises C901 only

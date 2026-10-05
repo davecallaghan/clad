@@ -95,5 +95,9 @@ exclude = ["cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/tests/fixtur
            "cicd/llm/templates/**/examples/**"]
 # Each code verified with `ruff rule <code>` (ruff 0.16.10) on 2026-10-04; all five exist.
 rules = ["S110", "BLE001", "E722", "PLR2004", "C901"]
+# S110 by default only flags `except Exception: pass` and bare `except: pass`; a typed handler
+# reduced to `pass` (the swallowed exception of reversion, "Why review does not catch a control
+# dying") is only caught with check-typed-exception. Found when the S110 canary did not fire.
+ruff_settings = ["lint.flake8-bandit.check-typed-exception=true"]
 # Ratchet: may only go down (the gate fails if --base has a lower value).
 c901_max_complexity = 56  # source: `ruff check --isolated --select C901 --config 'lint.mccabe.max-complexity=0' $(git ls-files '*.py')` on master 2026-10-04; highest reported: tools/md2tex.py:489:5 `convert` is too complex (56 > 0)
