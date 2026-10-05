@@ -1,0 +1,4 @@
+# This canary supplies a capacity so flag 6 can run; the value is a fixture, not a claim
+# about any real model.
+[config.gates.invented_limits]
+model_capacity = 128000  # source: canary fixture value; exercises flag 6 only

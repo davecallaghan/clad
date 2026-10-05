@@ -1,0 +1,12 @@
+# Canary: a timeout field in a job manifest (spec Gate 1, flag 5).
+bundle:
+  name: canary
+resources:
+  jobs:
+    analyse:
+      name: analyse
+      tasks:
+        - task_key: analyse
+          timeout_seconds: 1800
+          notebook_task:
+            notebook_path: ./analyse.py

@@ -1,0 +1,12 @@
+# Canary: the manifest-only case that survived eight PRs (reversion paper, "Bound reversion",
+# "Observed instances"): a wrapper job's timeout declared in a resource file that no
+# source-level guard reads. There is no code file in this canary on purpose.
+resources:
+  jobs:
+    wrapper:
+      name: wrapper
+      timeout_seconds: 14400
+      tasks:
+        - task_key: run_analysis
+          run_job_task:
+            job_id: 1
