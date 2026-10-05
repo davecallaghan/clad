@@ -1,0 +1,42 @@
+{
+ "blind_spots": [
+  "whether an evidence file says what its check claims (existence is checked, content is not)",
+  "checks the claim does not list",
+  "free-text fields (recorded, never scored)"
+ ],
+ "details": {
+  "free_text": {
+   "summary": "Free text, recorded and never scored: 7 gates + ruff_profile + liveness built test-first; see PLAN.md interpretations.",
+   "task": "build LLM-specific CI/CD gates in cicd/llm/"
+  },
+  "not_verified": [
+   "held-out phase (spec 5.5): no held-out fixtures supplied by the owner; heldout_run.py reports NOT_RUN",
+   "behavioural_harness R3: no recorded paraphrase pairs supplied (NOT_RUN)",
+   "behavioural_harness R4: no repeat_count with a source configured (NOT_RUN)",
+   "invented_limits budget_below_capacity: model_capacity unset (NOT_RUN)",
+   "invented_limits escalation and ruff_profile ratchet: not exercised in dogfood (no --base given); tested on temporary repos only",
+   "governed_write quarantine_alarm: no run manifest configured (NOT_RUN)",
+   "review_findings: no reviewer input exists for this repository (NOT_RUN in dogfood); escalation ladder state and independence (families unset) NOT_RUN",
+   "provenance on the repository: INEXPRESSIBLE (no governed outputs tracked); checked on the reference pipeline's stored rows only",
+   "live CI behaviour: .github/workflows/llm-gates.yml has not run on GitHub",
+   "branch protection: not verified that llm-gates is a required status check",
+   "behaviour against a real client Databricks pipeline: only the kit's reference pipeline and fixtures were exercised",
+   "whole-repo findings outside cicd/llm/ (invented_limits in app/ and tools/, ruff in tools/) are reported in dogfood.txt and not triaged"
+  ],
+  "status": "complete"
+ },
+ "findings": [],
+ "gate": "completion_evidence",
+ "kind": "deciding",
+ "notes": [],
+ "scope_size": 1,
+ "sub_checks": {
+  "checks": "RUN",
+  "digests": "RUN",
+  "schema": "RUN"
+ },
+ "timestamp": "2026-10-05T02:38:11+00:00",
+ "tree_hash": "4eeef4dcdab98822136ee0976f857cd564839cfa",
+ "verdict": "SATISFIED"
+}
+exit=0

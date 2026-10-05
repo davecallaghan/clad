@@ -1,0 +1,58 @@
+ 1. caught    [invented_limits] return SATISFIED early
+ 2. caught    [invented_limits] drop the constant-slice pattern
+ 3. caught    [invented_limits] stop reading manifest timeouts (the 8-PR survivor)
+ 4. caught    [invented_limits] accept an empty scope
+ 5. caught    [invented_limits] accept an allowlist entry without a source
+ 6. caught    [invented_limits] never tag escalation
+ 7. caught    [governed_write] skip a missing governed field instead of erroring
+ 8. caught    [governed_write] give the contract a default
+ 9. caught    [governed_write] accept partial canary detection
+10. caught    [governed_write] drop quarantined rows silently
+11. caught    [governed_write] accept an empty domain
+12. caught    [governed_write] gate return SATISFIED early
+13. caught    [governed_write] any write_gate call gates any target
+14. caught    [governed_write] ignore a defaulted contract parameter
+15. caught    [governed_write] silence the quarantine alarm
+16. caught    [provenance] two origins: promoted treated as a violation
+17. caught    [provenance] skip a missing origin
+18. caught    [provenance] accept code_supplied everywhere
+19. caught    [provenance] accept an empty enumeration of outputs
+20. caught    [behavioural_harness] R1 never compares stored to emitted
+21. caught    [behavioural_harness] R2 accepts a default grade
+22. caught    [behavioural_harness] zero assertions pass
+23. caught    [behavioural_harness] R4 never compares repeats
+24. caught    [review_findings] skip citation validation
+25. caught    [review_findings] report uncorroborated findings
+26. caught    [review_findings] a reviewer may corroborate itself
+27. caught    [review_findings] the ladder never escalates
+28. caught    [review_findings] ignore claimed independence
+29. caught    [safeguard_removal] return SATISFIED early
+30. caught    [safeguard_removal] stop detecting broadened handlers
+31. caught    [safeguard_removal] stop detecting a try around a safeguard
+32. caught    [safeguard_removal] allow write_gate's result to be discarded
+33. caught    [safeguard_removal] accept a scope with no safeguards
+34. caught    [safeguard_removal] ignore '# safeguard' markers
+35. caught    [completion_evidence] not_verified becomes optional
+36. caught    [completion_evidence] complete despite an unsatisfied check
+37. caught    [completion_evidence] evidence need not exist
+38. caught    [completion_evidence] deployment needs no read-back
+39. caught    [completion_evidence] digests are not compared
+40. caught    [ruff_profile] let noqa hide findings
+41. caught    [ruff_profile] ratchet may go up
+42. caught    [ruff_profile] drop the typed-exception setting
+43. caught    [ruff_profile] missing ruff passes
+44. caught    [liveness] a canary need not fire
+45. caught    [liveness] a gate without a canary is accepted
+46. caught    [liveness] empty discovery is clean
+47. caught    [liveness] discover gates from a hand-written list
+48. caught    [freeze] verification ignores moved digests
+49. caught    [freeze] frozen set stops following imports
+50. caught    [freeze] an unfrozen new file is ignored
+51. caught    [core] a verdict coerces to bool
+52. caught    [core] an empty enumeration is SATISFIED
+53. caught    [core] '**/' no longer matches zero directories
+
+per gate (caught/total): invented_limits 6/6, governed_write 9/9, provenance 4/4, behavioural_harness 4/4, review_findings 5/5, safeguard_removal 6/6, completion_evidence 5/5, ruff_profile 4/4, liveness 4/4, freeze 3/3, core 3/3
+53/53 caught
+every mutation caught by its named test
+exit=0
