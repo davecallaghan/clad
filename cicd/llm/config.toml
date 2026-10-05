@@ -101,3 +101,9 @@ rules = ["S110", "BLE001", "E722", "PLR2004", "C901"]
 ruff_settings = ["lint.flake8-bandit.check-typed-exception=true"]
 # Ratchet: may only go down (the gate fails if --base has a lower value).
 c901_max_complexity = 56  # source: `ruff check --isolated --select C901 --config 'lint.mccabe.max-complexity=0' $(git ls-files '*.py')` on master 2026-10-04; highest reported: tools/md2tex.py:489:5 `convert` is too complex (56 > 0)
+
+[hooks]
+# The completion claim the Stop hook validates when governed files changed (repository-relative).
+# Distinct from [gates.completion_evidence] completion, which is this kit's own build record.
+completion = "completion.json"
+
