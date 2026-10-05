@@ -1,8 +1,8 @@
 {
  "task": "guidance and authoring-loop enforcement for the LLM-specific gates",
  "status": "complete",
- "commit": "102a80a34546ac5cc67ddf19d2869f62f1e2f44b",
- "tree_hash": "5a5f88f433c5459657bb42c4811e0f1cc92d6b2c",
+ "commit": "4c5b5f9e4757b5febacdba9d410a8d0142193a7c",
+ "tree_hash": "23f8a5609820e2e46ca8289dae05122d11240e50",
  "artifact_digests": {
   "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
   "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
@@ -74,10 +74,10 @@
   },
   {
    "id": "section_4_measurement_arms_A_B_C",
-   "verdict": "NOT_RUN",
+   "verdict": "SATISFIED",
    "required": false,
-   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_run_1_report.json",
-   "note": "partial: 14/18 valid runs"
+   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_run_2_report.json",
+   "note": "ran: 18/18 valid runs"
   },
   {
    "id": "v2_pytest",
@@ -123,7 +123,7 @@
   }
  ],
  "not_verified": [
-  "section 4 measurement is partial: 14 of 18 runs valid (evidence/llm-guidance/eval_run_1_report.json); resilient_model_call arms B and C failed when the Pro session limit was hit and must be re-run with --resume. On the two tasks every arm completed, the four code gates passed in every run in every arm, so those tasks did not separate the arms; only completion_evidence differed (A 0/4, B 2/4, C 4/4). n is far too small for any claim.",
+  "section 4 measurement: 18/18 valid runs (evidence/llm-guidance/eval_run_2_report.json), 6 per arm, 3 builder-written tasks, one model, one day. Only one task (resilient_model_call) provoked code-gate violations, and only in arm A; first-attempt invented_limits there: A 0/2, B 2/2, C 2/2. completion_evidence: A 0/6, B 3/6, C 6/6. Counts this small support no general claim; arm A also had no instruction that a completion claim was expected; arm A's resilient runs and arms B/C's resilient runs were made hours apart (the B/C ones after a usage-limit reset).",
   "v2 gates (freeze c6c564e) were changed to close the 15 classes the v1 held-out run missed; on a fresh builder-written held-out set they caught 13/27 (v1: 21/36): the fixes closed the known classes, not unseen ones",
   "v2 held-out misses not fixed: pandas nrows, requests timeout tuple, SQL TABLESAMPLE, textwrap.shorten, DeltaTable merge, aliased writer, majority-vote grade, complete with no checks, evidence outside the repo, capitalised Confirm, rule quote case, warnings ignored, handler returning None, @safeguard decorator removed",
   "incident: before the harness tests were isolated, a test started 6 real headless sessions with a trivial prompt; records in evidence/llm-guidance/eval_accidental_smoke_run.jsonl, excluded from results",
