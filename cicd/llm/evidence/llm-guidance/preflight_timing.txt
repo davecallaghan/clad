@@ -1,0 +1,49 @@
+# preflight wall-clock, measured with /usr/bin/time -p, CICD_LLM_PYTHON=.venv-llm/bin/python (3.12.15), 2026-10-04 22:46 -0400, Apple M1
+kit run 1: real 0.49
+kit run 2: real 0.45
+kit run 3: real 0.44
+repo run 1: real 0.53
+repo run 2: real 0.51
+repo run 3: real 0.51
+
+## kit: cicd/llm/preflight.sh $(git ls-files 'cicd/llm/*')
+invented_limits    SATISFIED     (41 files, 0 findings; NOT_RUN sub-checks: ['budget_below_capacity', 'escalation'])
+ruff_profile       SATISFIED     (37 files, 0 findings; NOT_RUN sub-checks: ['ratchet'])
+safeguard_removal  not applicable (no given path is in this gate's scope)
+governed_write     SATISFIED     (21 files, 0 findings)
+json: /Users/david/workspace/clad/cicd/llm/ledger/preflight.json
+
+## whole repo: cicd/llm/preflight.sh $(git ls-files)
+invented_limits    VIOLATED      (189 files, 16 findings; NOT_RUN sub-checks: ['budget_below_capacity', 'escalation'])
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:68 truncating_call: .take(3) with a literal argument
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:77 truncating_call: .take(3) with a literal argument
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:86 truncating_call: .take(3) with a literal argument
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:118 truncating_call: .take(3) with a literal argument
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:119 truncating_call: .take(2) with a literal argument
+    app/core-test/src/main/scala/clad/core/test/Generators.scala:120 truncating_call: .take(2) with a literal argument
+    tools/md2tex.py:238 constant_slice: slice with constant bound 1
+    tools/md2tex.py:374 constant_slice: slice with constant bound 2
+    tools/md2tex.py:417 constant_slice: slice with constant bound 1
+    tools/md2tex.py:459 constant_slice: slice with constant bound 1
+    tools/md2tex.py:471 constant_slice: slice with constant bound 1
+    tools/md2tex.py:502 constant_slice: slice with constant bound 3
+    tools/md2tex.py:541 constant_slice: slice with constant bound -1
+    tools/md2tex.py:706 constant_slice: slice with constant bound 4
+    tools/md2tex.py:713 constant_slice: slice with constant bound -1
+    tools/md2tex.py:718 constant_slice: slice with constant bound 4
+ruff_profile       VIOLATED      (39 files, 12 findings; NOT_RUN sub-checks: ['ratchet'])
+    tools/md2tex.py:325 PLR2004: Magic value used in comparison, consider replacing `3` with a constant variable
+    tools/md2tex.py:395 PLR2004: Magic value used in comparison, consider replacing `2` with a constant variable
+    tools/md2tex.py:531 PLR2004: Magic value used in comparison, consider replacing `84` with a constant variable
+    tools/md2tex.py:532 PLR2004: Magic value used in comparison, consider replacing `96` with a constant variable
+    tools/md2tex.py:533 PLR2004: Magic value used in comparison, consider replacing `112` with a constant variable
+    tools/md2tex.py:567 PLR2004: Magic value used in comparison, consider replacing `84` with a constant variable
+    tools/md2tex.py:568 PLR2004: Magic value used in comparison, consider replacing `96` with a constant variable
+    tools/md2tex.py:569 PLR2004: Magic value used in comparison, consider replacing `112` with a constant variable
+    tools/md2tex.py:636 PLR2004: Magic value used in comparison, consider replacing `2` with a constant variable
+    tools/md2tex.py:668 PLR2004: Magic value used in comparison, consider replacing `4` with a constant variable
+    tools/md2tex.py:669 PLR2004: Magic value used in comparison, consider replacing `6` with a constant variable
+    tools/md2tex.py:679 PLR2004: Magic value used in comparison, consider replacing `12` with a constant variable
+safeguard_removal  not applicable (no given path is in this gate's scope)
+governed_write     SATISFIED     (23 files, 0 findings)
+json: /Users/david/workspace/clad/cicd/llm/ledger/preflight.json

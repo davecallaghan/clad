@@ -165,3 +165,9 @@ validated by Gate 7.
    with origin `code_supplied` is accepted by `provenance`: the marker records that the model
    emitted nothing (Gate 4, R2) and is not a grade. Any other `code_supplied` value on a field
    whose contract does not allow it is VIOLATED.
+8. **Preflight "not applicable".** (Guidance task.) A fast gate whose derived scope contains none of
+   the paths given to `preflight.sh` is printed as "not applicable" and does not affect the exit
+   code; otherwise every edit to a file no gate reads (Markdown, say) would fail preflight. A gate
+   that applies and returns NOT_RUN or INEXPRESSIBLE still fails it, and preflight with no paths at
+   all is INEXPRESSIBLE.
+
