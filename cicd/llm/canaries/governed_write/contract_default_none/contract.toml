@@ -1,0 +1,5 @@
+[targets.findings]
+ungraded_marker = "ungraded"
+[targets.findings.fields.severity]
+domain = ["high", "medium", "low"]
+origins = ["model_emitted"]

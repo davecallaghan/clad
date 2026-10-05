@@ -1,0 +1,3 @@
+[config.gates.governed_write]
+contract = "contract.toml"
+quarantine_manifest = "run_manifest.json"
