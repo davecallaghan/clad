@@ -1,0 +1,3 @@
+# base/ and head/ are committed in order to a temporary repo; the gate runs --base on them.
+[opts]
+layout = "base_head"
