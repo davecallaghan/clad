@@ -1,0 +1,5 @@
+{"reviewer": "rev_a", "commit": "WORKTREE", "pr": "canary", "round": 1,
+ "findings": [{"id": "a1", "file": "src.py", "line": 2, "quote": "max_rows = 500",
+               "rule_id": "LLM-LIMITS", "rule_quote": "Do not introduce a numeric limit.",
+               "message": "invented row cap"}],
+ "verdicts": []}

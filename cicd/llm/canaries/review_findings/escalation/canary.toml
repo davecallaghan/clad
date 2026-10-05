@@ -1,0 +1,6 @@
+[config.gates.review_findings]
+rule_registry = "rules.toml"
+[opts]
+findings_dir = "reviews"
+state = "ladder_state.json"
+readonly_state = true

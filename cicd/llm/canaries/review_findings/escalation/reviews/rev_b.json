@@ -1,0 +1,3 @@
+{"reviewer": "rev_b", "commit": "WORKTREE", "pr": "canary", "round": 1,
+ "findings": [],
+ "verdicts": [{"finding_id": "a1", "verdict": "confirm"}]}

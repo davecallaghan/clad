@@ -1,0 +1,3 @@
+[rules.LLM-LIMITS]
+gate = "invented_limits"
+text = "Do not introduce a numeric limit."
