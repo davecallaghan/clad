@@ -1,8 +1,8 @@
 {
  "task": "guidance and authoring-loop enforcement for the LLM-specific gates",
  "status": "complete",
- "commit": "3c477f91424daa0d8cd937976a50d2d4daba97fc",
- "tree_hash": "4a04b43e7bcdb6879f808d7ec35c6e2474a505d4",
+ "commit": "102a80a34546ac5cc67ddf19d2869f62f1e2f44b",
+ "tree_hash": "5a5f88f433c5459657bb42c4811e0f1cc92d6b2c",
  "artifact_digests": {
   "cicd/lib/verdict.py": "sha256:12eb487b5c74b14e78d14bbc1f181c7ddbf83c8567ee798169518b695ade97ef",
   "cicd/llm/core.py": "sha256:e9233df1d60369a185d3660791d058abd846b22be8658977be71e948ac55a534",
@@ -76,8 +76,8 @@
    "id": "section_4_measurement_arms_A_B_C",
    "verdict": "NOT_RUN",
    "required": false,
-   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_plan.txt",
-   "note": "not run: blocked by the permission classifier; needs the owner to start it"
+   "evidence_path": "cicd/llm/evidence/llm-guidance/eval_run_1_report.json",
+   "note": "partial: 14/18 valid runs"
   },
   {
    "id": "v2_pytest",
@@ -123,9 +123,9 @@
   }
  ],
  "not_verified": [
+  "section 4 measurement is partial: 14 of 18 runs valid (evidence/llm-guidance/eval_run_1_report.json); resilient_model_call arms B and C failed when the Pro session limit was hit and must be re-run with --resume. On the two tasks every arm completed, the four code gates passed in every run in every arm, so those tasks did not separate the arms; only completion_evidence differed (A 0/4, B 2/4, C 4/4). n is far too small for any claim.",
   "v2 gates (freeze c6c564e) were changed to close the 15 classes the v1 held-out run missed; on a fresh builder-written held-out set they caught 13/27 (v1: 21/36): the fixes closed the known classes, not unseen ones",
   "v2 held-out misses not fixed: pandas nrows, requests timeout tuple, SQL TABLESAMPLE, textwrap.shorten, DeltaTable merge, aliased writer, majority-vote grade, complete with no checks, evidence outside the repo, capitalised Confirm, rule quote case, warnings ignored, handler returning None, @safeguard decorator removed",
-  "section 4 measurement: settings and three tasks written by the builder at the owner's request; the run was blocked by the Claude Code auto-mode permission classifier ('Create Unsafe Agents') and has not run. The owner must start it: python -m cicd.llm.eval.run_eval --run --owner-approved",
   "incident: before the harness tests were isolated, a test started 6 real headless sessions with a trivial prompt; records in evidence/llm-guidance/eval_accidental_smoke_run.jsonl, excluded from results",
   "template instantiated against cicd/example/: NOT_RUN, cicd/example/ does not exist on this branch (it exists only as partial work on feat/cicd-kit)",
   "hooks inside a live Claude Code session: tested by sending the documented stdin JSON to the configured commands; not observed in an interactive session",
