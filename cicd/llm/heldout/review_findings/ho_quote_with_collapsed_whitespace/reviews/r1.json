@@ -1,0 +1,1 @@
+{"reviewer": "r1", "commit": "WORKTREE", "pr": "h", "round": 1, "findings": [{"id": "x1", "file": "Job.scala", "line": 2, "quote": "= rows.take(50)", "rule_id": "LLM-LIMITS", "rule_quote": "a cap must come from a requirement", "message": "row cap"}], "verdicts": []}

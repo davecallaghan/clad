@@ -1,0 +1,9 @@
+{
+ "name": "nightly",
+ "tasks": [
+  {
+   "task_key": "analyse",
+   "timeout_seconds": 7200
+  }
+ ]
+}

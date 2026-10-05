@@ -1,0 +1,14 @@
+{
+ "status": "complete",
+ "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+ "tree_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+ "artifact_digests": {},
+ "checks": [
+  {
+   "id": "tests",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/tests.txt"
+  }
+ ],
+ "not_verified": null
+}

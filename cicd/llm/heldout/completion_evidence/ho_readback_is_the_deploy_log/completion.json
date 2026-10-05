@@ -1,0 +1,16 @@
+{
+ "status": "complete",
+ "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+ "tree_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+ "artifact_digests": {},
+ "checks": [
+  {
+   "id": "deploy",
+   "verdict": "SATISFIED",
+   "evidence_path": "evidence/deploy.log",
+   "claims_deployment": true,
+   "readback_evidence": "evidence/deploy.log"
+  }
+ ],
+ "not_verified": []
+}

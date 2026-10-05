@@ -1,0 +1,34 @@
+# Rule registry for cicd/llm. Reviewer findings (gate review_findings) must cite a rule ID that
+# exists here and quote its text exactly. Each rule names the gate that checks it.
+
+[rules.LLM-LIMITS]
+gate = "invented_limits"
+text = "Do not introduce a numeric limit, timeout, budget, LIMIT or slice that makes the system process less than all of its input; a cap must come from a requirement."
+
+[rules.LLM-GOVERNED-WRITE]
+gate = "governed_write"
+text = "Every write of a governed value goes through write_gate with an explicit contract, and quarantined rows are handled, never dropped."
+
+[rules.LLM-PROVENANCE]
+gate = "provenance"
+text = "Every governed field is stored with its origin: model_emitted, code_supplied or promoted."
+
+[rules.LLM-NO-DEFAULT-GRADE]
+gate = "behavioural_harness"
+text = "A governed value is carried from what the model emitted; when the model emits nothing, store the ungraded marker, never a default grade."
+
+[rules.LLM-REVIEW]
+gate = "review_findings"
+text = "Act only on review findings that survived citation validation and corroboration; on the third repeat of a rule, stop and escalate to a human."
+
+[rules.LLM-SAFEGUARDS]
+gate = "safeguard_removal"
+text = "Never delete, wrap, short-circuit or broaden a safeguard or its exception handling to make something pass."
+
+[rules.LLM-COMPLETION]
+gate = "completion_evidence"
+text = "A completion claim is a completion.json with evidence for every check and a not_verified list; exit codes and green builds are not completion."
+
+[rules.LLM-LINT]
+gate = "ruff_profile"
+text = "No swallowed, blind or bare exception handlers, no unexplained magic comparisons, and no function above the complexity ratchet."

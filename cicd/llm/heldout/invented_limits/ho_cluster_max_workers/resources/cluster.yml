@@ -1,0 +1,8 @@
+resources:
+  jobs:
+    analyse:
+      job_clusters:
+        - job_cluster_key: main
+          new_cluster:
+            autoscale:
+              max_workers: 2

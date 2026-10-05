@@ -1,0 +1,9 @@
+[config.gates.review_findings]
+rule_registry = "rules.toml"
+author_family = "qwen"
+independent = true
+[config.gates.review_findings.reviewers]
+r1 = "claude"
+r2 = "qwen"
+[opts]
+findings_dir = "reviews"
