@@ -147,3 +147,38 @@ def test_no_changed_python_files_is_inexpressible(make_repo, kit_config):
     r = g.run(kit_config, g.diff_scope(root, kit_config, {"base": base}), {"base": base})
     assert r.verdict is Verdict.INEXPRESSIBLE
     assert core.EMPTY_ENUMERATION in r.notes
+
+
+# ---- v2 ------------------------------------------------------------------------------------------
+
+def test_handler_that_logs_and_continues_is_neutered(make_repo, kit_config):
+    r = diff_run(make_repo, kit_config,
+                 "def f(xs):\n    for x in xs:\n        try:\n            g(x)\n        except KeyError:\n            raise\n",
+                 "def f(xs):\n    for x in xs:\n        try:\n            g(x)\n        except KeyError:\n            log.warning('skip')\n            continue\n")
+    assert "neutered_handler" in rules(r)
+
+
+def test_inline_use_of_write_gate_result_discards_the_quarantine(make_repo, kit_config):
+    r = diff_run(make_repo, kit_config,
+                 "def f(s, r, c):\n    out = write_gate(r, c, 't')\n    s.write_rows('t', out.accepted)\n    s.write_rows('q', out.quarantined)\n",
+                 "def f(s, r, c):\n    s.write_rows('t', write_gate(r, c, 't').accepted)\n")
+    assert "write_gate_result_discarded" in rules(r)
+
+
+def test_new_conditional_exit_before_a_safeguard_is_flagged(make_repo, kit_config):
+    r = diff_run(make_repo, kit_config, "def f(r):\n    return check_rows(r)\n",
+                 "def f(r):\n    if FAST:\n        return r\n    return check_rows(r)\n")
+    assert "conditional_bypass" in rules(r)
+
+
+def test_existing_conditional_exit_is_not_new(make_repo, kit_config):
+    src = "def f(r):\n    if not r:\n        return []\n    return check_rows(r)\n"
+    r = diff_run(make_repo, kit_config, src, src.replace("return []", "return list()"))
+    assert "conditional_bypass" not in rules(r)
+
+
+def test_early_exit_in_a_new_function_bypasses_nothing(make_repo, kit_config):
+    """Found by dogfood: an empty-input guard in brand-new code is not a bypass of an existing safeguard."""
+    r = diff_run(make_repo, kit_config, "x = 1\n",
+                 "x = 1\n\n\ndef f(r):\n    if not r:\n        return []\n    return check_rows(r)\n")
+    assert "conditional_bypass" not in rules(r)

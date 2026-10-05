@@ -25,15 +25,17 @@ Checked by: `safeguard_removal`, `ruff_profile`.
 3. `safeguard_removal` (diff against a base) rejects:
    - a deleted call to a `@safeguard` function, a `# safeguard` line, or a call matching `*canary*`;
    - a handler broadened to `Exception`, `BaseException` or a bare `except:`;
-   - a handler body reduced to `pass` or `continue`;
+   - a handler body reduced to `pass` or `continue`, including logging and then continuing;
    - a new `try` around a safeguard call;
    - a safeguard parameter, or any `contract` parameter, gaining a default;
-   - the result of `write_gate` discarded or bound to `_`;
+   - the result of `write_gate` discarded, bound to `_`, or used inline (`write_gate(...).accepted`);
    - a safeguard call made unreachable (`if False:`, or after a `return`/`raise`/`continue`/`break`);
+   - a new conditional early exit before a safeguard call (`if FLAG: return rows`);
    - a deleted assertion, or a test newly marked skip or xfail.
 4. `ruff_profile` rejects (with `--ignore-noqa`, so a `# noqa` does not hide them): S110
    try-except-pass (including typed handlers), BLE001 blind `except Exception`, E722 bare `except:`,
-   PLR2004 magic-value comparisons, and C901 complexity above the ratchet in `cicd/llm/config.toml`.
+   PLR2004 magic-value comparisons, C901 complexity above the ratchet in `cicd/llm/config.toml`,
+   and (checked by the gate itself, not ruff) `contextlib.suppress(...)`.
 5. Catch the specific exception you can handle and re-raise with context; let anything else propagate.
 6. Run `cicd/llm/preflight.sh <files>` before you continue.
 

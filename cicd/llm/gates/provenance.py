@@ -7,8 +7,9 @@ came from ("Grade reversion requires provenance").
 Every governed field `f` is stored with `f__origin` in exactly three origins: model_emitted,
 code_supplied, promoted ("Three origins, not two"). VIOLATED when the origin is missing or
 unknown, or when code_supplied appears on a field whose contract does not allow it. `promoted`
-is never flagged: the two-origin design misreports correct promotions as violations, fires
-constantly on correct behaviour, and gets switched off. The contract's ungraded marker stored
+is never flagged as such: the two-origin design misreports correct promotions as violations, fires
+constantly on correct behaviour, and gets switched off. A promotion must name its source in
+`f__promoted_from` (v2: a "promoted" label on a value nothing emitted was otherwise unfalsifiable). The contract's ungraded marker stored
 as code_supplied is accepted (it records that the model emitted nothing; PLAN interpretation 7).
 
 Scope: stored rows in `<target>.governed.jsonl` files, derived from the repository (config
@@ -60,6 +61,9 @@ def check_row(rel: str, line: int, text: str, row: dict, spec: dict) -> list[Fin
         elif origin == "code_supplied" and "code_supplied" not in fspec.get("origins", []) and row[name] != marker:
             out.append(Finding(rel, line, h, "code_supplied_disallowed",
                                f"{name} = {row[name]!r} was supplied by code; the contract does not allow it"))
+        elif origin == "promoted" and not row.get(f"{name}__promoted_from"):
+            out.append(Finding(rel, line, h, "promotion_without_source",
+                               f"{name} is marked promoted but {name}__promoted_from does not say what was promoted"))
     return out
 
 

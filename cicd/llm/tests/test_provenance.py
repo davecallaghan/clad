@@ -63,8 +63,9 @@ def test_model_emitted_rows_are_satisfied(make_repo, kit_config):
 def test_promoted_is_never_flagged(make_repo, kit_config):
     """Two-origin designs misreport correct promotions and get switched off."""
     root = make_repo({"contract.toml": CONTRACT,
-                      "findings.governed.jsonl": jsonl(ok_row(severity__origin="promoted"),
-                                                       ok_row(finding_kind__origin="promoted"))})
+                      "findings.governed.jsonl": jsonl(
+                          ok_row(severity__origin="promoted", severity__promoted_from="model_emitted:medium"),
+                          ok_row(finding_kind__origin="promoted", finding_kind__promoted_from="row:42"))})
     assert run_repo(root, kit_config).verdict is Verdict.SATISFIED
 
 
@@ -132,3 +133,10 @@ def test_malformed_output_is_not_a_clean_result(make_repo, kit_config):
 def test_exactly_three_origins():
     """reversion, "Three origins, not two": the only paper-sourced constant of its kind."""
     assert g.ORIGINS == ("model_emitted", "code_supplied", "promoted")
+
+
+def test_promoted_without_its_source_is_flagged(make_repo, kit_config):
+    """v2: 'promoted' is never a violation by itself, but a promotion must name what it promoted."""
+    root = make_repo({"contract.toml": CONTRACT,
+                      "findings.governed.jsonl": jsonl(ok_row(severity__origin="promoted"))})
+    assert "promotion_without_source" in rules(run_repo(root, kit_config))

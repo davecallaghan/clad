@@ -137,3 +137,24 @@ def test_kit_reference_pipeline_is_satisfied():
     r = g.run(config, core.derive_scope(root, ["cicd/llm/**/*.py"], sec["exclude"]))
     assert r.verdict is Verdict.SATISFIED, [f.to_dict() for f in r.findings]
     assert r.details["gated_writes"] >= 1
+
+
+# ---- v2 ------------------------------------------------------------------------------------------
+
+def test_sql_insert_into_a_governed_table_is_flagged(make_repo, kit_config):
+    src = "def f(spark):\n    spark.sql(\"INSERT INTO main.dd.findings SELECT * FROM staged\")\n"
+    root = make_repo({"contract.toml": CONTRACT, "gate.py": GATE_DEF, "p.py": src})
+    assert "sql_write" in rules(run_repo(root, config_for(kit_config)))
+
+
+def test_sql_write_to_a_non_governed_table_is_not_flagged(make_repo, kit_config):
+    src = "def f(spark):\n    spark.sql('MERGE INTO audit_log USING s ON 1=1')\n"
+    root = make_repo({"contract.toml": CONTRACT, "gate.py": GATE_DEF, "p.py": src})
+    assert run_repo(root, config_for(kit_config)).verdict is Verdict.SATISFIED
+
+
+def test_gated_write_that_writes_the_raw_rows_is_flagged(make_repo, kit_config):
+    src = ("def publish(sink, rows, contract):\n    out = write_gate(rows, contract, 'findings')\n"
+           "    sink.write_rows('findings', rows)\n    return out\n")
+    root = make_repo({"contract.toml": CONTRACT, "gate.py": GATE_DEF, "p.py": src})
+    assert "raw_rows_written" in rules(run_repo(root, config_for(kit_config)))

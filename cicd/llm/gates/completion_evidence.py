@@ -20,7 +20,9 @@ Schema (`completion.json`):
 VIOLATED when: `not_verified` is missing (empty is allowed); a schema field is missing; a verdict
 is not one of the four; status is `complete` while a required check is not SATISFIED; an
 evidence path does not exist; a digest does not match the build manifest (when one is supplied);
-a check claims deployment without read-back evidence.
+a check claims deployment without read-back evidence, or with read-back evidence that is the deploy
+evidence itself or contains none of the claimed artifact digests; status is not exactly
+"complete" or "incomplete".
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ from cicd.llm.core import Finding, GateResult, Scope
 GATE_ID = "completion_evidence"
 KIND = "deciding"
 SCHEMA = ("status", "commit", "tree_hash", "artifact_digests", "checks")
+STATUSES = ("complete", "incomplete")  # v2: a synonym like "done" claimed completion while evading the check
 STRUCTURED = set(SCHEMA) | {"not_verified", "build_manifest"}
 BLIND_SPOTS = [
     "whether an evidence file says what its check claims (existence is checked, content is not)",
@@ -49,8 +52,8 @@ def completion_scope(root: Path, config: dict, opts: dict) -> Scope:
 
 
 class _Check:
-    def __init__(self, root: Path, rel: str):
-        self.root, self.rel, self.findings = root, rel, []
+    def __init__(self, root: Path, rel: str, claimed: list[str]):
+        self.root, self.rel, self.findings, self.claimed = root, rel, [], claimed
 
     def flag(self, rule: str, message: str) -> None:
         self.findings.append(Finding(self.rel, 1, core.line_hash(message), rule, message))
@@ -66,8 +69,19 @@ class _Check:
             self.flag("complete_with_unsatisfied_check", f"status is complete but required check {cid!r} is {verdict}")
         if not self.exists(c.get("evidence_path")):
             self.flag("missing_evidence", f"check {cid!r}: evidence_path {c.get('evidence_path')!r} does not exist")
-        if c.get("claims_deployment") and not self.exists(c.get("readback_evidence")):
+        if c.get("claims_deployment"):
+            self.readback(cid, c)
+
+    def readback(self, cid: str, c: dict) -> None:
+        rb = c.get("readback_evidence")
+        if not self.exists(rb):
             self.flag("deployment_without_readback", f"check {cid!r} claims deployment without read-back evidence")
+        elif rb == c.get("evidence_path"):
+            self.flag("readback_is_deploy_evidence",
+                      f"check {cid!r}: read-back evidence is the deploy evidence itself, not an independent read")
+        elif not any(d in (self.root / rb).read_text(encoding="utf-8", errors="replace") for d in self.claimed):
+            self.flag("readback_without_digest",
+                      f"check {cid!r}: read-back evidence contains none of the claimed artifact digests")
 
     def digests(self, d: dict) -> str:
         if not d.get("build_manifest"):
@@ -84,11 +98,13 @@ def run(config: dict, scope: Scope, opts: dict | None = None) -> GateResult:
         return core.not_run(GATE_ID, KIND, BLIND_SPOTS, "no completion file: nothing claims completion")
     rel = scope.files[0]
     d = json.loads((scope.root / rel).read_text(encoding="utf-8"))
-    c = _Check(scope.root, rel)
+    c = _Check(scope.root, rel, [str(v) for v in (d.get("artifact_digests") or {}).values()])
     if not isinstance(d.get("not_verified"), list):
         c.flag("missing_not_verified", "not_verified is required (an empty list is allowed, a missing key is not)")
     for key in (k for k in SCHEMA if k not in d):
         c.flag("schema", f"required field {key!r} is missing")
+    if d.get("status") not in STATUSES:
+        c.flag("invalid_status", f"status {d.get('status')!r} is not one of {STATUSES}")
     complete = d.get("status") == "complete"
     for check in d.get("checks", []):
         c.check(check, complete)

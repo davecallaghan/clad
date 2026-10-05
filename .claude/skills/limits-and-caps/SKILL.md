@@ -27,13 +27,16 @@ Checked by: `invented_limits` (see `cicd/llm/gates/invented_limits.py`).
    report prints after every row was processed) is not a cap. Say so in a code comment, and ask a
    human for an allowlist entry in `cicd/llm/allowlist.toml`: it needs file, line hash, value,
    justification, source and approver, and you cannot supply a source or an approver yourself.
-4. Job manifests count: check `databricks.yml` and `resources/**/*.yml` (and JSON job specs) for
+4. Bounds hide outside `key = value` too: `itertools.islice(xs, n)`, retry stop conditions such as
+   `stop_after_attempt(n)`, `.slice(0, n)`, SQL `TOP n` and `FETCH FIRST n ROWS`, and a literal
+   default on a limit-named setting (`widgets.text("max_pages", "20")`, `.get("TIMEOUT", 90)`).
+5. Job manifests count: check `databricks.yml` and `resources/**/*.yml` (and JSON job specs) for
    `timeout_seconds`, `max_*` and other limit-named parameters. A wrapper job's timeout overrides
    the called job's own.
-5. When correcting a flagged limit, never replace it with a larger literal. Remove the bound
+6. When correcting a flagged limit, never replace it with a larger literal. Remove the bound
    (process everything, or poll until done) or read it from config with a source. The gate's
    escalation mode (`--base <ref>`) tags a raised literal as `escalation`.
-6. Run `cicd/llm/preflight.sh <files>` and fix every `invented_limits` finding before you continue.
+7. Run `cicd/llm/preflight.sh <files>` and fix every `invented_limits` finding before you continue.
 
 ## Examples (executable: the guidance tests run them through the real gate)
 

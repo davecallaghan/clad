@@ -207,3 +207,42 @@ def test_unparseable_file_is_not_a_clean_result(make_repo, kit_config):
     r = run_repo(root, kit_config)
     assert r.verdict is Verdict.NOT_RUN
     assert r.details["unparseable"] == ["a.py"]
+
+
+# ---- v2: classes missed by the first held-out run (bounds outside key=value form) ---------------
+
+def test_literal_bound_passed_to_a_bounding_function_is_flagged(make_repo, kit_config):
+    root = make_repo({"a.py": "import itertools\nfirst = list(itertools.islice(stream, 25))\n",
+                      "b.py": "from tenacity import retry, stop_after_attempt\n@retry(stop=stop_after_attempt(5))\ndef f():\n    pass\n"})
+    found = {(f.file, f.rule) for f in run_repo(root, kit_config).findings}
+    assert ("a.py", "bounding_call") in found and ("b.py", "bounding_call") in found
+
+
+def test_slice_method_with_a_nonzero_literal_bound_is_flagged(make_repo, kit_config):
+    root = make_repo({"A.scala": "val firstPages = pages.slice(0, 300)\n", "b.py": "s = text.slice(0, 0)\n"})
+    found = {(f.file, f.rule) for f in run_repo(root, kit_config).findings}
+    assert ("A.scala", "truncating_call") in found
+    assert ("b.py", "truncating_call") not in found
+
+
+def test_sql_top_and_fetch_first_are_flagged(make_repo, kit_config):
+    root = make_repo({"q.sql": (FIXTURES / "sql_top_n.sql").read_text(),
+                      "r.sql": (FIXTURES / "sql_fetch_first.sql").read_text()})
+    assert {f.file for f in run_repo(root, kit_config).findings if f.rule == "sql_limit"} == {"q.sql", "r.sql"}
+
+
+def test_limit_named_key_with_a_literal_default_is_flagged(make_repo, kit_config):
+    root = make_repo({"a.py": "dbutils.widgets.text('max_documents', '40')\nt = os.environ.get('REQUEST_TIMEOUT', 90)\n"})
+    lines = sorted(f.line for f in run_repo(root, kit_config).findings if f.rule == "limit_default")
+    assert lines == [1, 2]
+
+
+def test_key_read_without_a_literal_default_is_not_flagged(make_repo, kit_config):
+    root = make_repo({"a.py": "n = int(dbutils.widgets.get('max_documents'))\nt = os.environ['REQUEST_TIMEOUT']\n"})
+    assert run_repo(root, kit_config).verdict is Verdict.SATISFIED
+
+
+def test_prose_starting_with_a_limit_word_is_not_a_key(make_repo, kit_config):
+    """Found by dogfood: a string like 'max_rows = 500' passed to a function is prose, not a setting name."""
+    root = make_repo({"a.py": "describe('max_rows = 500', 500)\n"})
+    assert "limit_default" not in rules(run_repo(root, kit_config))

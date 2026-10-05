@@ -61,8 +61,9 @@ def callsite_scan(config: dict, scope: Scope) -> GateResult:
     findings, gated, unresolved = [], 0, 0
     for rel in scope.files:
         text = (scope.root / rel).read_text(encoding="utf-8")
-        f, g, u = gw.scan_calls(rel, ast.parse(text), text.splitlines(), targets, cfg["writer_functions"])
-        findings, gated, unresolved = findings + f, gated + g, unresolved + u
+        tree, lines = ast.parse(text), text.splitlines()
+        f, g, u = gw.scan_calls(rel, tree, lines, targets, cfg["writer_functions"])
+        findings, gated, unresolved = findings + f + gw.sql_writes(rel, tree, lines, targets), gated + g, unresolved + u
     return GateResult(gw.GATE_ID, Verdict.VIOLATED if findings else Verdict.SATISFIED, gw.KIND,
                       findings=findings, scope_size=len(scope), blind_spots=gw.BLIND_SPOTS,
                       sub_checks={"call_sites": "RUN", "signature": "CI", "quarantine_alarm": "CI"},

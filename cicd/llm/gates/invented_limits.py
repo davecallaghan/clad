@@ -38,8 +38,10 @@ BLIND_SPOTS = [
 ALLOWLIST_FIELDS = ("file", "line_hash", "value", "justification", "source", "approver")
 _NUMBER = r"-?\d+(?:\.\d+)?"
 _REGEX_KEY = re.compile(r"\b([A-Za-z_]\w*)\s*(?::\s*[\w\[\]]+\s*)?[:=]\s*(" + _NUMBER + r")\b")
-_SQL_LIMIT = re.compile(r"\bLIMIT\s+(\d+)\b", re.IGNORECASE)
+# LIMIT n; T-SQL TOP n / TOP (n); ANSI FETCH FIRST n ROWS.
+_SQL_LIMIT = re.compile(r"\b(?:LIMIT\s+|TOP\s*\(?\s*|FETCH\s+FIRST\s+)(\d+)\b", re.IGNORECASE)
 _REGEX_SUFFIXES = {".sql", ".ts", ".scala"}
+_IDENTIFIER = re.compile(r"[A-Za-z_][\w.]*")  # a setting name, not prose that happens to start with max_
 _YAML_NUMERIC_TAGS = {"tag:yaml.org,2002:int", "tag:yaml.org,2002:float"}
 
 
@@ -60,6 +62,10 @@ def numeric_literal(node: ast.AST) -> float | int | None:
         inner = numeric_literal(node.operand)
         return -inner if inner is not None else None
     return None
+
+
+def _numeric_string(text: str) -> float | int | None:
+    return parse_number(text.strip()) if re.fullmatch(_NUMBER, text.strip()) else None
 
 
 def parse_number(text: str) -> float | int:
@@ -160,11 +166,24 @@ class _PyScanner(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> None:
         f = node.func
-        if isinstance(f, ast.Attribute) and f.attr in self.cfg["truncating_methods"] and node.args:
-            v = numeric_literal(node.args[0])
-            if v is not None:
-                self.out.add(node.lineno, "truncating_call", f".{f.attr}({v}) with a literal argument", v)
+        name = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else None
+        bounds = [v for a in node.args if (v := numeric_literal(a)) is not None and v != 0]
+        if isinstance(f, ast.Attribute) and name in self.cfg["truncating_methods"] and bounds:
+            self.out.add(node.lineno, "truncating_call", f".{name}(...{bounds[-1]}) with a literal bound", bounds[-1])
+        if name in self.cfg.get("bounding_functions", []) and bounds:
+            self.out.add(node.lineno, "bounding_call", f"{name}(...{bounds[-1]}) with a literal bound", bounds[-1])
+        self._literal_default(node)
         self.generic_visit(node)
+
+    def _literal_default(self, node: ast.Call) -> None:
+        """A limit-named key read with a literal default: `widgets.text("max_x", "20")`, `.get("TIMEOUT", 90)`."""
+        keys = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)
+                and _IDENTIFIER.fullmatch(a.value) and name_matches(a.value, self.cfg["key_patterns"])]
+        values = [v for a in node.args if (v := numeric_literal(a)) is not None or
+                  (isinstance(a, ast.Constant) and isinstance(a.value, str) and (v := _numeric_string(a.value)) is not None)]
+        if keys and values:
+            self.out.add(node.lineno, "limit_default",
+                         f"limit-named key {keys[0]!r} read with a literal default {values[0]}", values[0])
 
     def visit_Constant(self, node: ast.Constant) -> None:
         if isinstance(node.value, str):
@@ -209,7 +228,7 @@ def scan_structured(text: str, out: _Collector, cfg: dict, is_manifest: bool) ->
 
 def scan_regex(text: str, out: _Collector, cfg: dict, suffix: str) -> None:
     methods = "|".join(re.escape(m) for m in cfg["truncating_methods"])
-    trunc = re.compile(r"\.(" + methods + r")\(\s*(" + _NUMBER + r")\s*\)")
+    trunc = re.compile(r"\.(" + methods + r")\(\s*(" + _NUMBER + r")\s*(?:,\s*(" + _NUMBER + r")\s*)?\)")
     for i, line in enumerate(out.lines, start=1):
         for m in _SQL_LIMIT.finditer(line):
             out.add(i, "sql_limit", f"SQL LIMIT {m.group(1)}", int(m.group(1)))
@@ -223,8 +242,9 @@ def _scan_regex_code(line: str, i: int, out: _Collector, cfg: dict, trunc: re.Pa
             v = parse_number(m.group(2))
             out.add(i, "limit_key", f"limit-named `{m.group(1)}` has literal value {v}", v)
     for m in trunc.finditer(line):
-        v = parse_number(m.group(2))
-        out.add(i, "truncating_call", f".{m.group(1)}({v}) with a literal argument", v)
+        v = parse_number(m.group(3) or m.group(2))
+        if v != 0:
+            out.add(i, "truncating_call", f".{m.group(1)}(...{v}) with a literal bound", v)
 
 
 # ---- per-file dispatch ------------------------------------------------------------------------

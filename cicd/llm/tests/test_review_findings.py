@@ -159,3 +159,13 @@ def test_a_reviewer_confirming_its_own_finding_is_not_corroboration(make_repo, k
     r = run_dir(root, kit_config)
     assert r.details["reported"] == 0
     assert r.verdict is Verdict.SATISFIED
+
+
+def test_quote_matching_is_whitespace_insensitive(make_repo, kit_config):
+    """v2: a valid finding was dropped because the reviewer collapsed a run of spaces."""
+    root = make_repo({"src.py": "def load(rows):\n    max_rows   =   500\n    return rows\n", "rules.toml": REG})
+    sha = commit_all(root, "reviewed")
+    (root / "reviews").mkdir()
+    (root / "reviews" / "a.json").write_text(review("a", sha, [finding(quote="max_rows = 500")]))
+    (root / "reviews" / "b.json").write_text(review("b", sha, verdicts=[{"finding_id": "a1", "verdict": "confirm"}]))
+    assert run_dir(root, kit_config).details["reported"] == 1

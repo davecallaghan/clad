@@ -21,7 +21,7 @@ Checked by: `completion_evidence`. The Stop hook runs it when the session change
 1. Run `cicd/llm/preflight.sh` on the files you changed and save its output to an evidence file.
 2. Write `completion.json` at the repository root with this schema (from
    `cicd/llm/gates/completion_evidence.py`):
-   - `status`: `"complete"` only if every required check is SATISFIED;
+   - `status`: exactly `"complete"` (only if every required check is SATISFIED) or `"incomplete"`;
    - `commit`, `tree_hash`: `git rev-parse HEAD` and `git rev-parse HEAD^{tree}`;
    - `artifact_digests`: `{path: "sha256:<hex>"}` for any artifact you claim;
    - `checks`: `[{id, verdict, evidence_path, required?, claims_deployment?, readback_evidence?}]`,
@@ -32,7 +32,8 @@ Checked by: `completion_evidence`. The Stop hook runs it when the session change
    `budget_below_capacity`, `quarantine_alarm`) and every surface you did not check, such as live
    deployment, branch protection or production data.
 4. A check that claims deployment needs `readback_evidence`: what is deployed, read back, not the
-   deploy command's own report.
+   deploy command's own report. It must be a different file from the deploy evidence and contain
+   at least one digest from `artifact_digests`.
 5. Run `python -m cicd.llm.gates.completion_evidence --completion completion.json` and paste its output.
 
 ## Examples (executable: the guidance tests run them through the real gate)

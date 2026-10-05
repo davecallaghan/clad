@@ -24,7 +24,10 @@ manifest_globs = ["**/databricks.yml", "**/databricks.yaml", "**/resources/**/*.
 key_patterns = ["max_*", "*_limit", "*_cap", "*_budget", "*timeout*", "top_k", "max_tokens"]
 manifest_timeout_patterns = ["*timeout*"]
 # Method calls whose literal argument truncates a collection. Source: spec Gate 1 flag 4.
-truncating_methods = ["head", "limit", "take"]
+truncating_methods = ["head", "limit", "take", "slice"]
+# Functions whose literal numeric arguments bound how much is read or how often it is tried.
+# Source: classes missed by the first held-out run (itertools.islice; tenacity stop conditions).
+bounding_functions = ["islice", "stop_after_attempt", "stop_after_delay"]
 # Paths where SQL `LIMIT n` is legitimate (none declared). Source: spec Gate 1 flag 2.
 sql_limit_exclude = []
 # Keys that are token/evidence budgets, compared against model_capacity (flag 6).

@@ -1,0 +1,1 @@
+{"status": "finished", "commit": "0000000000000000000000000000000000000000", "tree_hash": "1111111111111111111111111111111111111111", "artifact_digests": {"a.tar": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}, "checks": [{"id": "t", "verdict": "SATISFIED", "evidence_path": "evidence/t.txt"}], "not_verified": []}

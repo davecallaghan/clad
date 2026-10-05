@@ -88,3 +88,8 @@ def test_a_noqa_naming_the_exact_code_does_not_hide_it(make_repo, kit_config):
     never covered the E722 it asserted, so it passed with or without --ignore-noqa."""
     root = make_repo({"m.py": "def f(p):\n    try:\n        return open(p).read()\n    except:  # noqa: E722\n        return ''\n"})
     assert "E722" in codes(run_repo(root, kit_config))
+
+
+def test_contextlib_suppress_is_a_swallowed_exception(make_repo, kit_config):
+    root = make_repo({"m.py": "import contextlib\n\n\ndef f(p):\n    with contextlib.suppress(OSError):\n        return open(p).read()\n"})
+    assert "SUPPRESS" in codes(run_repo(root, kit_config))

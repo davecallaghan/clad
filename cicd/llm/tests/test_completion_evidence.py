@@ -92,8 +92,9 @@ def test_digest_check_is_not_run_without_a_manifest(make_repo, kit_config):
 
 def test_deployment_claim_with_readback_evidence_is_satisfied(make_repo, kit_config):
     checks = [{"id": "deploy", "verdict": "SATISFIED", "evidence_path": "ev.txt",
-               "claims_deployment": True, "readback_evidence": "ev.txt"}]
-    assert run_doc(make_repo, kit_config, doc(checks=checks)).verdict is Verdict.SATISFIED
+               "claims_deployment": True, "readback_evidence": "rb.txt"}]
+    readback = {"rb.txt": "workspace file a.tar: sha256:" + "a" * 64 + "\n"}
+    assert run_doc(make_repo, kit_config, doc(checks=checks), readback).verdict is Verdict.SATISFIED
 
 
 def test_free_text_is_recorded_and_never_scored(make_repo, kit_config):
@@ -107,3 +108,23 @@ def test_missing_completion_file_is_not_run(make_repo, kit_config):
     cfg = core.deep_merge(kit_config, {"gates": {"completion_evidence": {"completion": "completion.json"}}})
     r = g.run(cfg, g.completion_scope(root, cfg, {}), {})
     assert r.verdict is Verdict.NOT_RUN
+
+
+# ---- v2 ------------------------------------------------------------------------------------------
+
+def test_status_must_be_complete_or_incomplete(make_repo, kit_config):
+    assert "invalid_status" in rules(run_doc(make_repo, kit_config, doc(status="done")))
+    assert run_doc(make_repo, kit_config, doc(status="incomplete")).verdict is Verdict.SATISFIED
+
+
+def test_readback_must_contain_a_claimed_digest(make_repo, kit_config):
+    checks = [{"id": "deploy", "verdict": "SATISFIED", "evidence_path": "ev.txt",
+               "claims_deployment": True, "readback_evidence": "rb.txt"}]
+    r = run_doc(make_repo, kit_config, doc(checks=checks), {"rb.txt": "Deployment complete!\n"})
+    assert "readback_without_digest" in rules(r)
+
+
+def test_readback_cannot_be_the_deploy_evidence_itself(make_repo, kit_config):
+    checks = [{"id": "deploy", "verdict": "SATISFIED", "evidence_path": "ev.txt",
+               "claims_deployment": True, "readback_evidence": "ev.txt"}]
+    assert "readback_is_deploy_evidence" in rules(run_doc(make_repo, kit_config, doc(checks=checks)))

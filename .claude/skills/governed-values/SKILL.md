@@ -23,10 +23,13 @@ Checked by: `governed_write`, `provenance`, `behavioural_harness`.
    domain, the allowed origins and the `ungraded_marker`.
 2. Always call `write_gate(rows, contract, target)` (from `cicd/llm/governed.py`) before writing to
    a governed target, in the same function as the write, passing the contract positionally.
-3. Handle the result: write `outcome.accepted` to the target and `outcome.quarantined` somewhere a
-   human will see it. Never discard the result or bind it to `_`.
+3. Handle the result: bind it to a name, write `outcome.accepted` (never the rows you passed in)
+   to the target and `outcome.quarantined` somewhere a human will see it. Never discard the result,
+   bind it to `_`, or use `write_gate(...).accepted` inline. Never write a governed table with SQL
+   (`INSERT INTO`, `MERGE INTO`): those rows bypass the gate.
 4. Set an origin on every governed field, as `<field>__origin`: `model_emitted` (the model said it),
    `code_supplied` (code produced it) or `promoted` (a promotion step moved a model value forward).
+   A promoted field also records what it was promoted from in `<field>__promoted_from`.
 5. When the model emits no value, store the contract's explicit ungraded marker with origin
    `code_supplied`. Never `dict.get(key, default)`, never `value or "default"`, never a default grade.
 6. A field-name mismatch (`finding_kind` against `finding_type`) is fixed by renaming the artifact so
@@ -43,6 +46,6 @@ Checked by: `governed_write`, `provenance`, `behavioural_harness`.
 ## Does not apply when
 
 - The target or field is not in the contract (the gates derive their scope from the contract).
-- The origin is `promoted`: that is correct behaviour, not a violation. A two-origin design flags it,
+- The origin is `promoted` and `<field>__promoted_from` names the source: that is correct behaviour, not a violation. A two-origin design flags it,
   fires on correct code and gets switched off ("Three origins, not two").
 - The stored value is the contract's ungraded marker with origin `code_supplied`.

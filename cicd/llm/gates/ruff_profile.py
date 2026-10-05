@@ -13,6 +13,7 @@ is NOT_RUN, never SATISFIED.
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import subprocess
@@ -47,6 +48,21 @@ def ratchet(root: Path, base: str | None, current: int | None) -> tuple[str, lis
     return "RUN", []
 
 
+def suppressions(scope: Scope) -> list[Finding]:
+    """`contextlib.suppress(...)`: an exception swallowed with no handler body for S110 to see (v2)."""
+    out = []
+    for rel in scope.files:
+        text = (scope.root / rel).read_text(encoding="utf-8")
+        lines = text.splitlines()
+        for n in ast.walk(ast.parse(text)):
+            f = n.func if isinstance(n, ast.Call) else None
+            name = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else None
+            if name == "suppress":
+                out.append(Finding(rel, n.lineno, core.line_hash(lines[n.lineno - 1]), "SUPPRESS",
+                                   "contextlib.suppress swallows the exception: handle it or let it propagate"))
+    return out
+
+
 def run(config: dict, scope: Scope, opts: dict | None = None) -> GateResult:
     opts = opts or {}
     cfg = core.gate_section(config, GATE_ID)
@@ -72,6 +88,7 @@ def run(config: dict, scope: Scope, opts: dict | None = None) -> GateResult:
         text = (scope.root / rel).read_text(encoding="utf-8").splitlines()
         findings.append(Finding(rel, line, core.line_hash(text[line - 1] if line <= len(text) else ""),
                                 item["code"], item["message"]))
+    findings += suppressions(scope)
     ratchet_state, ratchet_findings = ratchet(scope.root, opts.get("base"), threshold)
     findings += ratchet_findings
     return GateResult(GATE_ID, Verdict.VIOLATED if findings else Verdict.SATISFIED, KIND,

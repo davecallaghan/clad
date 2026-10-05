@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import inspect
 import json
+import re
 from pathlib import Path
 
 from cicd.lib.verdict import Verdict
@@ -91,17 +92,43 @@ def _own_calls(scope_node):
             stack.extend(ast.iter_child_nodes(n))
 
 
+# SQL that writes a table: INSERT INTO / INSERT OVERWRITE [TABLE] / MERGE INTO <name>.
+_SQL_WRITE = re.compile(r"\b(?:INSERT\s+(?:INTO|OVERWRITE)(?:\s+TABLE)?|MERGE\s+INTO)\s+([`\w.]+)", re.IGNORECASE)
+
+
+def sql_writes(rel: str, tree: ast.Module, lines: list[str], targets: set[str]) -> list[Finding]:
+    """A governed table written by SQL text: rows that never pass through write_gate."""
+    out = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            for m in _SQL_WRITE.finditer(node.value):
+                t = _governed(m.group(1).replace("`", ""), targets)
+                if t is not None:
+                    out.append(Finding(rel, node.lineno, core.line_hash(lines[node.lineno - 1]), "sql_write",
+                                       f"SQL writes governed target {t!r} directly; its rows bypass write_gate"))
+    return out
+
+
+def _gate_inputs(calls: list[ast.Call]) -> set[str]:
+    """Names passed to write_gate as its rows: writing these afterwards writes the unchecked rows."""
+    return {c.args[0].id for c in calls if _callee(c) == "write_gate" and c.args and isinstance(c.args[0], ast.Name)}
+
+
 def scan_calls(rel: str, tree: ast.Module, lines: list[str], targets: set[str], writers: list[str]):
     consts = _module_consts(tree)
     findings, gated, unresolved = [], 0, 0
     for node in _scopes(tree):
         calls = sorted(_own_calls(node), key=lambda c: (c.lineno, c.col_offset))
         gated_targets = {_gate_target(c, consts) for c in calls if _callee(c) == "write_gate"}
+        raw = _gate_inputs(calls)
         for c in (c for c in calls if _callee(c) in writers):
             name = _str_const(c.args[0], consts) if c.args else None
             t = _governed(name, targets) if name is not None else None
             if name is None:
                 unresolved += 1
+            elif t is not None and t in gated_targets and any(isinstance(a, ast.Name) and a.id in raw for a in c.args):
+                findings.append(Finding(rel, c.lineno, core.line_hash(lines[c.lineno - 1]), "raw_rows_written",
+                                        f"write to {t!r} passes the rows given to write_gate, not its accepted rows"))
             elif t is not None and t in gated_targets:
                 gated += 1
             elif t is not None:
@@ -161,6 +188,7 @@ def run(config: dict, scope: Scope, opts: dict | None = None) -> GateResult:
         text = (scope.root / rel).read_text(encoding="utf-8")
         tree, lines = ast.parse(text), text.splitlines()
         f1, g1, u1 = scan_calls(rel, tree, lines, targets, cfg["writer_functions"])
+        f1 += sql_writes(rel, tree, lines, targets)
         f2, d2 = check_signatures(rel, tree, lines)
         findings += f1 + f2
         gated, unresolved, defs = gated + g1, unresolved + u1, defs + d2

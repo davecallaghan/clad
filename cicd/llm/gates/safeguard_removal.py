@@ -45,10 +45,11 @@ REMOVED = {"guard_call": "deleted_safeguard_call", "marker": "deleted_safeguard_
 ADDED = {"broad_handler": "broadened_handler", "neutered_handler": "neutered_handler",
          "wrapped": "wrapped_safeguard", "default": "parameter_gained_default",
          "discarded": "write_gate_result_discarded", "unreachable": "unreachable_guard",
-         "skip": "test_skipped"}
+         "skip": "test_skipped", "conditional_bypass": "conditional_bypass"}
 _BROAD = {"Exception", "BaseException"}
 _SKIP_SUFFIXES = (".skip", ".skipif", ".xfail", "importorskip")
 _EXITS = (ast.Return, ast.Raise, ast.Continue, ast.Break)
+_BYPASS = " skipped when: "
 
 
 # ---- scope and sources ------------------------------------------------------------------------
@@ -123,8 +124,12 @@ def _callee(call: ast.Call) -> str:
 
 
 def _is_neutered(h: ast.ExceptHandler) -> bool:
-    return all(isinstance(s, (ast.Pass, ast.Continue)) or
-               (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) for s in h.body)
+    """The error goes nowhere: only pass/continue/docstrings, or (v2) no raise and the body ends in
+    pass/continue, as in `log.warning(...); continue`."""
+    quiet = all(isinstance(s, (ast.Pass, ast.Continue)) or
+                (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant)) for s in h.body)
+    raises = any(isinstance(n, ast.Raise) for s in h.body for n in ast.walk(s))
+    return quiet or (not raises and isinstance(h.body[-1], (ast.Pass, ast.Continue)))
 
 
 def _broad(h: ast.ExceptHandler) -> bool:
@@ -213,6 +218,12 @@ class _Extract(ast.NodeVisitor):
             self.add("discarded", ast.unparse(node), node.lineno)
         self.generic_visit(node)
 
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        """`write_gate(...).accepted`: the result is never bound, so its quarantine is unreachable (v2)."""
+        if isinstance(node.value, ast.Call) and _callee(node.value) == "write_gate":
+            self.add("discarded", ast.unparse(node), node.lineno)
+        self.generic_visit(node)
+
     def visit_If(self, node: ast.If) -> None:
         falsy = isinstance(node.test, ast.Constant) and not node.test.value
         if falsy:
@@ -227,13 +238,22 @@ class _Extract(ast.NodeVisitor):
                 self._after_exit(stmts)
         super().generic_visit(node)
 
+    def _guard_calls(self, node: ast.AST) -> list[ast.Call]:
+        return [n for n in ast.walk(node) if isinstance(n, ast.Call) and self.is_guard_call(n)]
+
     def _after_exit(self, stmts: list) -> None:
-        exited = False
+        exited, bypasses = False, []
         for s in stmts:
             if exited:
-                for c in (n for n in ast.walk(s) if isinstance(n, ast.Call) and self.is_guard_call(n)):
+                for c in self._guard_calls(s):
                     self.add("unreachable", ast.unparse(c), c.lineno)
+            for test in bypasses:
+                for c in self._guard_calls(s):
+                    self.add("conditional_bypass", f"{ast.unparse(c)}{_BYPASS}{ast.unparse(test)}", test.lineno)
             exited = exited or isinstance(s, _EXITS)
+            # v2: a branch that exits without calling the safeguard skips every safeguard after it
+            if isinstance(s, ast.If) and any(isinstance(b, _EXITS) for b in s.body) and not self._guard_calls(s):
+                bypasses.append(s.test)
 
 
 def extract(text: str | None, guards: set[str], patterns: list[str]) -> dict[str, list[tuple[str, int]]]:
@@ -261,7 +281,15 @@ def compare(rel: str, base_text: str | None, head_text: str | None, guards: set[
     b, h = extract(base_text, guards, patterns), extract(head_text, guards, patterns)
     removed = _diff(rel, b, h, REMOVED, (base_text or "").splitlines(), "removed since base")
     added = _diff(rel, h, b, ADDED, (head_text or "").splitlines(), "new since base")
-    return removed + added
+    # A bypass needs something to bypass: the safeguard call must already have existed at base, in
+    # the same function. A new function with an early exit (say, for empty input) bypasses nothing.
+    existed = {k for k, _ in b.get("guard_call", [])}
+    return removed + [f for f in added if f.rule != "conditional_bypass" or _bypassed_call(f, existed)]
+
+
+def _bypassed_call(f: Finding, existed: set[str]) -> bool:
+    call = f.message.split(": ", 1)[1].split(_BYPASS)[0]
+    return any(k.split("|", 1)[1] == call for k in existed)
 
 
 # ---- run ---------------------------------------------------------------------------------------

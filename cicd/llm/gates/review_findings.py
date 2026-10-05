@@ -65,8 +65,11 @@ def citation_valid(root: Path, commit: str, f: dict, registry: dict) -> bool:
     line, quote = f.get("line"), str(f.get("quote", "")).strip()
     rule = registry.get(str(f.get("rule_id")))
     rule_quote = str(f.get("rule_quote", "")).strip()
+    def squash(s: str) -> str:
+        return " ".join(s.split())  # reviewers reflow whitespace; the words must still match
+
     return (lines is not None and isinstance(line, int) and 0 < line <= len(lines)
-            and bool(quote) and quote in lines[line - 1]
+            and bool(quote) and squash(quote) in squash(lines[line - 1])
             and rule is not None and bool(rule_quote) and rule_quote in rule["text"])
 
 
