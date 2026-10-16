@@ -11,11 +11,13 @@ final class HttpUpstream(baseUrl: String, apiKey: String, runtime: Runtime, slee
 
   def complete(body: ujson.Obj, interactionId: String): Either[String, ujson.Value] =
     call.post(s"$baseUrl/chat/completions", apiKey, interactionId, ujson.write(body)).flatMap { (status, text) =>
-      if status / 100 != 2 then Left(s"provider returned $status: ${HttpUpstream.excerpt(text)}")
+      if status / 100 != 2 then Left(s"provider returned $status: ${HttpUpstream.excerpt(text, apiKey)}")
       else Try(ujson.read(text)).toEither.left.map(e => s"provider returned $status: unparseable body (${e.getClass.getName})")
     }
 
 object HttpUpstream:
   /** How much of an error body goes into a message: enough to diagnose, short enough not to flood the audit reason. */
   private val excerptChars = 200
-  private[upstream] def excerpt(text: String): String = text.take(excerptChars)
+  /** The configured key is redacted before truncating, so a provider that echoes it cannot leak it into an error. */
+  private[upstream] def excerpt(text: String, key: String): String =
+    (if key.isEmpty then text else text.replace(key, "***")).take(excerptChars)

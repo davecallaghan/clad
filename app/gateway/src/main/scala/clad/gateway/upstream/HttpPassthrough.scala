@@ -12,5 +12,7 @@ final class HttpPassthrough(upstreams: Map[String, (String, String)], runtime: R
     upstreams.get(name) match
       case None => Left(s"no passthrough upstream named $name")
       case Some((base, key)) =>
-        val url = if path.isEmpty then base else s"$base/$path"
+        val root = base.replaceAll("/+$", "")
+        val rest = path.replaceAll("^/+", "")
+        val url = if rest.isEmpty then root else s"$root/$rest"
         call.post(url, key, interactionId, body)

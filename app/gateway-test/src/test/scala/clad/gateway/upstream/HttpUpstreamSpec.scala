@@ -110,3 +110,26 @@ class HttpUpstreamSpec extends AnyFunSuite:
   test("passthrough to an unknown name is Left") {
     assert(HttpPassthrough(Map.empty, Rt.base).forward("nope", "", "{}", "iid").isLeft)
   }
+
+  test("an interrupt during the back-off sleep is Left and restores the interrupt flag") {
+    withServer((ex, _, _) => reply(ex, 429, "slow")) { (url, seen) =>
+      val r = HttpUpstream(url, "k", Rt.oneRetry, _ => throw InterruptedException()).complete(req, "iid")
+      val flagged = Thread.interrupted()
+      assert(r.left.exists(_.contains("cannot reach the provider: java.lang.InterruptedException")))
+      assert(flagged && seen.size == 1)
+    }
+  }
+
+  test("passthrough joins a trailing-slash base and a leading-slash path with one slash") {
+    withServer((ex, _, _) => reply(ex, 200, "x")) { (url, seen) =>
+      HttpPassthrough(Map("jev" -> (url + "/", "k")), Rt.base).forward("jev", "/x", "{}", "iid")
+      assert(seen.map(_.path) == Seq("/v1/x"))
+    }
+  }
+
+  test("a provider body that echoes the key is redacted in the error") {
+    withServer((ex, _, _) => reply(ex, 401, "bad key secret-key-123 given")) { (url, _) =>
+      val r = HttpUpstream(url, "secret-key-123", Rt.base, _ => ()).complete(req, "iid")
+      assert(r.left.exists(m => m.contains("401") && m.contains("***") && !m.contains("secret-key-123")))
+    }
+  }

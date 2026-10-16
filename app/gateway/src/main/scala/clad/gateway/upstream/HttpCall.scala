@@ -17,9 +17,15 @@ private[upstream] final class HttpCall(runtime: Runtime, sleep: Long => Unit):
   private def attempt(url: String, key: String, interactionId: String, body: String, retriesLeft: Int): Either[String, (Int, String)] =
     send(url, key, interactionId, body) match
       case Right((status, _)) if (status == 429 || status == 503) && retriesLeft > 0 =>
-        sleep(runtime.upstreamRetryWaitMillis.toLong)
-        attempt(url, key, interactionId, body, retriesLeft - 1)
+        pause().flatMap(_ => attempt(url, key, interactionId, body, retriesLeft - 1))
       case other => other
+
+  private def pause(): Either[String, Unit] =
+    try Right(sleep(runtime.upstreamRetryWaitMillis.toLong))
+    catch
+      case e: InterruptedException =>
+        Thread.currentThread.interrupt()
+        Left(s"cannot reach the provider: ${e.getClass.getName}")
 
   private def send(url: String, key: String, interactionId: String, body: String): Either[String, (Int, String)] =
     try
