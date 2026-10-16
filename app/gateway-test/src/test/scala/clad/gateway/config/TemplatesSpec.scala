@@ -7,6 +7,7 @@ object Fixtures:
   val dir: Path = Paths.get(getClass.getResource("/governance").toURI)
   val runtime: Runtime = Runtime(chainLockKey = 7243001L, upstreamRetries = 1, upstreamTimeoutSeconds = 5, upstreamRetryWaitMillis = 10)
   def config: GatewayConfig = GatewayConfig.loadWith(dir, runtime).fold(e => throw AssertionError(e), identity)
+  def approvedConfig(): GatewayConfig = ApprovedFixtures.load()
   val sample: Map[String, String] = Map("catalog" -> "- tax_drag_ratio (dimensions: scenario, year)",
     "vanna_context" -> "Tables: gold_scenario_summary(scenario, year)", "today" -> "2026-10-16", "schema" -> "person: name")
 
