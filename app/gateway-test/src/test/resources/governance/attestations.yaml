@@ -1,0 +1,5 @@
+# Human review of each governed template version (EPG procedural constraint compliance_review).
+# An LLM is never an attestor. Until David reviews a template and adds its entry, calls using it are blocked.
+# Entry: {template_id: agent.answer, template_version: "1", attestor: david, attested_at: "2026-10-16T10:00:00Z",
+#         rationale: "<what you checked>"}
+attestations: []

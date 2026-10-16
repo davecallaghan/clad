@@ -1,0 +1,12 @@
+# Model registry (spec section 7.4). A model is usable only when a central approver has approved it: until then its
+# model_registry_status is "pending", the EPG constraint approved_model is unsatisfied, and calls using it are blocked.
+# To approve, a central approver sets status: approved, approved_by: <their agent id>, approved_at: <date>.
+provider: deepinfra
+tiers:
+  large: openai/gpt-oss-120b
+  small: openai/gpt-oss-20b
+approved:
+  - {id: openai/gpt-oss-120b, status: pending, approved_by: null, approved_at: null}
+  - {id: openai/gpt-oss-20b, status: pending, approved_by: null, approved_at: null}
+classifier:
+  - {id: meta-llama/Llama-Guard-4-12B, status: pending, approved_by: null, approved_at: null}
