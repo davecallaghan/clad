@@ -4,7 +4,8 @@ case class AgentConfig(
   id: String,
   name: String,
   authorizedDomains: Seq[String],
-  authorizedLevels: Seq[String]
+  authorizedLevels: Seq[String],
+  kind: String = "human"
 )
 
 case class ConstraintConfig(
@@ -13,7 +14,9 @@ case class ConstraintConfig(
   level: String,
   domain: String,
   version: String = "1.0",
-  evaluability: String = "mechanical"
+  evaluability: String = "mechanical",
+  author: String = "",
+  approver: String = ""
 )
 
 case class ConstraintHierarchyConfig(
@@ -40,7 +43,8 @@ case class ThresholdConfig(
   flagThreshold: Double,
   riskTier: String,
   owner: String,
-  version: String = "1.0"
+  version: String = "1.0",
+  level: String = "enterprise"
 )
 
 case class FailurePostureConfig(
@@ -57,5 +61,8 @@ case class GovernanceConfig(
   checkers: Seq[CheckerBinding] = Seq.empty,
   outputConstraints: Seq[OutputConstraintConfig] = Seq.empty,
   thresholds: Seq[ThresholdConfig] = Seq.empty,
-  failurePosture: FailurePostureConfig = FailurePostureConfig()
+  failurePosture: FailurePostureConfig = FailurePostureConfig(),
+  centralApprovers: Seq[String] = Seq.empty,
+  criticalDomains: Seq[String] = Seq.empty,
+  project: String = ""
 )

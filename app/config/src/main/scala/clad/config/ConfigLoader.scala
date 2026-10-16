@@ -42,6 +42,15 @@ object ConfigLoader:
     }
 
   def buildEngine(config: GovernanceConfig): Either[List[ConfigError], GovernanceEngine] =
+    buildHierarchy(config).flatMap { eh =>
+      GovernanceEngine.build(EngineConfig(eh, EvidenceSet.empty, Level.Project)).left.map(
+        _.map(e => ValidationError("engine", e.toString)))
+    }
+
+  /** The evaluable hierarchy a config describes, without building an engine. An engine
+    * needs evidence for every procedural constraint, which a reader of the config (the
+    * conformance module) does not have; the hierarchy does not. */
+  def buildHierarchy(config: GovernanceConfig): Either[List[ConfigError], EvaluableHierarchy] =
     val errors = List.newBuilder[ConfigError]
 
     val allConstraintConfigs = config.constraints.enterprise ++ config.constraints.department ++ config.constraints.project
@@ -134,14 +143,8 @@ object ConfigLoader:
         errs.foreach(e => errors += ValidationError("evaluableHierarchy", e.toString))
         return Left(errors.result())
 
-    val engineConfig = EngineConfig(eh, EvidenceSet.empty, Level.Project)
-    GovernanceEngine.build(engineConfig) match
-      case Right(engine) =>
-        val errs = errors.result()
-        if errs.nonEmpty then Left(errs) else Right(engine)
-      case Left(errs) =>
-        errs.foreach(e => errors += ValidationError("engine", e.toString))
-        Left(errors.result())
+    val errs = errors.result()
+    if errs.nonEmpty then Left(errs) else Right(eh)
 
   private def parseLevel(s: String): Level = s.toLowerCase match
     case "enterprise" => Level.Enterprise
