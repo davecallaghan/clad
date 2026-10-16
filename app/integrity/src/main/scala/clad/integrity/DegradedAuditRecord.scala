@@ -24,12 +24,18 @@ case class SignedDegradedRecord(
 )
 
 object SignedDegradedRecord:
+  def signedBytes(record: DegradedAuditRecord): Array[Byte] =
+    s"${record.interactionId.value}|${record.timestamp}|${record.component.value}|${record.failureReason}|${record.postureApplied}|${record.actionTaken}"
+      .getBytes("UTF-8")
+
   def sign(
     record: DegradedAuditRecord,
     kms: KeyManagementService,
     supervisorId: ComponentId
   ): Either[KmsError, SignedDegradedRecord] =
-    val data = s"${record.interactionId.value}|${record.timestamp}|${record.component.value}|${record.failureReason}|${record.postureApplied}|${record.actionTaken}"
-    kms.sign(data.getBytes("UTF-8")).map { sig =>
+    kms.sign(signedBytes(record)).map { sig =>
       SignedDegradedRecord(record, sig, signedBy = supervisorId, onBehalfOf = record.component)
     }
+
+  def verify(s: SignedDegradedRecord, kms: KeyManagementService): Either[KmsError, Boolean] =
+    kms.verify(signedBytes(s.record), s.signature)
