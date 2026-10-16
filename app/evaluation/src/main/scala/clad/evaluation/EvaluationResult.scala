@@ -22,6 +22,17 @@ case class ProceduralDetail(
   rationale: String
 ) extends EvalDetail
 
+/** A Tier-2 classifier result. A score below the threshold is "below threshold", not a pass:
+  * `satisfied` on the entry records the threshold decision, and the score is kept so a
+  * reviewer can see how close it was. */
+case class ClassifierDetail(
+  classifierId: String,
+  classifierVersion: String,
+  score: Double,
+  threshold: Double,
+  thresholdVersion: String
+) extends EvalDetail
+
 case class PromptEvaluationReport(
   level: Level,
   results: Set[ConstraintResult],

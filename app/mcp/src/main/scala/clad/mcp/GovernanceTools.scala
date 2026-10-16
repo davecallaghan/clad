@@ -178,6 +178,8 @@ object GovernanceTools:
             sb.append(s"Property detected = $detected\n")
           case clad.evaluation.ProceduralDetail(attestor, _, rationale) =>
             sb.append(s"Attestor: $attestor, Rationale: $rationale\n")
+          case clad.evaluation.ClassifierDetail(classifierId, classifierVersion, score, threshold, _) =>
+            sb.append(s"Classifier: $classifierId v$classifierVersion, score $score, threshold $threshold\n")
       }
 
     sb.append(s"\nAudit Digest: ${report.audit.digest}\n")

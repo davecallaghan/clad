@@ -76,6 +76,15 @@ object ReportSerializer:
           "attestedAt" -> writeJs(attestedAt),
           "rationale" -> ujson.Str(rationale)
         )
+      case ClassifierDetail(classifierId, classifierVersion, score, threshold, thresholdVersion) =>
+        ujson.Obj(
+          "type" -> ujson.Str("Classifier"),
+          "classifierId" -> ujson.Str(classifierId),
+          "classifierVersion" -> ujson.Str(classifierVersion),
+          "score" -> ujson.Num(score),
+          "threshold" -> ujson.Num(threshold),
+          "thresholdVersion" -> ujson.Str(thresholdVersion)
+        )
     ,
     json =>
       val obj = json.obj
@@ -88,6 +97,14 @@ object ReportSerializer:
             obj("attestor").str,
             read[Instant](obj("attestedAt")),
             obj("rationale").str
+          )
+        case "Classifier" =>
+          ClassifierDetail(
+            obj("classifierId").str,
+            obj("classifierVersion").str,
+            obj("score").num,
+            obj("threshold").num,
+            obj("thresholdVersion").str
           )
         case other => throw new IllegalArgumentException(s"Unknown detail type: $other")
   )

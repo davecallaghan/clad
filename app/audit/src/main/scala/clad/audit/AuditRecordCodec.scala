@@ -24,10 +24,12 @@ object AuditRecordCodec:
 
   private given ReadWriter[EvalDetail] = readwriter[ujson.Value].bimap(
     { case MechanicalDetail(detected) => ujson.Obj("type" -> "Mechanical", "propertyDetected" -> detected)
-      case ProceduralDetail(attestor, at, rationale) => ujson.Obj("type" -> "Procedural", "attestor" -> attestor, "attestedAt" -> writeJs(at), "rationale" -> rationale) },
+      case ProceduralDetail(attestor, at, rationale) => ujson.Obj("type" -> "Procedural", "attestor" -> attestor, "attestedAt" -> writeJs(at), "rationale" -> rationale)
+      case ClassifierDetail(id, v, score, th, thv) => ujson.Obj("type" -> "Classifier", "classifierId" -> id, "classifierVersion" -> v, "score" -> score, "threshold" -> th, "thresholdVersion" -> thv) },
     json => json("type").str match
       case "Mechanical" => MechanicalDetail(json("propertyDetected").bool)
       case "Procedural" => ProceduralDetail(json("attestor").str, read[Instant](json("attestedAt")), json("rationale").str)
+      case "Classifier" => ClassifierDetail(json("classifierId").str, json("classifierVersion").str, json("score").num, json("threshold").num, json("thresholdVersion").str)
   )
 
   private given ReadWriter[AuditEntry] = readwriter[ujson.Value].bimap(

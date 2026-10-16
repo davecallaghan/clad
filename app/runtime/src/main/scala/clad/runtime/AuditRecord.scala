@@ -6,7 +6,7 @@ import java.time.Instant
 import java.security.MessageDigest
 
 enum EvaluabilityClass:
-  case Mechanical, Procedural
+  case Mechanical, Procedural, Classifier
 
 case class AuditEntry(
   constraint: Constraint,
