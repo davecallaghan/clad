@@ -1,0 +1,4 @@
+WORM probe against personal_finance's Postgres 17.11 (pod pf, localhost:5433), role pf_gov_writer, 2026-10-16.
+Probe config (password file path redacted to its name): tables [governance.gil]
+Only governance.gil had rows; audit_record and degraded_record were empty (would be NOT_RUN).
+
