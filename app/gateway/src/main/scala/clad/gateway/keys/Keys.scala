@@ -1,7 +1,7 @@
 package clad.gateway.keys
 
 import clad.audit.Ed25519KeyManagement
-import java.nio.file.{Files, Path, StandardOpenOption}
+import java.nio.file.{Files, Path, StandardCopyOption}
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.{KeyFactory, KeyPairGenerator, MessageDigest}
 import java.security.spec.X509EncodedKeySpec
@@ -42,6 +42,20 @@ object Keys:
       kms <- Ed25519KeyManagement.fromPrivatePem(privText, pub, kid).left.map(_.toString)
     yield kms
 
+  /** Temp file (mode 600) in the same directory, then an atomic move: a failed write never leaves a
+    * partial `<role>.ed25519` that would make later generate calls skip and load fail. */
+  private def writePrivateAtomically(dir: Path, priv: Path, text: String): Unit =
+    val tmp = Files.createTempFile(dir, priv.getFileName.toString, ".tmp",
+      PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))
+    try
+      Files.writeString(tmp, text)
+      if Files.exists(priv) then throw java.nio.file.FileAlreadyExistsException(priv.toString)
+      Files.move(tmp, priv, StandardCopyOption.ATOMIC_MOVE)
+    catch case e: Throwable =>
+      try Files.deleteIfExists(tmp)
+      catch case c: java.io.IOException => e.addSuppressed(c)
+      throw e
+
   def generate(dir: Path, role: String): Either[String, Boolean] =
     val priv = dir.resolve(s"$role.ed25519")
     if Files.exists(priv) then Right(false)
@@ -51,8 +65,7 @@ object Keys:
         val kp = KeyPairGenerator.getInstance("Ed25519").generateKeyPair()
         // Public half first: the private file is the "already generated" marker, so it lands last.
         Files.writeString(dir.resolve(s"$role.ed25519.pub.pem"), pem("PUBLIC KEY", kp.getPublic.getEncoded))
-        Files.createFile(priv, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")))
-        Files.writeString(priv, pem("PRIVATE KEY", kp.getPrivate.getEncoded), StandardOpenOption.TRUNCATE_EXISTING)
+        writePrivateAtomically(dir, priv, pem("PRIVATE KEY", kp.getPrivate.getEncoded))
         Right(true)
       catch
         case e: java.io.IOException => Left(s"cannot write keys to $dir: ${e.getMessage}")
