@@ -39,20 +39,35 @@ object AuditRecordCodec:
       read[EvalDetail](json("detail")), read[Instant](json("timestamp")))
   )
 
+  private given ReadWriter[Surface] = readwriter[String].bimap(_.toString, Surface.valueOf(_))
+
+  private def optStr(o: Option[String]): ujson.Value = o match
+    case Some(s) => ujson.Str(s)
+    case None => ujson.Null
+
+  private def readOptStr(json: ujson.Value, key: String): Option[String] =
+    json.obj.get(key).flatMap {
+      case ujson.Null => None
+      case v => Some(v.str)
+    }
+
   private given ReadWriter[AuditRecord] = readwriter[ujson.Value].bimap(
     ar => ujson.Obj("artifactDigest" -> ar.artifactDigest, "entries" -> writeJs(ar.entries),
       "configDigest" -> ar.configDigest, "timestamp" -> writeJs(ar.timestamp),
-      "previousDigest" -> (ar.previousDigest match { case Some(d) => ujson.Str(d); case None => ujson.Null }),
-      "interactionId" -> (ar.interactionId match { case Some(i) => ujson.Str(i.value); case None => ujson.Null })),
-    // json.obj.get for interactionId, as for recordedDigest below: a record written
+      "previousDigest" -> optStr(ar.previousDigest),
+      "interactionId" -> optStr(ar.interactionId.map(_.value)),
+      "component" -> optStr(ar.component),
+      "surface" -> optStr(ar.surface.map(_.toString)),
+      "outcome" -> optStr(ar.outcome)),
+    // json.obj.get for every optional field, as for recordedDigest below: a line written
     // before the field existed must decode to None rather than throw.
     json => AuditRecord(json("artifactDigest").str, read[Vector[AuditEntry]](json("entries")),
       json("configDigest").str, read[Instant](json("timestamp")),
       json("previousDigest") match { case ujson.Null => None; case v => Some(v.str) },
-      json.obj.get("interactionId").flatMap {
-        case ujson.Null => None
-        case v => Some(InteractionId(v.str))
-      })
+      readOptStr(json, "interactionId").map(InteractionId(_)),
+      readOptStr(json, "component"),
+      readOptStr(json, "surface").map(Surface.valueOf(_)),
+      readOptStr(json, "outcome"))
   )
 
   private given ReadWriter[Signature] = readwriter[ujson.Value].bimap(

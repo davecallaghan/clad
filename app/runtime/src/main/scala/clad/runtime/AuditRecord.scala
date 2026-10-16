@@ -30,7 +30,10 @@ case class AuditRecord(
   configDigest: String,
   timestamp: Instant,
   previousDigest: Option[String],
-  interactionId: Option[InteractionId] = None
+  interactionId: Option[InteractionId] = None,
+  component: Option[String] = None,
+  surface: Option[Surface] = None,
+  outcome: Option[String] = None
 ):
   lazy val digest: String =
     // The identifier is PREFIXED only when present, rather than always appended, so
@@ -38,8 +41,14 @@ case class AuditRecord(
     // existed. Appending unconditionally would invalidate every stored signature.
     // It must be inside the digest either way: an identifier outside the hash could
     // be re-pointed at a different interaction without detection.
+    // component, surface and outcome follow the same rule, in that fixed order, before
+    // the identifier: a component or outcome outside the hash could be relabelled.
+    val optional =
+      component.fold("")(c => s"component:$c|") +
+      surface.fold("")(s => s"surface:$s|") +
+      outcome.fold("")(o => s"outcome:$o|")
     val idPart = interactionId.fold("")(id => s"interaction:${id.value}|")
-    val canonical = idPart + s"$artifactDigest|$configDigest|$timestamp|$previousDigest|" +
+    val canonical = optional + idPart + s"$artifactDigest|$configDigest|$timestamp|$previousDigest|" +
       entries.map(e =>
         s"${e.constraint.property.value}:${e.constraintVersion}:${e.evaluabilityClass}:${e.satisfied}"
       ).sorted.mkString("|")
