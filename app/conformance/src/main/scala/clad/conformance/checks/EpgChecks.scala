@@ -29,7 +29,7 @@ object EpgChecks:
           val procEntries = r.entries.filter(_.evaluabilityClass == EvaluabilityClass.Procedural)
           val evidence = EvidenceSet(procEntries.collect { case AuditEntry(c, _, _, sat, ProceduralDetail(att, at, why), _) =>
             c.property -> ProceduralEvidence(c.property, att, sat, at, why) }.toMap)
-          val badAttestors = procEntries.collect { case AuditEntry(c, _, _, _, ProceduralDetail(att, _, _), _) if !humans.contains(att) =>
+          val badAttestors = procEntries.collect { case AuditEntry(c, _, _, true, ProceduralDetail(att, _, _), _) if !humans.contains(att) =>
             s"$who: ${c.property.value} attested by non-human $att" }
           PromptEvaluator.evaluate(PromptArtifact(art.content, art.metadata), eh, evidence, Level.Project, r.timestamp) match
             case Left(e) => badAttestors :+ s"$who: $e"

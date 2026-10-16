@@ -42,3 +42,13 @@ class EpgChecksSpec extends AnyFunSuite with Matchers:
       case _ => e))
     withRecords(b, Vector(r1, TestBundles.rocRecord(id, TestBundles.at(12), "pass")))
     run(b)("R-EPG-REEVAL").verdict shouldBe Verdict.Violated
+
+  test("an unsatisfied procedural entry with no attestor (unattested) does not violate R-EPG-REEVAL"):
+    val b = TestBundles.valid()
+    val r0 = TestBundles.epgRecord(id, TestBundles.at(10), satisfied = true, "block")
+    val r1 = r0.copy(entries = r0.entries.map(e => e.detail match
+      case clad.evaluation.ProceduralDetail(_, _, _) =>
+        e.copy(satisfied = false, detail = clad.evaluation.ProceduralDetail("", java.time.Instant.EPOCH, "no attestation"))
+      case _ => e))
+    withRecords(b, Vector(r1))
+    run(b)("R-EPG-REEVAL").verdict shouldBe Verdict.Satisfied

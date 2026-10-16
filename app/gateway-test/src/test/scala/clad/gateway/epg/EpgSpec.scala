@@ -41,3 +41,24 @@ class EpgSpec extends AnyFunSuite:
     assert(rep.errors.isEmpty, rep.errors)
     assert(rep.warnings.exists(_.contains("approved_model")) && rep.warnings.exists(_.contains("attest")))
   }
+
+  test("the artifact digest is the digest of the stored content") {
+    val r = epg.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
+    assert(r.artifactDigest == clad.gateway.config.Canonical.sha256(ujson.read(r.artifactJson)("content").str))
+  }
+
+  test("an attested template carries attestor and time into the procedural detail") {
+    val att = clad.gateway.config.Attestations(Vector(clad.gateway.config.Attestation(answer.id, answer.version, "david", at, "reviewed")))
+    val attEpg = Epg.build(cfg.copy(attestations = att)).fold(fail(_), identity)
+    val r = attEpg.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
+    val e = r.entries.find(_.constraint.property.value == "compliance_review").get
+    assert(e.satisfied && e.detail == clad.evaluation.ProceduralDetail("david", at, "reviewed"))
+  }
+
+  test("a template whose text violates a text constraint is a startup error, not a warning") {
+    val bad = answer.copy(text = answer.text + " 123-45-6789")
+    val badCfg = cfg.copy(templates = clad.gateway.config.Templates(cfg.templates.byId + (bad.id -> bad), cfg.templates.models))
+    val rep = StartupCheck.run(badCfg, Epg.build(badCfg).fold(fail(_), identity))
+    assert(rep.errors.exists(e => e.contains("agent.answer") && e.contains("contains_pii")), rep.errors)
+    assert(!rep.warnings.exists(_.contains("contains_pii")))
+  }
