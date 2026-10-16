@@ -2,3 +2,7 @@ WORM probe against personal_finance's Postgres 17.11 (pod pf, localhost:5433), r
 Probe config (password file path redacted to its name): tables [governance.gil]
 Only governance.gil had rows; audit_record and degraded_record were empty (would be NOT_RUN).
 
+SATISFIED
+refused UPDATE on governance.gil: 42501
+refused DELETE on governance.gil: 42501
+refused TRUNCATE on governance.gil: 42501

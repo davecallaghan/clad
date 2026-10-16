@@ -24,15 +24,21 @@
    "id": "no_cancelled_tests",
    "verdict": "SATISFIED",
    "evidence_path": "cicd/llm/evidence/conformance/no-cancelled-tests.txt"
+  },
+  {
+   "id": "worm_probe_real_postgres",
+   "verdict": "SATISFIED",
+   "required": false,
+   "evidence_path": "cicd/llm/evidence/conformance/worm-probe-real-postgres.txt"
   }
  ],
  "not_verified": [
   "full Lean proof check (lake build of every theorem in lean/): not run; only the clad-difftest target and its imports were built",
   "invented_limits NOT_RUN sub-checks: budget_below_capacity, escalation",
-  "WORM probe (R-AI1) against a real Postgres: not run, no unit test (needs a database)",
   "ghost probe send() against a real egress proxy: not run; only scoring is unit-tested",
   "evidence bundle from a real application (personal_finance exporter): not run",
   "spec section 9 fixture bundle in conformance-test/src/test/resources/bundles/minimal/: end-to-end test builds the bundle in a temp directory instead",
-  "CI on GitHub: not run, branch not pushed"
+  "CI on GitHub: not run, branch not pushed",
+  "WORM probe ran against one table only (governance.gil); audit_record and degraded_record had no rows yet, and pf_gov_writer is refused by privilege (42501), so the triggers were not what the probe exercised"
  ]
 }
