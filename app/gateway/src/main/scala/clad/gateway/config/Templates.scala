@@ -27,7 +27,11 @@ object Templates:
     val extra = vars.keySet -- t.slots.keySet
     if missing.nonEmpty then Left(s"${t.id}: missing slot values ${missing.toVector.sorted.mkString(", ")}")
     else if extra.nonEmpty then Left(s"${t.id}: undeclared slots ${extra.toVector.sorted.mkString(", ")}")
-    else Right(Slot.replaceAllIn(t.text, m => Regex.quoteReplacement(vars(m.group(1)))))
+    else
+      val used = Slot.findAllMatchIn(t.text).map(_.group(1)).toSet
+      val unbound = used -- vars.keySet
+      if unbound.nonEmpty then Left(s"${t.id}: text uses undeclared slots ${unbound.toVector.sorted.mkString(", ")}")
+      else Right(Slot.replaceAllIn(t.text, m => Regex.quoteReplacement(vars.getOrElse(m.group(1), ""))))
 
   def loadModels(path: Path): Either[String, Models] =
     Loading.guard(path) {
@@ -55,12 +59,21 @@ object Templates:
               if id != file then Left(s"$file.yaml: id $id does not match the file name")
               else
                 val project = o("project").str
+                val text = o("text").str.stripTrailing
+                val slotsOr: Either[String, Map[String, String]] = o.get("slots") match
+                  case None | Some(ujson.Null) => Right(Map.empty)
+                  case Some(s: ujson.Obj)      => Right(s.value.map((k, v) => k -> v.str).toMap)
+                  case Some(_)                 => Left(s"${f.getFileName}: slots must be a mapping")
                 for
+                  slots <- slotsOr
+                  used = Slot.findAllMatchIn(text).map(_.group(1)).toSet
+                  _ <- Either.cond(used == slots.keySet, (),
+                    s"${f.getFileName}: slots in text ${used.toVector.sorted.mkString("[", ", ", "]")} do not match declared slots ${slots.keySet.toVector.sorted.mkString("[", ", ", "]")}")
                   p <- gov.projects.get(project).toRight(s"$id: unknown project $project")
                   model <- models.tiers.get(o("model_tier").str).toRight(s"$id: unknown model tier ${o("model_tier").str}")
                 yield m + (id -> Template(id, o("version") match { case ujson.Str(s) => s; case v => v.render() },
-                  project, p.tier, model, o("model_tier").str, o("text").str.stripTrailing, o("response_format").str,
-                  o("evidence_format").str, o.get("slots").collect { case s: ujson.Obj => s.value.map((k, v) => k -> v.str).toMap }.getOrElse(Map.empty)))
+                  project, p.tier, model, o("model_tier").str, text, o("response_format").str,
+                  o("evidence_format").str, slots))
             catch case e: NoSuchElementException => Left(s"${f.getFileName}: missing field ${e.getMessage}")
           }
         }

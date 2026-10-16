@@ -55,3 +55,26 @@ class TemplatesSpec extends AnyFunSuite:
   test("runtime values are required, never defaulted") {
     assert(Runtime.fromJson(ujson.Obj("chain_lock_key" -> 1)).left.exists(_.contains("upstream_retries")))
   }
+
+  private def promptsDir(slotsLine: String, text: String): Path =
+    val d = java.nio.file.Files.createTempDirectory("prompts")
+    val project = Fixtures.config.governance.projects.keySet.toVector.sorted.headOption.getOrElse("p")
+    val tier = t.models.tiers.keySet.toVector.sorted.headOption.getOrElse("t")
+    java.nio.file.Files.writeString(d.resolve("x.t.yaml"),
+      s"id: x.t\nversion: 1\nproject: $project\nmodel_tier: $tier\nresponse_format: text\nevidence_format: none\n$slotsLine\ntext: \"$text\"\n")
+    d
+
+  test("load refuses text slots that are not declared, naming the file") {
+    val r = Templates.load(promptsDir("slots: {}", "hello {{x}}"), t.models, Fixtures.config.governance)
+    assert(r.left.exists(e => e.contains("x.t.yaml") && e.contains("do not match")), r.toString)
+  }
+
+  test("load refuses a slots field that is not a mapping, naming the file") {
+    val r = Templates.load(promptsDir("slots: [a]", "hello"), t.models, Fixtures.config.governance)
+    assert(r.left.exists(e => e.contains("x.t.yaml") && e.contains("mapping")), r.toString)
+  }
+
+  test("render returns a Left for a hand-built template using an undeclared slot") {
+    val x = Template("h", "1", "p", "Standard", "m", "t", "hi {{x}}", "text", "none", Map.empty)
+    assert(Templates.render(x, Map.empty).left.exists(_.contains("undeclared")))
+  }
