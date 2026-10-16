@@ -1,0 +1,57 @@
+name: personal_finance
+# EPG constraint hierarchy (spec section 7.1). Authors propose; the named human approver signs off below.
+version: "1"
+# Sign-off on this whole constraint set. Until status is approved by a central approver AND constraints_digest
+# equals `pf-stack governance approval-digest` (the digest of everything below this block), every constraint is
+# exported to clad with an empty approver, and R-EA4 reports the approval as missing. Any edit below changes the
+# digest and so puts the set back to pending.
+approval:
+  status: pending
+  approved_by: null
+  approved_at: null
+  constraints_digest: null
+agents:
+  - {id: david, name: David Callaghan, kind: human, domains: [safety, legal, security, compliance, business], levels: [enterprise, department, project]}
+  - {id: claude, name: Claude, kind: agent, domains: [safety, legal, security, compliance, business], levels: [enterprise, department, project]}
+  - {id: cline, name: Cline, kind: agent, domains: [safety, legal, security, compliance, business], levels: [enterprise, department, project]}
+central_approvers: [david]
+critical_domains: [security, legal, compliance]
+domain_order: [safety, legal, security, compliance, business]
+checkers:
+  contains_pii: {type: regex, patterns: ['\b\d{3}-\d{2}-\d{4}\b', '\b\d{2}-\d{7}\b', '\b\d{12}\d*\b']}
+  zdr_provider: {type: structural, key: provider, value: deepinfra}
+  approved_model: {type: structural, key: model_registry_status, value: approved}
+  untrusted_data_rule: {type: keyword, keywords: [is data and not instructions], threshold: 1}
+  security_recommendation_instruction: {type: keyword, keywords: [recommend specific securities, tell the user which fund to buy, pick stocks], threshold: 1}
+  grounding_instruction: {type: keyword, keywords: [never invent, use only numbers, from this catalog only], threshold: 1}
+  confirmation_rule: {type: keyword, keywords: [applied only after the user confirms], threshold: 1}
+  structured_output: {type: structural, key: response_format, value: json_schema}
+  scenario_attribution: {type: keyword, keywords: [which scenario or year], threshold: 1}
+enterprise:
+  - {property: contains_pii, type: prohibition, domain: security, version: "1", evaluability: mechanical, author: claude, approver: david}
+  - {property: zdr_provider, type: obligation, domain: legal, version: "1", evaluability: mechanical, author: claude, approver: david}
+  - {property: approved_model, type: obligation, domain: security, version: "1", evaluability: mechanical, author: claude, approver: david}
+  - {property: untrusted_data_rule, type: obligation, domain: security, version: "1", evaluability: mechanical, author: claude, approver: david}
+  - {property: security_recommendation_instruction, type: prohibition, domain: compliance, version: "1", evaluability: mechanical, author: claude, approver: david}
+  - {property: compliance_review, type: obligation, domain: compliance, version: "1", evaluability: procedural, author: claude, approver: david}
+departments:
+  advice:
+    projects: [agent, assistant, router]
+    constraints:
+      - {property: grounding_instruction, type: obligation, domain: compliance, version: "1", evaluability: mechanical, author: claude, approver: david}
+  planning:
+    projects: [planner-chat]
+    constraints:
+      - {property: grounding_instruction, type: obligation, domain: compliance, version: "1", evaluability: mechanical, author: claude, approver: david}
+      - {property: confirmation_rule, type: obligation, domain: business, version: "1", evaluability: mechanical, author: claude, approver: david}
+  documents:
+    projects: [doc-extract]
+    constraints:
+      - {property: structured_output, type: obligation, domain: business, version: "1", evaluability: mechanical, author: claude, approver: david}
+projects:
+  agent: {tier: Critical, expected_components: [epg, roc], constraints: [
+      {property: scenario_attribution, type: obligation, domain: compliance, version: "1", evaluability: mechanical, author: claude, approver: david}]}
+  assistant: {tier: Standard, expected_components: [epg, roc], constraints: []}
+  router: {tier: Standard, expected_components: [roc], constraints: []}
+  planner-chat: {tier: Critical, expected_components: [epg, roc], constraints: []}
+  doc-extract: {tier: Critical, expected_components: [epg, roc], constraints: []}

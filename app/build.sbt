@@ -263,9 +263,38 @@ lazy val `conformance-test` = project
     )
   )
 
+lazy val gateway = project
+  .in(file("gateway"))
+  .dependsOn(core, evaluation, runtime, audit, output, integrity, config, api)
+  .settings(
+    commonSettings,
+    name := "clad-gateway",
+    libraryDependencies ++= Seq(
+      "org.yaml"       % "snakeyaml"           % "2.3",
+      "org.postgresql" % "postgresql"          % "42.7.4",
+      "org.http4s"    %% "http4s-ember-server" % http4sVersion,
+      "org.http4s"    %% "http4s-dsl"          % http4sVersion,
+      "org.typelevel" %% "cats-effect"         % catsEffectVersion
+    ),
+    Compile / mainClass := Some("clad.gateway.Main")
+  )
+
+lazy val `gateway-test` = project
+  .in(file("gateway-test"))
+  .dependsOn(gateway, conformance, `runtime-test`, `audit-test`)
+  .settings(
+    commonSettings,
+    name := "clad-gateway-test",
+    libraryDependencies ++= Seq(
+      "org.scalatest"  %% "scalatest"            % "3.2.19",
+      "org.http4s"     %% "http4s-ember-client"  % http4sVersion  % Test,
+      "org.typelevel"  %% "cats-effect-testing-scalatest" % "1.6.0" % Test
+    )
+  )
+
 lazy val root = project
   .in(file("."))
-  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest, conformance, `conformance-test`)
+  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest, conformance, `conformance-test`, gateway, `gateway-test`)
   .settings(
     commonSettings,
     name := "clad",
