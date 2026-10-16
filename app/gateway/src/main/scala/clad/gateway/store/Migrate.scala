@@ -62,13 +62,17 @@ object Migrate:
       s"ALTER ROLE clad_gov_writer PASSWORD '$writerPw'",
       s"ALTER ROLE clad_gov_reader PASSWORD '$readerPw'"))
 
+  /** Statement text for error messages: a quoted PASSWORD value never appears. */
+  private[store] def redact(stmt: String): String =
+    stmt.replaceAll("(?i)(PASSWORD\\s+)'[^']*'", "$1'***'")
+
   def run(adminUrl: String, writerPw: String, readerPw: String): Either[String, Unit] =
     statements(writerPw, readerPw).flatMap { stmts =>
       Jdbc.withConnection(adminUrl) { c =>
-        stmts.foldLeft[Either[String, Unit]](Right(())) { (acc, s) =>
+        stmts.zipWithIndex.foldLeft[Either[String, Unit]](Right(())) { case (acc, (s, i)) =>
           acc.flatMap { _ =>
             try { c.createStatement().execute(s); Right(()) }
-            catch case e: java.sql.SQLException => Left(s"${e.getSQLState}: ${e.getMessage} [$s]")
+            catch case e: java.sql.SQLException => Left(s"statement ${i + 1}: ${e.getSQLState}: ${e.getMessage} [${redact(s)}]")
           }
         }
       }.flatten

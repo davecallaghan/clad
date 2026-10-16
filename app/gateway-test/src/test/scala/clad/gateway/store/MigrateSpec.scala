@@ -25,3 +25,18 @@ class MigrateSpec extends AnyFunSuite:
       assert(Jdbc.withConnection(db.writerUrl)(_.createStatement().execute(stmt)).isLeft, stmt)
       assert(Jdbc.withConnection(db.adminUrl)(_.createStatement().execute(stmt)).left.exists(_.contains("append-only")), stmt)
   }
+
+  test("redaction removes the password from ALTER ROLE text") {
+    val out = Migrate.redact("ALTER ROLE clad_gov_writer PASSWORD 'sekretpw1'")
+    assert(!out.contains("sekretpw1"))
+    assert(out.contains("'***'"))
+  }
+
+  test("a failing migration reports the statement index and never the password") {
+    val db = TestDatabase.fresh()
+    val r = Migrate.run(db.readerUrl, "sekretwriter1", "sekretreader1")
+    assert(r.isLeft)
+    val msg = r.left.getOrElse("")
+    assert(msg.startsWith("statement "))
+    assert(!msg.contains("sekretwriter1") && !msg.contains("sekretreader1"))
+  }

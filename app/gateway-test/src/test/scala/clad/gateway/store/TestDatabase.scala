@@ -5,7 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger
 final case class TestDb(adminUrl: String, writerUrl: String, readerUrl: String)
 
 /** A fresh, migrated database per call on the server named by CLAD_TEST_PG_ADMIN_URL (a superuser JDBC URL).
-  * Names start clad_gw_test_ so a live store can never be the target. */
+  * Names start clad_gw_test_ so a live store can never be the target.
+  * Roles are cluster-wide, so running the tests resets the clad_gov_writer/clad_gov_reader passwords on the target
+  * server: CLAD_TEST_PG_ADMIN_URL must point at a server with no live clad store. */
 object TestDatabase:
   val WriterPw = "testwriterpw"
   val ReaderPw = "testreaderpw"
