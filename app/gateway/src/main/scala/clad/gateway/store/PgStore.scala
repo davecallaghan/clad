@@ -48,9 +48,15 @@ final class PgStore(writerUrl: String, lockKey: Long, anchors: ChainAnchorStore,
     val record =
       try build(head)
       catch case NonFatal(e) => throw SQLException(s"building the audit record failed: ${e.getMessage}", SigningState, e)
-    val signed = SignedAuditRecord.sign(record, kms) match
-      case Right(s) => s
-      case Left(e)  => throw SQLException(s"signing failed: $e", SigningState)
+    val signed =
+      try SignedAuditRecord.sign(record, kms) match
+        case Right(s) => s
+        case Left(e)  => throw SQLException(s"signing failed: $e", SigningState)
+      catch case NonFatal(e) if !e.isInstanceOf[SQLException] =>
+        throw SQLException(s"signing failed: ${e.getMessage}", SigningState, e)
+    val line =
+      try AuditRecordCodec.encode(signed)
+      catch case NonFatal(e) => throw SQLException(s"encoding the audit record failed: ${e.getMessage}", SigningState, e)
     val interactionId = record.interactionId.map(_.value).getOrElse(
       throw SQLException("audit record has no interaction id", SigningState))
     val ps = c.prepareStatement(
@@ -60,15 +66,20 @@ final class PgStore(writerUrl: String, lockKey: Long, anchors: ChainAnchorStore,
     ps.setString(2, record.component.orNull)
     ps.setString(3, record.digest)
     ps.setString(4, record.previousDigest.orNull)
-    ps.setString(5, AuditRecordCodec.encode(signed))
+    ps.setString(5, line)
     ps.executeUpdate()
     (signed, count)
 
   /** The record is already committed; a lost anchor is reported on stderr and does not fail the append. */
   private def anchor(count: Int, digest: String): Unit =
-    val result = ChainAnchor.sign(ChainAnchor(count, digest, Instant.now()), anchorKms) match
-      case Left(e)  => Left(s"anchor signing failed: $e")
-      case Right(s) => anchors.write(s).toEither.left.map(_.getMessage)
+    val result = PgStore.AnchorLock.synchronized {
+      anchors.read match
+        case scala.util.Success(Some(current)) if current.anchor.count >= count => Right(())
+        case _ =>
+          ChainAnchor.sign(ChainAnchor(count, digest, Instant.now()), anchorKms) match
+            case Left(e)  => Left(s"anchor signing failed: $e")
+            case Right(s) => anchors.write(s).toEither.left.map(_.getMessage)
+      }
     result.left.foreach(reason => System.err.println(s"GOVERNANCE_ANCHOR_FAILED $reason"))
 
   def degraded(r: SignedDegradedRecord): Either[String, Unit] =
@@ -98,3 +109,7 @@ final class PgStore(writerUrl: String, lockKey: Long, anchors: ChainAnchorStore,
       ps.executeUpdate()
       ()
     }
+
+object PgStore:
+  /** Serialises anchor writes across all PgStore instances in the JVM: the anchor file is rewritten in place. */
+  private val AnchorLock = Object()

@@ -4,6 +4,7 @@ import clad.audit.{KeyManagementService, SignedAuditRecord}
 import clad.integrity.{GilEntry, SignedDegradedRecord}
 import clad.runtime.AuditRecord
 import scala.collection.mutable
+import scala.util.control.NonFatal
 
 /** In-memory GatewayStore for tests. */
 final class MemoryStore extends GatewayStore:
@@ -23,9 +24,15 @@ final class MemoryStore extends GatewayStore:
 
   def appendLinked(build: Option[String] => AuditRecord, kms: KeyManagementService): Either[String, SignedAuditRecord] =
     synchronized {
-      SignedAuditRecord.sign(build(lines.lastOption.map(_.record.digest)), kms)
-        .left.map(e => s"signing failed: $e")
-        .map { s => lines += s; s }
+      for
+        record <- try Right(build(lines.lastOption.map(_.record.digest)))
+                  catch case NonFatal(e) => Left(s"building the audit record failed: ${e.getMessage}")
+        _ <- record.interactionId.toRight("audit record has no interaction id")
+        signed <- try SignedAuditRecord.sign(record, kms).left.map(e => s"signing failed: $e")
+                  catch case NonFatal(e) => Left(s"signing failed: ${e.getMessage}")
+      yield
+        lines += signed
+        signed
     }
 
   def degraded(r: SignedDegradedRecord): Either[String, Unit] = synchronized { degradedLines += r; Right(()) }

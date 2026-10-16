@@ -59,6 +59,17 @@ class PgStoreSpec extends AnyFunSuite:
     assert(anchor.anchor.count == 3 && anchor.anchor.headDigest == last.record.digest)
   }
 
+  test("concurrent appends leave a parseable anchor naming the full chain") {
+    val db = TestDatabase.fresh()
+    val dir = Files.createTempDirectory("anchors")
+    val s = PgStore(db.writerUrl, 7243001L, ChainAnchorStore(dir), kms)
+    given ExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Threads))
+    Await.result(Future.sequence((1 to Threads).map(_ => Future(s.appendLinked(record, kms)))), Duration.Inf)
+      .foreach(r => assert(r.isRight, r))
+    val anchor = ChainAnchorStore(dir).read.get.get
+    assert(anchor.anchor.count == Threads && lines(db).lastOption.exists(_.record.digest == anchor.anchor.headDigest))
+  }
+
   test("register, configs and artifacts are stored; configs and artifacts are idempotent") {
     val db = TestDatabase.fresh()
     val s = store(db)
