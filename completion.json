@@ -1,18 +1,33 @@
 {
  "task": "conformance module (docs/plans/2026-10-15-conformance.md, Tasks 1-15)",
- "status": "incomplete",
- "commit": "51f1a76d2bd87f42c6884c59ef0304f4c69d4bb1",
- "tree_hash": "b77d72acc00bab08d7e66cb4732f555463f00784",
+ "status": "complete",
+ "commit": "700f03796368339c34bc28df5c41e8c31426b93a",
+ "tree_hash": "bdf08ba6d8c18695061e9272e53225327ac6f58c",
  "artifact_digests": {},
  "checks": [
-  {"id": "sbt_test", "verdict": "SATISFIED", "evidence_path": "cicd/llm/evidence/conformance/sbt-test.txt"},
-  {"id": "preflight", "verdict": "SATISFIED", "evidence_path": "cicd/llm/evidence/conformance/preflight.txt"},
-  {"id": "differential_test", "verdict": "NOT_RUN", "evidence_path": "cicd/llm/evidence/conformance/differential.txt"},
-  {"id": "no_cancelled_tests", "verdict": "NOT_RUN", "evidence_path": "cicd/llm/evidence/conformance/no-cancelled-tests.txt"}
+  {
+   "id": "sbt_test",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/conformance/sbt-test.txt"
+  },
+  {
+   "id": "preflight",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/conformance/preflight.txt"
+  },
+  {
+   "id": "differential_test",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/conformance/differential.txt"
+  },
+  {
+   "id": "no_cancelled_tests",
+   "verdict": "SATISFIED",
+   "evidence_path": "cicd/llm/evidence/conformance/no-cancelled-tests.txt"
+  }
  ],
  "not_verified": [
-  "differential test (tools/run-differential-test.sh): NOT_RUN, lake/Lean toolchain not installed on this machine",
-  "no_cancelled_tests: the 2 cancelled tests are the Lean differential specs, cancelled for the same missing Lean binary; they also cancel on origin/master",
+  "full Lean proof check (lake build of every theorem in lean/): not run; only the clad-difftest target and its imports were built",
   "invented_limits NOT_RUN sub-checks: budget_below_capacity, escalation",
   "WORM probe (R-AI1) against a real Postgres: not run, no unit test (needs a database)",
   "ghost probe send() against a real egress proxy: not run; only scoring is unit-tested",

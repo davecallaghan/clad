@@ -1,5 +1,13 @@
-FAIL: 2 test(s) cancelled. A cancelled test is not a passing test.
-
-102:[info] - should agree with Scala evaluator on generated test cases !!! CANCELED !!!
-104:[info] - should handle empty hierarchy !!! CANCELED !!!
-537:[info] Tests: succeeded 11, failed 0, canceled 2, ignored 0, pending 0
+PASS: 0 test(s) cancelled (full sbt test with LEAN_DIFFTEST_EXE set; elan 4.2.4, Lean v4.30.0-rc2).
+97:[info] Tests: succeeded 44, failed 0, canceled 0, ignored 0, pending 0
+206:[info] Tests: succeeded 64, failed 0, canceled 0, ignored 0, pending 0
+440:[info] Tests: succeeded 116, failed 0, canceled 0, ignored 0, pending 0
+445:[info] Tests: succeeded 40, failed 0, canceled 0, ignored 0, pending 0
+545:[info] Tests: succeeded 71, failed 0, canceled 0, ignored 0, pending 0
+628:[info] Tests: succeeded 56, failed 0, canceled 0, ignored 0, pending 0
+801:[info] Tests: succeeded 27, failed 0, canceled 0, ignored 0, pending 0
+806:[info] Tests: succeeded 13, failed 0, canceled 0, ignored 0, pending 0
+811:[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
+816:[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
+882:[info] Tests: succeeded 56, failed 0, canceled 0, ignored 0, pending 0
+913:[info] Tests: succeeded 13, failed 0, canceled 0, ignored 0, pending 0
