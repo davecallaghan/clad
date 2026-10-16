@@ -74,7 +74,15 @@ final class Governance private (
 object Governance:
   val Posture: Map[String, String] = Map("Critical" -> "fail-closed", "Standard" -> "fail-open-flagged", "Low" -> "fail-open")
 
-  def load(path: Path): Either[String, Governance] = fromJson(YamlJson.read(path))
+  private val CheckerKinds = Vector("regex", "keyword", "structural")
+  private val ConstraintTypes = Vector("obligation", "prohibition")
+  private val Evaluabilities = Vector("mechanical", "procedural")
+
+  def load(path: Path): Either[String, Governance] =
+    try fromJson(YamlJson.read(path))
+    catch
+      case e: java.io.IOException                    => Left(s"$path: ${e.getMessage}")
+      case e: org.yaml.snakeyaml.error.YAMLException => Left(s"$path: ${e.getMessage}")
 
   private def strs(v: ujson.Value): Vector[String] = v.arr.map(_.str).toVector
 
@@ -113,6 +121,22 @@ object Governance:
   private def validate(g: Governance, listedProjects: Seq[String]): Option[String] =
     val all = g.enterprise ++ g.departments.values.flatten ++ g.projectConstraints.values.flatten
     val agent = g.agents.map(a => a.id -> a).toMap
+    val tiers = Posture.keySet
+    val rawConstraints: Seq[ujson.Value] =
+      g.raw("enterprise").arr.toSeq ++ g.raw("departments").obj.values.toSeq.flatMap(_("constraints").arr) ++
+        g.raw("projects").obj.values.toSeq.flatMap(_("constraints").arr)
+    val enumerations = Iterator(
+      g.projects.values.collect { case p if !tiers.contains(p.tier) =>
+        s"project ${p.name}: tier ${p.tier} must be one of ${tiers.toSeq.sorted.mkString(", ")}" },
+      g.checkers.values.collect { case ch if !CheckerKinds.contains(ch.kind) =>
+        s"checker ${ch.property}: type ${ch.kind} must be one of ${CheckerKinds.mkString(", ")}" },
+      rawConstraints.flatMap { c =>
+        val t = c.obj.get("type").collect { case ujson.Str(x) => x }.getOrElse("absent")
+        Option.when(!ConstraintTypes.contains(t))(
+          s"constraint ${c.obj.get("property").map(_.str).getOrElse("?")}: type $t must be one of ${ConstraintTypes.mkString(", ")}") },
+      all.filterNot(c => Evaluabilities.contains(c.evaluability)).map(c =>
+        s"${c.property}: evaluability ${c.evaluability} must be one of ${Evaluabilities.mkString(", ")}")
+    ).flatten
     val perConstraint = all.iterator.flatMap { c =>
       Iterator(
         Option.when(c.evaluability == "mechanical" && !g.checkers.contains(c.property))(s"${c.property}: mechanical constraint has no checker"),
@@ -137,4 +161,4 @@ object Governance:
       val by = a.get("approved_by").collect { case ujson.Str(s) => s }.getOrElse("")
       Option.when(!(agent.get(by).exists(_.kind == "human") && g.centralApprovers.contains(by)))(
         s"approval approved_by $by must be a human central approver") }.flatten
-    (perConstraint ++ commas ++ membership ++ contradictions ++ approvedBy.iterator).nextOption()
+    (enumerations ++ perConstraint ++ commas ++ membership ++ contradictions ++ approvedBy.iterator).nextOption()

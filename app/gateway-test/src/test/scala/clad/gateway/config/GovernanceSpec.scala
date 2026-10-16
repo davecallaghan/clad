@@ -73,3 +73,30 @@ class GovernanceSpec extends AnyFunSuite:
     o("approval") = ujson.Obj("status" -> "approved", "approved_by" -> "claude", "approved_at" -> "2026-10-16",
                               "constraints_digest" -> "sha256:x")
   })
+
+  test("a missing file is a Left, not an exception") {
+    val r = Governance.load(Paths.get("/nonexistent/constraints.yaml"))
+    assert(r.left.exists(_.contains("/nonexistent/constraints.yaml")), r)
+  }
+  test("malformed YAML is a Left, not an exception") {
+    val f = Files.createTempFile("constraints", ".yaml")
+    try
+      Files.writeString(f, "agents: [unclosed\n  : : {")
+      val r = Governance.load(f)
+      assert(r.left.exists(_.startsWith(f.toString)), r)
+    finally Files.delete(f)
+  }
+  test("an unknown tier is refused")(rejects("tier")(o => o("projects")("agent").obj("tier") = "critical"))
+  test("an unknown checker type is refused")(rejects("must be one of regex, keyword, structural")(o =>
+    o("checkers")("zdr_provider").obj("type") = "magic"))
+  test("an unknown constraint type is refused")(rejects("must be one of obligation, prohibition")(o =>
+    o("enterprise").arr(0).obj("type") = "forbid"))
+  test("an unknown evaluability is refused")(rejects("must be one of mechanical, procedural")(o =>
+    o("enterprise").arr(0).obj("evaluability") = "magic"))
+  test("a project in two departments is refused")(rejects("exactly one department")(o =>
+    o("departments")("planning")("projects").arr.append(ujson.Str("agent"))))
+  test("an author not authorised for the domain and level is refused")(rejects("not authorised") { o =>
+    o("agents").arr.append(ujson.Obj("id" -> "bob", "name" -> "Bob", "kind" -> "agent",
+      "domains" -> ujson.Arr("business"), "levels" -> ujson.Arr("project")))
+    o("enterprise").arr(0).obj("author") = "bob"
+  })
