@@ -48,7 +48,9 @@ final class Routes(gateway: Gateway, clients: Clients):
   }
 
   private def passthrough(req: Request[IO], rest: Uri.Path): IO[Response[IO]] =
-    rest.segments.map(_.decoded()).toList match
+    val segments = rest.segments.map(_.decoded()).toList
+    if !segments.forall(safeSegment) then rejected("passthrough path segments may only use letters, digits, '.', '_', '~' and '-'")
+    else segments match
       case name :: tail =>
         withPrefix(req) { prefix =>
           def header(h: String) = req.headers.get(CIString(h)).map(_.head.value)
@@ -63,6 +65,10 @@ final class Routes(gateway: Gateway, clients: Clients):
         }
       case Nil => rejected("no passthrough upstream named")
 
+  private val SafeSegment = "[A-Za-z0-9._~-]+".r
+  /** Segments are joined unencoded into the upstream URL, so anything that could traverse or re-route it is refused. */
+  private def safeSegment(s: String): Boolean = s != "." && s != ".." && SafeSegment.matches(s)
+
   // authentication
 
   private def bearer(req: Request[IO]): Option[String] =
@@ -74,7 +80,7 @@ final class Routes(gateway: Gateway, clients: Clients):
       case None         => unauthorized
 
   private def allowed(prefix: String, principal: String): Boolean =
-    principal == prefix || principal.startsWith(prefix + ":")
+    principal == prefix || (principal.startsWith(prefix + ":") && principal.length > prefix.length + 1)
 
   private def admin(req: Request[IO])(f: ujson.Obj => Either[String, String]): IO[Response[IO]] =
     if !bearer(req).exists(clients.isAdmin) then unauthorized
@@ -82,9 +88,12 @@ final class Routes(gateway: Gateway, clients: Clients):
       Try(ujson.read(text)).toEither.left.map(_ => "body is not JSON").flatMap {
         case o: ujson.Obj => Right(o)
         case _            => Left("body is not a JSON object")
-      }.flatMap(f) match
-        case Right(done) => json(Status.Ok, ujson.Obj("status" -> done))
-        case Left(why)   => json(Status.BadRequest, error("admin_rejected", "reason" -> why))
+      } match
+        case Left(why) => json(Status.BadRequest, error("admin_rejected", "reason" -> why))
+        case Right(o) => IO.blocking(f(o)).flatMap {
+          case Right(done) => json(Status.Ok, ujson.Obj("status" -> done))
+          case Left(why)   => json(Status.BadRequest, error("admin_rejected", "reason" -> why))
+        }
     }
 
   // request parsing
@@ -157,10 +166,14 @@ final class Routes(gateway: Gateway, clients: Clients):
 
   private def respondPassthrough(r: GatewayResult): IO[Response[IO]] = r match
     case GatewayResult.Delivered(id, _, response) =>
-      val status = response.obj.get("status").map(_.num.toInt).flatMap(s => Status.fromInt(s).toOption)
-      status match
-        case Some(s) =>
-          IO.pure(Response[IO](s).withEntity(response("body").str).withContentType(`Content-Type`(MediaType.application.json))
+      val shape = response match
+        case o: ujson.Obj => (o.value.get("status"), o.value.get("body")) match
+          case (Some(ujson.Num(n)), Some(ujson.Str(b))) => Status.fromInt(n.toInt).toOption.map(_ -> b)
+          case _                                        => None
+        case _ => None
+      shape match
+        case Some((s, b)) =>
+          IO.pure(Response[IO](s).withEntity(b).withContentType(`Content-Type`(MediaType.application.json))
             .putHeaders(iidHeader(id).headers))
         case None => json(Status.BadGateway, error("unavailable", "interaction_id" -> id, "reason" -> "upstream returned an invalid status"), iidHeader(id))
     case other => nonDelivered(other)

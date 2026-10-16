@@ -12,6 +12,9 @@ final case class Clients(byToken: Map[String, String], adminToken: String):
   def prefixFor(token: String): Option[String] =
     byToken.collectFirst { case (t, prefix) if same(t, token) => prefix }
 
+  /** Never prints a token: only the prefixes and how many tokens there are. */
+  override def toString: String = s"Clients(${byToken.size} tokens, prefixes=${byToken.values.toSeq.sorted.mkString(",")})"
+
   def isAdmin(token: String): Boolean = adminToken.nonEmpty && same(adminToken, token)
 
 object Clients:

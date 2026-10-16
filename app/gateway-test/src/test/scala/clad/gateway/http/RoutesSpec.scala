@@ -156,3 +156,32 @@ class RoutesSpec extends AnyFunSuite:
     for bad <- Seq("", "a", "a=", "=api", "a=api,a=planner", "z=api") do assert(Clients.parse(bad, "z").isLeft, bad)
     assert(Clients.parse("a=api", "").isLeft)
   }
+
+  test("passthrough refuses traversal, query, fragment and slash smuggling in path segments") {
+    val pass = FakePassthrough()
+    val rig = Rig(pass = pass)
+    for p <- Seq("/v1/passthrough/jev/%2E%2E/x", "/v1/passthrough/jev/a%3Fb", "/v1/passthrough/jev/a%2Fb",
+      "/v1/passthrough/jev/a%23b", "/v1/passthrough/jev/a%20b", "/v1/passthrough/jev/./x", "/v1/passthrough/%2E%2E") do
+      val (status, body, _) = post(rig, p, Some("tok-api"), "{}", passHeaders*)
+      assert(status == Status.BadRequest && errType(body) == "governance_rejected", p)
+    assert(pass.calls.isEmpty)
+    assert(post(rig, "/v1/passthrough/jev/v1.2/a_b-c~d", Some("tok-api"), "{}", passHeaders*)._1 == Status.Ok)
+    assert(pass.calls.map(_._2).toSeq == Seq("v1.2/a_b-c~d"))
+  }
+
+  test("Clients.toString shows prefixes and a count, never a token") {
+    val c = Clients.parse("tok-api=api,tok-planner=planner", Admin).fold(e => throw AssertionError(e), identity)
+    assert(!c.toString.contains("tok-") && !c.toString.contains(Admin) && c.toString.contains("2 tokens") && c.toString.contains("planner"))
+  }
+
+  test("a delivered passthrough reply with an unusable status is 502 with an error body, not a 500") {
+    val pass = new FakePassthrough:
+      override def forward(name: String, path: String, body: String, iid: String) = Right((1000, "x"))
+    val (status, body, header) = post(Rig(pass = pass), "/v1/passthrough/jev", Some("tok-api"), "{}", passHeaders*)
+    assert(status == Status.BadGateway && errType(body) == "unavailable" && header.isDefined)
+  }
+
+  test("a principal of exactly <prefix>: is refused") {
+    val (status, body, _) = post(Rig(), "/v1/chat/completions", Some("tok-api"), chat(principal = "api:"))
+    assert(status == Status.BadRequest && body("error")("reason").str == "principal_not_allowed_for_token")
+  }
