@@ -240,9 +240,32 @@ lazy val difftest = project
     )
   )
 
+lazy val conformance = project
+  .in(file("conformance"))
+  .dependsOn(core, evaluation, runtime, audit, output, integrity, config)
+  .settings(
+    commonSettings,
+    name := "clad-conformance",
+    libraryDependencies ++= Seq("org.postgresql" % "postgresql" % "42.7.4"),
+    Compile / mainClass := Some("clad.conformance.Main")
+  )
+
+lazy val `conformance-test` = project
+  .in(file("conformance-test"))
+  .dependsOn(conformance, `runtime-test`, `audit-test`)
+  .settings(
+    commonSettings,
+    name := "clad-conformance-test",
+    libraryDependencies ++= Seq(
+      "org.scalatest"  %% "scalatest"       % "3.2.19",
+      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0",
+      "org.scalacheck" %% "scalacheck"      % "1.18.1"
+    )
+  )
+
 lazy val root = project
   .in(file("."))
-  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest)
+  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest, conformance, `conformance-test`)
   .settings(
     commonSettings,
     name := "clad",
