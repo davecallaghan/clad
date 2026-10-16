@@ -24,7 +24,9 @@ object TestDatabase:
     val base = url.split("\\?", 2)(0)
     s"$base?user=$user&password=$pw"
 
-  def fresh(): TestDb =
+  /** Synchronized: roles are cluster-wide, so concurrent suites' ALTER ROLE statements would collide
+    * ("tuple concurrently updated"). */
+  def fresh(): TestDb = synchronized {
     val db = s"clad_gw_test_${ProcessHandle.current().pid()}_${n.incrementAndGet()}"
     Jdbc.withConnection(admin) { c =>
       c.createStatement().execute(s"DROP DATABASE IF EXISTS $db WITH (FORCE)")
@@ -33,3 +35,4 @@ object TestDatabase:
     val dbAdmin = withDb(admin, db)
     Migrate.run(dbAdmin, WriterPw, ReaderPw).fold(e => throw AssertionError(e), identity)
     TestDb(dbAdmin, withUser(dbAdmin, "clad_gov_writer", WriterPw), withUser(dbAdmin, "clad_gov_reader", ReaderPw))
+  }
