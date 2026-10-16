@@ -15,4 +15,4 @@ final class HttpPassthrough(upstreams: Map[String, (String, String)], runtime: R
         val root = base.replaceAll("/+$", "")
         val rest = path.replaceAll("^/+", "")
         val url = if rest.isEmpty then root else s"$root/$rest"
-        call.post(url, key, interactionId, body)
+        call.post(url, key, interactionId, body).map((status, text) => (status, HttpUpstream.redact(text, key)))

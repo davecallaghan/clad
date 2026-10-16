@@ -20,4 +20,7 @@ object HttpUpstream:
   private val excerptChars = 200
   /** The configured key is redacted before truncating, so a provider that echoes it cannot leak it into an error. */
   private[upstream] def excerpt(text: String, key: String): String =
-    (if key.isEmpty then text else text.replace(key, "***")).take(excerptChars)
+    redact(text, key).take(excerptChars)
+
+  private[upstream] def redact(text: String, key: String): String =
+    if key.isEmpty then text else text.replace(key, "***")

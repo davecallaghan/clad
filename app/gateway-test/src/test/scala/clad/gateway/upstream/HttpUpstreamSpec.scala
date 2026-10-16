@@ -133,3 +133,11 @@ class HttpUpstreamSpec extends AnyFunSuite:
       assert(r.left.exists(m => m.contains("401") && m.contains("***") && !m.contains("secret-key-123")))
     }
   }
+
+  test("a passthrough body that echoes the key is redacted, whatever the status") {
+    for status <- Seq(200, 401) do
+      withServer((ex, _, _) => reply(ex, status, """{"echo":"secret-key-123"}""")) { (url, _) =>
+        val r = HttpPassthrough(Map("jev" -> (url, "secret-key-123")), Rt.base).forward("jev", "", "{}", "iid")
+        assert(r == Right((status, """{"echo":"***"}""")))
+      }
+  }
