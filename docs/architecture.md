@@ -36,6 +36,8 @@ flowchart TD
     core --> config
     config --> api
     config --> mcp
+    config --> conformance
+    integrity --> conformance
 
     runtime["<b>runtime</b><br/><i>+ upickle</i>"]
     integrity["<b>integrity</b><br/><i>+ output</i>"]
@@ -43,12 +45,23 @@ flowchart TD
     config["<b>config</b><br/><i>+ evaluation, runtime,<br/>output, integrity</i>"]
     api["<b>api</b><br/><i>+ runtime, output,<br/>monitoring, integrity</i><br/><i>+ http4s, cats-effect</i>"]
     mcp["<b>mcp</b><br/><i>+ runtime, output,<br/>audit, integrity</i>"]
+    conformance["<b>conformance</b><br/><i>+ core, evaluation, runtime,<br/>audit, output</i><br/><i>+ postgresql jdbc</i>"]
 
     classDef mod fill:#eef2f7,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
     classDef leaf fill:#e7ecf2,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
     class core,evaluation,runtime,audit,integrity,output,config mod;
-    class monitoring,api,mcp leaf;
+    class monitoring,api,mcp,conformance leaf;
 ```
+
+### Conformance
+
+`conformance` measures a deployed application against CLAD from an evidence bundle the
+application exports: audit chain, interaction log, infrastructure call log, configs, prompt
+artifacts, degraded records, anchors and MDR output. It re-verifies everything with clad's own
+code (public-key signature checks, digest recomputation, prompt re-evaluation, ghost detection),
+optionally probes the live system (WORM storage, an injected bypass call), and writes a scorecard
+with one verdict per requirement. See `app/conformance/README.md` and
+`docs/specs/2026-10-15-conformance-design.md`.
 
 ## Key Domain Types
 

@@ -1,0 +1,5 @@
+FAIL: 2 test(s) cancelled. A cancelled test is not a passing test.
+
+102:[info] - should agree with Scala evaluator on generated test cases !!! CANCELED !!!
+104:[info] - should handle empty hierarchy !!! CANCELED !!!
+537:[info] Tests: succeeded 11, failed 0, canceled 2, ignored 0, pending 0

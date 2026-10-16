@@ -1,0 +1,2 @@
+=== Building Lean evaluator ===
+tools/run-differential-test.sh: line 10: lake: command not found
