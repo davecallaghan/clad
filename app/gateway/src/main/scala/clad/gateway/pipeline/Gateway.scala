@@ -24,7 +24,8 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
     "Critical" -> FailurePosture.FailClosed, "Standard" -> FailurePosture.FailOpenFlagged, "Low" -> FailurePosture.FailOpen)
 
   /** What a step hands the next: the checked, pseudonymised request with its template, model and rendered prompt. */
-  private final case class Checked(req: GovernedRequest, t: Template, principal: String, model: String, rendered: String)
+  private final case class Checked(req: GovernedRequest, t: Template, principal: String, model: String, rendered: String,
+                                   messages: Vector[ujson.Obj])
 
   def complete(req: GovernedRequest): GatewayResult =
     val started = System.nanoTime()
@@ -48,32 +49,66 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
     check(req) match
       case Left(why) => Rejected(why)
       case Right(c) =>
-        val now = clock()
-        contained(c.t.project) match
-          case Left(err) =>
-            System.err.println(s"CLAD_GATEWAY_CONTAINMENT_UNREADABLE $err")
-            blockWithRecord(c, iid, now, "containment_unreadable")
-          case Right(Some(_)) => blockWithRecord(c, iid, now, "contained")
-          case Right(None) =>
-            register(c, iid, now) match
-              case Left(_) => Blocked(iid, "gil_unavailable")
-              case Right(_) =>
-                runEpg(c, iid) match
-                  case Left(why)  => Blocked(iid, why)
-                  case Right(()) =>
-                    body(c).fold(Rejected(_), b => callUpstream(c, b, iid, spent))
+        guarded(c, iid) {
+          register(c, iid, clock()) match
+            case Left(_) => Blocked(iid, "gil_unavailable")
+            case Right(_) =>
+              runEpg(c, iid) match
+                case Left(why) => Blocked(iid, why)
+                case Right(()) => callUpstream(c, body(c), iid, spent)
+        }
+
+  /** Containment comes first; an unreadable containment file blocks rather than allows. */
+  private def guarded(c: Checked, iid: String)(proceed: => GatewayResult): GatewayResult =
+    contained(c.t.project) match
+      case Left(err) =>
+        System.err.println(s"CLAD_GATEWAY_CONTAINMENT_UNREADABLE $err")
+        blockWithRecord(c, iid, clock(), "containment_unreadable")
+      case Right(Some(_)) => blockWithRecord(c, iid, clock(), "contained")
+      case Right(None)    => proceed
 
   // 1 + 2 + 3: check, pseudonymise, model
+  private val AllowedRoles = Set("user", "assistant", "tool")
+
+  private def pseudonym(p: String): Either[String, String] =
+    val out = Principal.pseudonymise(p)
+    Either.cond(!out.contains('@'), out, "principal_not_pseudonymisable")
+
   private def check(req: GovernedRequest): Either[String, Checked] =
     for
       t <- cfg.templates.get(req.templateId).toRight(s"unknown template ${req.templateId}")
-      _ <- Either.cond(!req.messages.exists(m => m.value.get("role").contains(ujson.Str("system"))), (),
-        "client system messages are not allowed")
+      _ <- Either.cond(req.messages.forall(m => m.value.get("role").exists {
+        case ujson.Str(r) => AllowedRoles.contains(r)
+        case _            => false
+      }), (), "client messages may only have the roles user, assistant and tool")
+      principal <- pseudonym(req.principal)
       rendered <- Templates.render(t, req.vars)
       model <- req.modelTier match
         case None => Right(t.model)
         case Some(tier) => cfg.templates.modelFor(tier).toRight(s"unknown model tier $tier")
-    yield Checked(req, t, Principal.pseudonymise(req.principal), model, rendered)
+      messages <- withEvidence(t, req)
+    yield Checked(req, t, principal, model, rendered, messages)
+
+  private val DataTag = "(?i)<(/?data)".r
+
+  /** The client messages with the evidence appended to the last user message; every failure is a rejection. */
+  private def withEvidence(t: Template, req: GovernedRequest): Either[String, Vector[ujson.Obj]] = req.evidence match
+    case None => Right(req.messages)
+    case Some(e) =>
+      val payload = t.evidenceFormat match
+        case "rows_json"      => Right(ujson.write(e).replace("<", "\\u003c"))
+        case "document_pages" => Right(DataTag.replaceAllIn(evidenceText(e), m => "&lt;" + m.group(1)))
+        case other            => Left(s"${t.id}: evidence is not accepted (evidence_format $other)")
+      payload.flatMap { p =>
+        val idx = req.messages.lastIndexWhere(_.value.get("role").contains(ujson.Str("user")))
+        if idx < 0 then Left("evidence needs a user message")
+        else req.messages(idx).value.get("content") match
+          case Some(ujson.Str(s)) =>
+            val m = ujson.Obj.from(req.messages(idx).value.toSeq.map((k, v) =>
+              if k == "content" then k -> ujson.Str(s + "\n\n<data>\n" + p + "\n</data>") else k -> v))
+            Right(req.messages.updated(idx, m))
+          case _ => Left("evidence needs a user message with text content")
+      }
 
   // 4: containment file, {"<project>": "<reason>"}; absent means nothing contained, unreadable is an error
   private def readContainment(): Either[String, Map[String, String]] =
@@ -142,36 +177,17 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
         Left(r.entries.find(!_.satisfied).map(_.constraint.property.value).getOrElse("epg_blocked"))
       case Right(_) => Right(())
 
-  // 7: body
-  private def body(c: Checked): Either[String, ujson.Obj] =
-    val system = ujson.Obj("role" -> "system", "content" -> c.rendered)
-    val withEvidence: Either[String, Vector[ujson.Obj]] = c.req.evidence match
-      case None => Right(c.req.messages)
-      case Some(e) =>
-        val payload = c.t.evidenceFormat match
-          case "rows_json"      => Right(ujson.write(e))
-          case "document_pages" => Right(evidenceText(e).replace("<data", "&lt;data").replace("</data", "&lt;/data"))
-          case other            => Left(s"${c.t.id}: evidence is not accepted (evidence_format $other)")
-        payload.flatMap { p =>
-          val idx = c.req.messages.lastIndexWhere(_.value.get("role").contains(ujson.Str("user")))
-          if idx < 0 then Left("evidence needs a user message")
-          else c.req.messages(idx).value.get("content") match
-            case Some(ujson.Str(s)) =>
-              val m = ujson.Obj.from(c.req.messages(idx).value.toSeq.map((k, v) => if k == "content" then k -> ujson.Str(s + "\n\n<data>\n" + p + "\n</data>") else k -> v))
-              Right(c.req.messages.updated(idx, m))
-            case _ => Left("evidence needs a user message with text content")
-        }
-    withEvidence.map { ms =>
-      val base = ujson.Obj.from(c.req.options.value.toSeq)
-      base("model") = c.model
-      base("messages") = ujson.Arr.from(system +: ms)
-      base
-    }
+  // 7: body (infallible: the messages were validated in check)
+  private def body(c: Checked): ujson.Obj =
+    val base = ujson.Obj.from(c.req.options.value.toSeq)
+    base("model") = c.model
+    base("messages") = ujson.Arr.from(ujson.Obj("role" -> "system", "content" -> c.rendered) +: c.messages)
+    base
 
   // 8: upstream
   private def validReply(v: ujson.Value): Boolean = v match
     case o: ujson.Obj => o.value.get("choices") match
-      case Some(a: ujson.Arr) => a.value.headOption.exists(_.isInstanceOf[ujson.Obj])
+      case Some(a: ujson.Arr) => a.value.headOption.exists(ch => ch.isInstanceOf[ujson.Obj] && ch.obj.get("message").exists(_.isInstanceOf[ujson.Obj]))
       case _                  => false
     case _ => false
 
@@ -204,17 +220,22 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
       cfg.templates.get(templateId) match
         case None => Rejected(s"unknown template $templateId")
         case Some(t) =>
-          val c = Checked(GovernedRequest(templateId, principal, session, Vector.empty, Map.empty, None, None, ujson.Obj()),
-            t, Principal.pseudonymise(principal), t.model, "")
-          register(c, iid, clock()) match
-            case Left(_) => Blocked(iid, "gil_unavailable")
-            case Right(_) =>
-              val reply =
-                try forwarder.forward(name, path, body, iid)
-                catch case NonFatal(e) => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
-              reply match
-                case Right((status, text)) => Delivered(iid, "pass", ujson.Obj("status" -> status, "body" -> text))
-                case Left(why)             => fail(t, iid, why)
+          pseudonym(principal) match
+            case Left(why) => Rejected(why)
+            case Right(p) =>
+              val c = Checked(GovernedRequest(templateId, principal, session, Vector.empty, Map.empty, None, None, ujson.Obj()),
+                t, p, t.model, "", Vector.empty)
+              guarded(c, iid) {
+                register(c, iid, clock()) match
+                  case Left(_) => Blocked(iid, "gil_unavailable")
+                  case Right(_) =>
+                    val reply =
+                      try forwarder.forward(name, path, body, iid)
+                      catch case NonFatal(e) => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+                    reply match
+                      case Right((status, text)) => Delivered(iid, "pass", ujson.Obj("status" -> status, "body" -> text))
+                      case Left(why)             => fail(t, iid, why)
+              }
     catch case NonFatal(e) =>
       System.err.println(s"CLAD_GATEWAY_INTERNAL_ERROR iid=$iid ${e.getClass.getName}: ${e.getMessage}")
       Unavailable(Some(iid), s"internal error: ${e.getMessage}")
