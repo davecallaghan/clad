@@ -1,4 +1,5 @@
-invented_limits    SATISFIED     (2 files, 0 findings; NOT_RUN sub-checks: ['budget_below_capacity', 'escalation'])
+invented_limits    VIOLATED      (2 files, 1 findings; NOT_RUN sub-checks: ['budget_below_capacity', 'escalation'])
+    app/gateway-test/src/test/scala/clad/gateway/upstream/HttpUpstreamSpec.scala:13 limit_key: limit-named `upstreamTimeoutSeconds` has literal value 1
 ruff_profile       not applicable (no given path is in this gate's scope)
 safeguard_removal  not applicable (no given path is in this gate's scope)
 governed_write     not applicable (no given path is in this gate's scope)
