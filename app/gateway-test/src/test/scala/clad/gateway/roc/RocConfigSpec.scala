@@ -28,7 +28,7 @@ class RocConfigSpec extends AnyFunSuite:
     RocConfig.load(dir, gov)
 
   test("the fixture loads, with the classifier profile") {
-    assert(roc.constraints.size == 9 && roc.thresholds.size == 2 && roc.routerIntents.contains("plan_edit"))
+    assert(roc.constraints.size == 8 && roc.thresholds.size == 2 && roc.routerIntents.contains("plan_edit"))
     assert(roc.classifier.id == "llama_guard" && roc.classifier.verdictTokens > 0 && roc.classifier.measuredFp.isEmpty)
     assert(roc.safeResponses.contains("default") && roc.retryVariant.nonEmpty)
   }
@@ -36,7 +36,10 @@ class RocConfigSpec extends AnyFunSuite:
   test("forTemplate picks constraints by template and project; router.jev gets route_valid and the global deterministic ones") {
     assert(roc.forTemplate(template("agent.answer", "agent")).map(_.property).toSet ==
       Set("numbers_grounded", "contains_pii", "guarantee_language", "specialized_advice", "unsafe_content"))
-    assert(roc.forTemplate(template("router.jev", "router")).map(_.property).toSet ==
+    // router.jev is not a prompt of the base fixture, so route_valid (which names it) is added without loading
+    val withRoute = roc.copy(constraints = roc.constraints :+
+      OutputConstraintDef("route_valid", true, "deterministic", Set("router.jev"), Set.empty, None))
+    assert(withRoute.forTemplate(template("router.jev", "router")).map(_.property).toSet ==
       Set("route_valid", "contains_pii", "guarantee_language"))
   }
 
@@ -75,6 +78,36 @@ class RocConfigSpec extends AnyFunSuite:
     assert(r.left.exists(_.contains("unknown project")), r.toString)
   }
 
+  test("a templates or projects value that is not a list of strings is refused, not widened to all") {
+    val bare = withRoc(_.replace("templates: [agent.answer]", "templates: agent.answer"))
+    assert(bare.left.exists(e => e.contains("numbers_grounded") && e.contains("templates")), bare.toString)
+    val mixed = withRoc(_.replace("projects: [agent, assistant, planner-chat]}", "projects: [agent, 7]}"))
+    assert(mixed.left.exists(_.contains("projects")), mixed.toString)
+  }
+
+  test("a present but wrongly typed optional value is refused") {
+    val cat = withRoc(_.replace("category: S6", "category: [S6]"))
+    assert(cat.left.exists(_.contains("category")), cat.toString)
+    val owner = withRoc(_.replace("owner: david", "owner: [david]"))
+    assert(owner.left.exists(_.contains("owner")), owner.toString)
+    val dir = Files.createTempDirectory("roc")
+    val s = Files.walk(Fixtures.dir)
+    try s.iterator().asScala.foreach { p =>
+      val t = dir.resolve(Fixtures.dir.relativize(p).toString)
+      if Files.isDirectory(p) then Files.createDirectories(t) else Files.copy(p, t)
+    } finally s.close()
+    val prof = dir.resolve("classifiers").resolve("llama_guard.yaml")
+    Files.writeString(prof, Files.readString(prof).replace("measured_fp: null", "measured_fp: high"))
+    assert(RocConfig.load(dir, gov).left.exists(_.contains("measured_fp")))
+  }
+
+  test("a template id or project name that matches nothing is refused") {
+    val t = withRoc(_.replace("templates: [agent.answer]", "templates: [agent.anwser]"))
+    assert(t.left.exists(e => e.contains("agent.anwser") && e.contains("unknown template")), t.toString)
+    val p = withRoc(_.replace("projects: [agent, assistant, planner-chat]}", "projects: [agent, assitant]}"))
+    assert(p.left.exists(e => e.contains("assitant") && e.contains("unknown project")), p.toString)
+  }
+
   test("a missing key is a Left naming the file") {
     val r = withRoc(_.replace("retry_variant:", "retry_variant_x:"))
     assert(r.left.exists(e => e.contains("roc.yaml") && e.contains("retry_variant")), r.toString)
@@ -90,7 +123,6 @@ class RocConfigSpec extends AnyFunSuite:
       Set("specialized_advice" -> 0.5, "unsafe_content" -> 0.5, "tau_max" -> 0.5))
     assert(cfg.thresholds.exists(t => t.property == "tau_max" && t.riskTier == "Critical" && t.level == "enterprise"))
     assert(ConfigLoader.loadFromString(gov.configJson("agent", roc)).flatMap(ConfigLoader.buildHierarchy).isRight)
-    // the base fixture has no router.jev prompt, so route_valid (which names that template) is not exported for router
     assert(gov.governanceConfig("router", roc).outputConstraints.map(_.property).toSet == Set("contains_pii", "guarantee_language"))
   }
 

@@ -11,7 +11,6 @@ constraints:
   - {property: guarantee_language, type: prohibition, kind: deterministic}
   - {property: specialized_advice, type: prohibition, kind: classifier, category: S6, projects: [agent, assistant, planner-chat]}
   - {property: unsafe_content, type: prohibition, kind: classifier, projects: [agent, assistant, planner-chat, doc-extract]}
-  - {property: route_valid, type: obligation, kind: deterministic, templates: [router.jev]}
 thresholds:
   - {property: specialized_advice, level: enterprise, tau: 0.5, version: "1"}   # test fixture
   - {property: unsafe_content, level: enterprise, tau: 0.5, version: "1"}       # test fixture

@@ -77,10 +77,27 @@ object RocConfig:
   private def num(o: ujson.Value, file: String, k: String): Either[String, Double] =
     field(o, file, k).flatMap { case ujson.Num(n) => Right(n); case _ => Left(s"$file: $k must be a number") }
 
-  private def optNum(o: ujson.Value, k: String): Option[Double] = o.objOpt.flatMap(_.get(k)).collect { case ujson.Num(n) => n }
-  private def optStr(o: ujson.Value, k: String): Option[String] = o.objOpt.flatMap(_.get(k)).collect { case ujson.Str(s) => s }
-  private def strSet(o: ujson.Value, k: String): Set[String] =
-    o.objOpt.flatMap(_.get(k)).collect { case a: ujson.Arr => a.value.collect { case ujson.Str(s) => s }.toSet }.getOrElse(Set.empty)
+  /** Absent or null is None; present with the wrong type is an error, never a silent default. */
+  private def present(o: ujson.Value, k: String): Option[ujson.Value] = o.objOpt.flatMap(_.get(k)).filter(_ != ujson.Null)
+
+  private def optNum(o: ujson.Value, file: String, k: String): Either[String, Option[Double]] =
+    present(o, k).fold[Either[String, Option[Double]]](Right(None)) {
+      case ujson.Num(n) => Right(Some(n))
+      case _            => Left(s"$file: $k must be a number")
+    }
+
+  private def optStr(o: ujson.Value, file: String, k: String): Either[String, Option[String]] =
+    present(o, k).fold[Either[String, Option[String]]](Right(None)) {
+      case ujson.Str(s) => Right(Some(s))
+      case _            => Left(s"$file: $k must be a string")
+    }
+
+  /** Absent means empty (all); present must be a list of strings. */
+  private def strSet(o: ujson.Value, file: String, k: String): Either[String, Set[String]] =
+    present(o, k).fold[Either[String, Set[String]]](Right(Set.empty)) {
+      case a: ujson.Arr if a.value.forall(_.strOpt.isDefined) => Right(a.value.map(_.str).toSet)
+      case _                                                  => Left(s"$file: $k must be a list of strings")
+    }
 
   private def all[A](xs: Seq[Either[String, A]]): Either[String, Vector[A]] =
     xs.foldLeft[Either[String, Vector[A]]](Right(Vector.empty))((acc, x) => acc.flatMap(v => x.map(v :+ _)))
@@ -90,8 +107,8 @@ object RocConfig:
     for
       id <- str(v, f, "id"); model <- str(v, f, "model"); version <- str(v, f, "version"); upstream <- str(v, f, "upstream")
       tokens <- num(v, f, "verdict_tokens")
-    yield ClassifierProfile(id, model, version, upstream, tokens.toInt, optNum(v, "measured_fp"), optNum(v, "measured_fn"),
-      optStr(v, "validated_at"))
+      fp <- optNum(v, f, "measured_fp"); fn <- optNum(v, f, "measured_fn"); at <- optStr(v, f, "validated_at")
+    yield ClassifierProfile(id, model, version, upstream, tokens.toInt, fp, fn, at)
 
   private def templateProjects(prompts: Path): Either[String, Map[String, String]] =
     if !Files.isDirectory(prompts) then Right(Map.empty)
@@ -118,13 +135,15 @@ object RocConfig:
           p <- str(c, f, "property"); t <- str(c, f, "type"); k <- str(c, f, "kind")
           _ <- Either.cond(Types.contains(t), (), s"$f: $p: type $t must be one of ${Types.mkString(", ")}")
           _ <- Either.cond(Kinds.contains(k), (), s"$f: $p: kind $k must be one of ${Kinds.mkString(", ")}")
-        yield OutputConstraintDef(p, t == "obligation", k, strSet(c, "templates"), strSet(c, "projects"), optStr(c, "category"))
+          ts <- strSet(c, s"$f: $p", "templates"); ps <- strSet(c, s"$f: $p", "projects"); cat <- optStr(c, s"$f: $p", "category")
+        yield OutputConstraintDef(p, t == "obligation", k, ts, ps, cat)
       })
       thresholds <- all(ths.toSeq.map { t =>
         for
           p <- str(t, f, "property"); l <- str(t, f, "level"); tau <- num(t, f, "tau"); v <- str(t, f, "version")
           _ <- Either.cond(Levels.contains(l), (), s"$f: $p: level $l must be one of ${Levels.mkString(", ")}")
-        yield ThresholdDef(p, l, optStr(t, "scope").getOrElse(""), tau, v, optStr(t, "owner").getOrElse(owner))
+          scope <- optStr(t, s"$f: $p", "scope"); own <- optStr(t, s"$f: $p", "owner")
+        yield ThresholdDef(p, l, scope.getOrElse(""), tau, v, own.getOrElse(owner))
       })
       responses <- all(safe.value.toSeq.map((k, x) => x match
         case ujson.Str(s) => Right(k -> s)
@@ -157,4 +176,8 @@ object RocConfig:
     val unthresholded = roc.constraints.filter(_.kind == "classifier").filterNot(c =>
       roc.thresholds.exists(th => th.property == c.property && th.level == "enterprise")).map(c =>
       s"roc.yaml: classifier constraint ${c.property} has no enterprise threshold")
-    (scopeErrors ++ duplicates ++ monotonic ++ critical ++ unthresholded).headOption
+    val unknownTemplates = roc.constraints.flatMap(c => c.templates.toVector.sorted.filterNot(roc.templateProjects.contains).map(t =>
+      s"roc.yaml: ${c.property}: unknown template '$t'"))
+    val unknownProjects = roc.constraints.flatMap(c => c.projects.toVector.sorted.filterNot(gov.projects.contains).map(p =>
+      s"roc.yaml: ${c.property}: unknown project '$p'"))
+    (scopeErrors ++ unknownTemplates ++ unknownProjects ++ duplicates ++ monotonic ++ critical ++ unthresholded).headOption
