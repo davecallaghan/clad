@@ -4,27 +4,46 @@
 [info] loading settings for project root from build.sbt...
 [info] resolving key references (21597 settings) ...
 [info] set current project to clad (in build file:/Users/david/workspace/clad-conformance/app/)
-[info] DifferentialTestSpec:
-[info] Lean evaluator
-[info] - should agree with Scala evaluator on generated test cases !!! CANCELED !!!
-[info]   new java.io.File(DifferentialTestSpec.this.leanExePath).exists() was false Lean executable not found at /Users/david/workspace/clad-conformance/app/../lean/.lake/build/bin/clad-difftest (DifferentialTestSpec.scala:19)
-[info] - should handle empty hierarchy !!! CANCELED !!!
-[info]   new java.io.File(DifferentialTestSpec.this.leanExePath).exists() was false (DifferentialTestSpec.scala:57)
-[info] OutputEvaluatorSpec:
-[info] OutputEvaluator
-[info] - should pass when all constraints satisfied
-[info] - should pass for empty constraint set
-[info] - should block when Critical deterministic fails
-[info] - should block when Critical composite fails via AnyFlag
-[info] - should flag when Standard classifier fails but no Critical failures
-[info] - should have detected=true/satisfied=false when pattern found
-[info] - should have detected=false/satisfied=true when pattern not found
-[info] - should include score, threshold, thresholdVersion, classifierId, classifierVersion, decision in classifier result
-[info] - should flag classifier when score exceeds threshold
-[info] - should fail composite AnyFlag when ANY sub-constraint fails
-[info] - should pass composite AllFlag when at least one sub-constraint passes
-[info] - should partition results by type
-[info] - should carry artifact and timestamp in report
+[info] CheckerSpec:
+[info] RegexChecker in Any mode
+[info] - should match when at least one pattern is found
+[info] - should not match when no patterns are found
+[info] - should match with multiple patterns present
+[info] RegexChecker in All mode
+[info] - should match when all patterns are found
+[info] - should not match when only some patterns are found
+[info] RegexChecker
+[info] - should handle empty content
+[info] - should expose propertyId
+[info] KeywordChecker
+[info] - should detect keywords case-insensitively
+[info] - should return false when keywords are absent
+[info] - should respect threshold
+[info] - should return false when below threshold
+[info] - should handle empty content
+[info] MetadataRequirement.KeyExists
+[info] - should return true when key is present
+[info] - should return false when key is missing
+[info] MetadataRequirement.KeyEquals
+[info] - should return true when key matches value
+[info] - should return false when value mismatches
+[info] MetadataRequirement.KeyMatches
+[info] - should return true when pattern matches
+[info] - should return false when pattern does not match
+[info] MetadataRequirement.AllOf
+[info] - should return true when all requirements are met
+[info] - should return false when some requirements are not met
+[info] MetadataRequirement.AnyOf
+[info] - should return true when at least one requirement is met
+[info] - should return false when no requirements are met
+[info] StructuralChecker
+[info] - should delegate to MetadataRequirement
+[info] - should return false when requirement is not met
+[info] CompositeChecker in All mode
+[info] - should return true when all checkers detect
+[info] - should return false when some checkers fail
+[info] CompositeChecker in Any mode
+[info] - should return true when at least one checker detects
 [info] FallbackHandlerSpec:
 [info] SafeResponseFallback
 [info] - should return default safe response with unable to provide
@@ -41,6 +60,21 @@
 [info] - should have 3 values
 [info] BlockedOutput
 [info] - should carry original artifact and non-empty reasons
+[info] OutputEvaluatorSpec:
+[info] OutputEvaluator
+[info] - should pass when all constraints satisfied
+[info] - should pass for empty constraint set
+[info] - should block when Critical deterministic fails
+[info] - should block when Critical composite fails via AnyFlag
+[info] - should flag when Standard classifier fails but no Critical failures
+[info] - should have detected=true/satisfied=false when pattern found
+[info] - should have detected=false/satisfied=true when pattern not found
+[info] - should include score, threshold, thresholdVersion, classifierId, classifierVersion, decision in classifier result
+[info] - should flag classifier when score exceeds threshold
+[info] - should fail composite AnyFlag when ANY sub-constraint fails
+[info] - should pass composite AllFlag when at least one sub-constraint passes
+[info] - should partition results by type
+[info] - should carry artifact and timestamp in report
 [info] OutputConstraintSpec:
 [info] OutputArtifact
 [info] - should store content and metadata
@@ -73,23 +107,6 @@
 [info] OutputConstraintSet
 [info] - should default to empty sequences
 [info] - should hold provided constraints
-[info] AuditRecordDigestGoldenSpec:
-[info] - legacy record (no optional fields) keeps its digest
-[info] - record with only an interaction id keeps its digest
-[info] - record with every optional field
-[info] GovernanceEngineSpec:
-[info] GovernanceEngine.build
-[info] - should succeed with all-mechanical config
-[info] - should succeed with mixed config when evidence provided
-[info] - should fail when evidence missing for procedural constraints
-[info] GovernanceEngine.evaluate
-[info] - should produce complete report for compliant prompt
-[info] - should detect violations in non-compliant prompt
-[info] - should produce audit record linked to artifact digest
-[info] - should evaluate at configured level only
-[info] - should handle mixed mechanical/procedural
-[info] - should produce deterministic configDigest for same config
-[info] - should succeed with empty hierarchy
 [info] AuditRecordSpec:
 [info] AuditEntry
 [info] - should store constraint, version, class, and satisfaction
@@ -124,6 +141,28 @@
 [info] AuditRecord.interactionId
 [info] - should default to absent, leaving the digest as it was before the field existed
 [info] - should be covered by the digest
+[info] LevelSpec:
+[info] Level ordering
+[info] - should have Enterprise govern all levels
+[info] - should have Department govern Department and Project only
+[info] - should have Project govern only itself
+[info] strictlyGoverns
+[info] - should be irreflexive
+[info] - should be transitive
+[info] Level
+[info] - should have exactly three values
+[info] Ordering
+[info] - should be a total order — all pairs comparable
+[info] SurfaceSpec:
+[info] Surface
+[info] - should have six values: the five pipeline surfaces plus evidence
+[info] - should keep the pipeline partition to five
+[info] Surface.governability
+[info] - should be defined for every surface under either deployment
+[info] - should classify the pipeline surfaces independently of the evidence deployment
+[info] - should split the evidence surface's class by deployment choice
+[info] Governability
+[info] - should have exactly three values
 [info] GovernanceCheckersSpec:
 [info] GovernanceCheckers.all
 [info] - should contain exactly 12 checkers
@@ -186,46 +225,23 @@
 [info] - should not detect with only 1 marker
 [info] - should not detect with no markers
 [info] - should be case-insensitive
-[info] CheckerSpec:
-[info] RegexChecker in Any mode
-[info] - should match when at least one pattern is found
-[info] - should not match when no patterns are found
-[info] - should match with multiple patterns present
-[info] RegexChecker in All mode
-[info] - should match when all patterns are found
-[info] - should not match when only some patterns are found
-[info] RegexChecker
-[info] - should handle empty content
-[info] - should expose propertyId
-[info] KeywordChecker
-[info] - should detect keywords case-insensitively
-[info] - should return false when keywords are absent
-[info] - should respect threshold
-[info] - should return false when below threshold
-[info] - should handle empty content
-[info] MetadataRequirement.KeyExists
-[info] - should return true when key is present
-[info] - should return false when key is missing
-[info] MetadataRequirement.KeyEquals
-[info] - should return true when key matches value
-[info] - should return false when value mismatches
-[info] MetadataRequirement.KeyMatches
-[info] - should return true when pattern matches
-[info] - should return false when pattern does not match
-[info] MetadataRequirement.AllOf
-[info] - should return true when all requirements are met
-[info] - should return false when some requirements are not met
-[info] MetadataRequirement.AnyOf
-[info] - should return true when at least one requirement is met
-[info] - should return false when no requirements are met
-[info] StructuralChecker
-[info] - should delegate to MetadataRequirement
-[info] - should return false when requirement is not met
-[info] CompositeChecker in All mode
-[info] - should return true when all checkers detect
-[info] - should return false when some checkers fail
-[info] CompositeChecker in Any mode
-[info] - should return true when at least one checker detects
+[info] AuditRecordDigestGoldenSpec:
+[info] - legacy record (no optional fields) keeps its digest
+[info] - record with only an interaction id keeps its digest
+[info] - record with every optional field
+[info] GovernanceEngineSpec:
+[info] GovernanceEngine.build
+[info] - should succeed with all-mechanical config
+[info] - should succeed with mixed config when evidence provided
+[info] - should fail when evidence missing for procedural constraints
+[info] GovernanceEngine.evaluate
+[info] - should produce complete report for compliant prompt
+[info] - should detect violations in non-compliant prompt
+[info] - should produce audit record linked to artifact digest
+[info] - should evaluate at configured level only
+[info] - should handle mixed mechanical/procedural
+[info] - should produce deterministic configDigest for same config
+[info] - should succeed with empty hierarchy
 [info] ReportSerializerSpec:
 [info] ReportSerializer.toJson
 [info] - should produce non-empty JSON starting with {
@@ -239,118 +255,17 @@
 [info] ReportSerializer.fromJson
 [info] - should return Left(ParseError) for empty string
 [info] - should return Left(ParseError) for invalid JSON
-[info] PropertyCheckerSpec:
-[info] CheckerRegistry.build
-[info] - should succeed with distinct checkers
-[info] - should reject duplicate checkers for the same property
-[info] - should build an empty registry
-[info] CheckerRegistry.empty
-[info] - should have no checkers
-[info] AlwaysDetects
-[info] - should detect property in any artifact
-[info] NeverDetects
-[info] - should not detect property in any artifact
-[info] KeywordChecker
-[info] - should detect property when keyword is present
-[info] - should not detect property when keyword is absent
-[info] PromptEvaluatorSpec:
-[info] evaluate
-[info] - should produce results for all constraints in effective set
-[info] - should evaluate at Enterprise level with only enterprise constraints
-[info] - should handle mixed mechanical and procedural constraints
-[info] - should fail when procedural evidence is missing
-[info] - should report allSatisfied = false when any constraint fails
-[info] - should succeed with empty hierarchy
-[info] Report partition
-[info] - should have mechanicalResults ++ proceduralResults == results
-[info] DeonticInversionSpec:
-[info] Obligation with property detected
-[info] - should be satisfied
-[info] Obligation with property not detected
-[info] - should not be satisfied
-[info] Prohibition with property detected
-[info] - should not be satisfied
-[info] Prohibition with property not detected
-[info] - should be satisfied
-[info] Obligation with keyword checker and keyword present
-[info] - should be satisfied
-[info] Prohibition with keyword checker and keyword present
-[info] - should not be satisfied
-[info] SemanticIntentSpec:
-[info] SemanticIntent
-[info] - should not be a Constraint or EvaluableConstraint
-[info] Decomposition
-[info] - should link intent to operational constraints
-[info] SoundnessState.Claimed
-[info] - should carry attestor and timestamp
-[info] SoundnessState.NoCounterexampleFound
-[info] - should carry last tested timestamp
-[info] DecompositionRegistry
-[info] - should report full coverage when all intents have decompositions
-[info] - should report incomplete coverage when an intent has empty decomposition
-[info] - should extract all evaluable constraints
-[info] - should handle multiple decompositions
-[info] EvaluableHierarchySpec:
-[info] EvaluableHierarchy.build
-[info] - should succeed when all constraints classified and checkers registered
-[info] - should succeed with a mix of mechanical and procedural constraints
-[info] - should reject when constraints are unclassified
-[info] - should reject when mechanical constraints lack checkers
-[info] - should succeed with empty hierarchy
-[info] - should collect multiple errors
-[info] mechanicalAt
-[info] - should return only mechanical constraints at given level
-[info] proceduralAt
-[info] - should return only procedural constraints at given level
-[info] EvaluableConstraintSpec:
-[info] MechanicalConstraint
-[info] - should wrap a Constraint with version
-[info] ProceduralConstraint
-[info] - should wrap a Constraint with version
-[info] EvaluableConstraint
-[info] - should be a sealed hierarchy with exactly two subtypes
-[info] EvidenceSet.of
-[info] - should create set from varargs
-[info] EvidenceSet.empty
-[info] - should return None for any property
-[info] EvidenceSet.forProperty
-[info] - should return None for unknown property
-[info] Generated EvaluableConstraints
-[info] - should preserve inner constraint
-[info] SurfaceSpec:
-[info] Surface
-[info] - should have six values: the five pipeline surfaces plus evidence
-[info] - should keep the pipeline partition to five
-[info] Surface.governability
-[info] - should be defined for every surface under either deployment
-[info] - should classify the pipeline surfaces independently of the evidence deployment
-[info] - should split the evidence surface's class by deployment choice
-[info] Governability
-[info] - should have exactly three values
-[info] TensionSpec:
-[info] TensionDetector.detectAnnotationTensions
-[info] - should detect P_meta at higher level overridden by F at lower level
-[info] - should detect P_meta at higher level overridden by O at lower level
-[info] - should return empty when no annotation is overridden
-[info] - should not flag annotation at same level as constraint
-[info] TensionDetector.detectCrossDomainTensions
-[info] - should detect same property from different domains
-[info] - should return empty when all constraints on same property are from same domain
-[info] ScalaEvaluatorSpec:
-[info] ScalaEvaluator
-[info] - should evaluate empty hierarchy as all satisfied
-[info] - should evaluate satisfied obligation at enterprise level
-[info] - should evaluate unsatisfied obligation at enterprise level
-[info] - should evaluate satisfied prohibition at enterprise level
-[info] - should evaluate unsatisfied prohibition at enterprise level
-[info] - should inherit enterprise constraints at department level
-[info] - should inherit enterprise and department constraints at project level
-[info] - should use evidence for procedural constraints
-[info] DiffTestGeneratorSpec:
-[info] DiffTestGenerator
-[info] - should generate valid test cases
-[info] - should serialize test cases to JSON
-[info] - should generate cases that Scala evaluator can process
+[info] ConstraintSpec:
+[info] Constraint.contradicts
+[info] - should detect O(φ) vs F(φ) as contradiction
+[info] - should detect F(φ) vs O(φ) as contradiction (symmetric)
+[info] - should not flag O(φ) vs O(φ) as contradiction
+[info] - should not flag F(φ) vs F(φ) as contradiction
+[info] - should not flag O(φ) vs F(ψ) as contradiction (different properties)
+[info] contradicts
+[info] - should be symmetric for all constraint pairs
+[info] GovernanceAnnotation
+[info] - should not be a subtype of Constraint
 [info] PropertyIdSpec:
 [info] PropertyId.apply
 [info] - should accept valid snake_case identifiers
@@ -363,36 +278,6 @@
 [info] PropertyId.unsafe
 [info] - should bypass validation
 [info] - should generate valid PropertyIds
-[info] PrecedenceTableSpec:
-[info] PrecedenceTable.resolve
-[info] - should use specific rule when available
-[info] - should fall back to domain priority when no specific rule exists
-[info] - should return Second when c2's domain has higher priority
-[info] - should return Unresolved when domains have equal priority
-[info] - should return Unresolved when domain is not in priority list
-[info] LevelSpec:
-[info] Level ordering
-[info] - should have Enterprise govern all levels
-[info] - should have Department govern Department and Project only
-[info] - should have Project govern only itself
-[info] strictlyGoverns
-[info] - should be irreflexive
-[info] - should be transitive
-[info] Level
-[info] - should have exactly three values
-[info] Ordering
-[info] - should be a total order — all pairs comparable
-[info] ConstraintSpec:
-[info] Constraint.contradicts
-[info] - should detect O(φ) vs F(φ) as contradiction
-[info] - should detect F(φ) vs O(φ) as contradiction (symmetric)
-[info] - should not flag O(φ) vs O(φ) as contradiction
-[info] - should not flag F(φ) vs F(φ) as contradiction
-[info] - should not flag O(φ) vs F(ψ) as contradiction (different properties)
-[info] contradicts
-[info] - should be symmetric for all constraint pairs
-[info] GovernanceAnnotation
-[info] - should not be a subtype of Constraint
 [info] ConstraintHierarchySpec:
 [info] ConstraintHierarchy.build
 [info] - should succeed with empty constraint sets
@@ -410,6 +295,22 @@
 [info] - should hold: C*(enterprise) <= C*(department) <= C*(project)
 [info] Contradiction freedom
 [info] - should hold for all valid hierarchies at all levels
+[info] PrecedenceTableSpec:
+[info] PrecedenceTable.resolve
+[info] - should use specific rule when available
+[info] - should fall back to domain priority when no specific rule exists
+[info] - should return Second when c2's domain has higher priority
+[info] - should return Unresolved when domains have equal priority
+[info] - should return Unresolved when domain is not in priority list
+[info] TensionSpec:
+[info] TensionDetector.detectAnnotationTensions
+[info] - should detect P_meta at higher level overridden by F at lower level
+[info] - should detect P_meta at higher level overridden by O at lower level
+[info] - should return empty when no annotation is overridden
+[info] - should not flag annotation at same level as constraint
+[info] TensionDetector.detectCrossDomainTensions
+[info] - should detect same property from different domains
+[info] - should return empty when all constraints on same property are from same domain
 [info] ComponentCompositionSpec:
 [info] ComponentComposition.compose
 [info] - should combine surfaces
@@ -431,41 +332,34 @@
 [info] - should hold: (g1 + g2) + g3 = g1 + (g2 + g3) for non-overlapping components
 [info] Identity property
 [info] - should hold for all components
-[info] InteractionLogSpec:
-[info] - InteractionId.generate produces unique IDs
-[info] - InteractionId stores and retrieves value
-[info] - register adds entry
-[info] - count increments after register
-[info] - exists returns true for registered ID
-[info] - exists returns false for unregistered ID
-[info] - entriesBetween covers all entries in window
-[info] - entriesBetween covers partial entries in window
-[info] - entriesBetween covers none when window excludes all
-[info] - GilEntry carries optional metadata
-[info] - GilEntry has empty metadata by default
-[info] - InteractionLog has no update method
-[info] - InteractionLog has no delete method
-[info] - InteractionLog has no remove method
-[info] DegradedRecordCodecSpec:
-[info] - round-trips and the supervisor signature verifies with the public key
-[info] - signed bytes are clad's existing format
-[info] - a malformed line is a Left
-[info] FailurePostureSpec:
-[info] - FailurePosture has 3 values
-[info] - FailureAction has 3 values
-[info] - actionFor maps FailClosed to Blocked
-[info] - actionFor maps FailOpenFlagged to ProceededFlagged
-[info] - actionFor maps FailOpen to ProceededSilent
-[info] - ComponentId stores and retrieves value
-[info] - ComponentId has pre-defined Epg, Roc, Supervisor
-[info] - DegradedAuditRecord stores all failure info
-[info] - SignedDegradedRecord.sign signs with supervisor key
-[info] - SignedDegradedRecord has signedBy != onBehalfOf
-[info] GovernanceSupervisorSpec:
-[info] GovernanceSupervisor
-[info] - should return Success when evaluation succeeds
-[info] - should handle complex types like Map
-[info] - should handle complex types like List
+[info] ClassifierDetailCodecSpec:
+[info] - a classifier entry round-trips and its class is part of the digest
+[info] ScalaEvaluatorSpec:
+[info] ScalaEvaluator
+[info] - should evaluate empty hierarchy as all satisfied
+[info] - should evaluate satisfied obligation at enterprise level
+[info] - should evaluate unsatisfied obligation at enterprise level
+[info] - should evaluate satisfied prohibition at enterprise level
+[info] - should evaluate unsatisfied prohibition at enterprise level
+[info] - should inherit enterprise constraints at department level
+[info] - should inherit enterprise and department constraints at project level
+[info] - should use evidence for procedural constraints
+[info] DifferentialTestSpec:
+[info] Lean evaluator
+[info] - should agree with Scala evaluator on generated test cases !!! CANCELED !!!
+[info]   new java.io.File(DifferentialTestSpec.this.leanExePath).exists() was false Lean executable not found at /Users/david/workspace/clad-conformance/app/../lean/.lake/build/bin/clad-difftest (DifferentialTestSpec.scala:19)
+[info] - should handle empty hierarchy !!! CANCELED !!!
+[info]   new java.io.File(DifferentialTestSpec.this.leanExePath).exists() was false (DifferentialTestSpec.scala:57)
+[info] DiffTestGeneratorSpec:
+[info] DiffTestGenerator
+[info] - should generate valid test cases
+[info] - should serialize test cases to JSON
+[info] - should generate cases that Scala evaluator can process
+[info] Ed25519KeyManagementSpec:
+[info] - a signature made with the private key verifies with a public-key-only instance
+[info] - a public-key-only instance cannot sign
+[info] - a malformed PEM is an error, not an exception
+[info] - a signature from another key does not verify
 [info] AuditStoreSpec:
 [info] AuditStore.append + readAll
 [info] - should store and retrieve records in order
@@ -476,40 +370,77 @@
 [info] - should filter by timestamp
 [info] - should return all records when timestamp is before all
 [info] - should return empty when timestamp is after all
-[info] - should return Failed with Blocked action for FailClosed posture
 [info] AuditStore
 [info] - should have no update or delete methods
-[info] - should return Failed with ProceededFlagged action for FailOpenFlagged posture
-[info] - should return Failed with ProceededSilent action for FailOpen posture
-[info] - should create degraded record with correct signatures
-[info] - should include interactionId and DegradedStatus in degraded record
-[info] - should include exception class name and message in failure reason
-[info] - should be generic over A (Int, List, Map all work)
-[info] GhostDetectorSpec:
-[info] GhostDetector.detect
-[info] - should return empty report for empty GIL entries
-[info] - should return no ghosts when all entries are audited
-[info] - should detect ghosts with Unknown classification for unaudited entries
-[info] - should classify ghosts as ComponentFailure when in degradedIds
-[info] - should handle mix of audited, degraded, and unknown entries
-[info] - should calculate ghostRate correctly
-[info] GhostClassification
-[info] - should have 4 values
-[info] GhostDetector.detectFromStores
-[info] - should find no ghosts when every entry has a linked audit record
-[info] - should report only the entries that genuinely lack an audit record
-[info] - should count records with no identifier as unlinkable rather than silently as ghosts
-[info] - should classify a ghost with a degraded record as ComponentFailure
-[info] SupervisedEngineSpec:
-[info] SupervisedEngine
-[info] - should succeed with GIL registered and engine passing
-[info] - should stamp the GIL interaction id onto the audit record
-[info] - should register in GIL before evaluating
-[info] - should return Failed with Blocked when engine throws under FailClosed
-[info] - should return Failed with ProceededFlagged under FailOpenFlagged
-[info] - should block immediately when GIL fails under FailClosed
-[info] - should continue with gilRegistered=false when GIL fails under FailOpenFlagged
-[info] - should generate unique interaction IDs per evaluation
+[info] AuditRecordCodecFieldsSpec:
+[info] - optional fields round-trip
+[info] - a line without the new fields decodes them as None
+[info] AppendOnlyFileStoreSpec:
+[info] - append and read back a single record
+[info] - preserve insertion order across multiple appends
+[info] - count returns correct count
+[info] - readSince filters by timestamp
+[info] - persist across store instances
+[info] - write one line per record in chain.jsonl
+[info] - detect corrupted lines and throw CorruptionDetected
+[info] - AuditRecordCodec round-trip preserves all fields including signature bytes
+[info] - AuditRecordCodec round-trips the interaction identifier
+[info] - AuditRecordCodec decodes a record written before interactionId existed
+[info] - AuditRecordCodec returns Left for invalid JSON
+[info] - persist every record when appends are concurrent
+[info] EvaluableHierarchySpec:
+[info] EvaluableHierarchy.build
+[info] - should succeed when all constraints classified and checkers registered
+[info] - should succeed with a mix of mechanical and procedural constraints
+[info] - should reject when constraints are unclassified
+[info] - should reject when mechanical constraints lack checkers
+[info] - should succeed with empty hierarchy
+[info] - should collect multiple errors
+[info] mechanicalAt
+[info] - should return only mechanical constraints at given level
+[info] proceduralAt
+[info] - should return only procedural constraints at given level
+[info] SemanticIntentSpec:
+[info] SemanticIntent
+[info] - should not be a Constraint or EvaluableConstraint
+[info] Decomposition
+[info] - should link intent to operational constraints
+[info] SoundnessState.Claimed
+[info] - should carry attestor and timestamp
+[info] SoundnessState.NoCounterexampleFound
+[info] - should carry last tested timestamp
+[info] DecompositionRegistry
+[info] - should report full coverage when all intents have decompositions
+[info] - should report incomplete coverage when an intent has empty decomposition
+[info] - should extract all evaluable constraints
+[info] - should handle multiple decompositions
+[info] PromptEvaluatorSpec:
+[info] evaluate
+[info] - should produce results for all constraints in effective set
+[info] - should evaluate at Enterprise level with only enterprise constraints
+[info] - should handle mixed mechanical and procedural constraints
+[info] - should fail when procedural evidence is missing
+[info] - should report allSatisfied = false when any constraint fails
+[info] - should succeed with empty hierarchy
+[info] Report partition
+[info] - should have mechanicalResults ++ proceduralResults == results
+[info] SignedAuditRecordSpec:
+[info] HmacKeyManagement
+[info] - should expose keyId
+[info] - should produce signature with correct keyId and algorithm HmacSHA256
+[info] - should be deterministic (same data = same signature)
+[info] - should produce different signatures for different data
+[info] - should verify returns true for valid signature
+[info] - should verify returns false for tampered signature bytes
+[info] - should verify returns false for wrong data
+[info] - should produce different signatures with different keys
+[info] - should fail cross-KMS verification (sign with key1, verify with key2)
+[info] SignedAuditRecord.sign
+[info] - should produce a SignedAuditRecord with correct signature metadata
+[info] SignedAuditRecord.isAuthentic
+[info] - should return true for properly signed record
+[info] - should return false with wrong key
+[info] - should be deterministic (signing same record twice produces same signature)
 [info] SignedAuditChainSpec:
 [info] SignedAuditChain.empty
 [info] - should have length 0
@@ -548,102 +479,155 @@
 [info] - should verifyStore with empty store
 [info] - should report DigestMismatch when persisted content is tampered after signing
 [info] - should report MissingRecordedDigest for a record written before digests were persisted
-[info] Run completed in 1 second, 249 milliseconds.
-[info] Run completed in 1 second, 255 milliseconds.
-[info] Run completed in 1 second, 241 milliseconds.
-[info] Total number of tests run: 44
-[info] Total number of tests run: 11
-[info] Total number of tests run: 64
-[info] Suites: completed 6, aborted 0
-[info] Suites: completed 3, aborted 0
-[info] Run completed in 1 second, 230 milliseconds.
-[info] Tests: succeeded 11, failed 0, canceled 2, ignored 0, pending 0
-[info] Tests: succeeded 44, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] All tests passed.
-[info] Suites: completed 8, aborted 0
-[info] Total number of tests run: 116
-[info] Tests: succeeded 64, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] Suites: completed 6, aborted 0
-[info] Tests: succeeded 116, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] Run completed in 960 milliseconds.
-[info] Total number of tests run: 56
-[info] Suites: completed 6, aborted 0
-[info] Tests: succeeded 56, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] Run completed in 1 second, 142 milliseconds.
-[info] Total number of tests run: 40
-[info] Suites: completed 3, aborted 0
-[info] Tests: succeeded 40, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] AppendOnlyFileStoreSpec:
-[info] - append and read back a single record
-[info] - preserve insertion order across multiple appends
-[info] - count returns correct count
-[info] - readSince filters by timestamp
-[info] - persist across store instances
-[info] - write one line per record in chain.jsonl
-[info] - detect corrupted lines and throw CorruptionDetected
-[info] - AuditRecordCodec round-trip preserves all fields including signature bytes
-[info] - AuditRecordCodec round-trips the interaction identifier
-[info] - AuditRecordCodec decodes a record written before interactionId existed
-[info] - AuditRecordCodec returns Left for invalid JSON
-[info] - persist every record when appends are concurrent
-[info] AuditRecordCodecFieldsSpec:
-[info] - optional fields round-trip
-[info] - a line without the new fields decodes them as None
-[info] SignedAuditRecordSpec:
-[info] HmacKeyManagement
-[info] - should expose keyId
-[info] - should produce signature with correct keyId and algorithm HmacSHA256
-[info] - should be deterministic (same data = same signature)
-[info] - should produce different signatures for different data
-[info] - should verify returns true for valid signature
-[info] - should verify returns false for tampered signature bytes
-[info] - should verify returns false for wrong data
-[info] - should produce different signatures with different keys
-[info] - should fail cross-KMS verification (sign with key1, verify with key2)
-[info] SignedAuditRecord.sign
-[info] - should produce a SignedAuditRecord with correct signature metadata
-[info] SignedAuditRecord.isAuthentic
-[info] - should return true for properly signed record
-[info] - should return false with wrong key
-[info] - should be deterministic (signing same record twice produces same signature)
-[info] ClassifierDetailCodecSpec:
-[info] - a classifier entry round-trips and its class is part of the digest
-[info] Ed25519KeyManagementSpec:
-[info] - a signature made with the private key verifies with a public-key-only instance
-[info] - a public-key-only instance cannot sign
-[info] - a malformed PEM is an error, not an exception
-[info] - a signature from another key does not verify
 [info] ChainAnchorSpec:
 [info] an anchored chain
 [info] - should verify when intact
 [info] - should detect a chain whose tail has been deleted
 [info] - should report AnchorMissing when no anchor is present
-[info] DetectorsSpec:
-[info] ComponentHealthDetector
-[info] - should fire on ComponentFailure with FailClosed as P2High
-[info] - should use P3Medium for FailOpenFlagged
-[info] - should use P3Medium for FailOpen
-[info] - should ignore non-ComponentFailure events
-[info] ConstraintViolationDetector
-[info] - should fire on ViolationDetected
-[info] - should pass through severity from event
-[info] - should ignore non-ViolationDetected events
-[info] GhostRateDetector
-[info] - should not fire when ghost rate is below threshold
-[info] - should fire when ghost rate exceeds threshold
-[info] - should not fire on empty window (only config events)
-[info] - should evict events outside the window
-[info] BlockRateAnomalyDetector
-[info] - should not fire when block rate is below threshold
-[info] - should fire when block rate exceeds threshold
-[info] - should ignore EPG evaluations (only count ROC)
-[info] AbstractWindowDetector
-[info] - should maintain sliding window
+[info] DeonticInversionSpec:
+[info] Obligation with property detected
+[info] - should be satisfied
+[info] Obligation with property not detected
+[info] - should not be satisfied
+[info] Prohibition with property detected
+[info] - should not be satisfied
+[info] Prohibition with property not detected
+[info] - should be satisfied
+[info] Obligation with keyword checker and keyword present
+[info] - should be satisfied
+[info] Prohibition with keyword checker and keyword present
+[info] - should not be satisfied
+[info] PropertyCheckerSpec:
+[info] CheckerRegistry.build
+[info] - should succeed with distinct checkers
+[info] - should reject duplicate checkers for the same property
+[info] - should build an empty registry
+[info] CheckerRegistry.empty
+[info] - should have no checkers
+[info] AlwaysDetects
+[info] - should detect property in any artifact
+[info] NeverDetects
+[info] - should not detect property in any artifact
+[info] KeywordChecker
+[info] - should detect property when keyword is present
+[info] - should not detect property when keyword is absent
+[info] EvaluableConstraintSpec:
+[info] MechanicalConstraint
+[info] - should wrap a Constraint with version
+[info] ProceduralConstraint
+[info] - should wrap a Constraint with version
+[info] EvaluableConstraint
+[info] - should be a sealed hierarchy with exactly two subtypes
+[info] EvidenceSet.of
+[info] - should create set from varargs
+[info] EvidenceSet.empty
+[info] - should return None for any property
+[info] EvidenceSet.forProperty
+[info] - should return None for unknown property
+[info] Generated EvaluableConstraints
+[info] - should preserve inner constraint
+[info] GovernanceSupervisorSpec:
+[info] GovernanceSupervisor
+[info] - should return Success when evaluation succeeds
+[info] - should handle complex types like Map
+[info] - should handle complex types like List
+[info] - should return Failed with Blocked action for FailClosed posture
+[info] - should return Failed with ProceededFlagged action for FailOpenFlagged posture
+[info] - should return Failed with ProceededSilent action for FailOpen posture
+[info] - should create degraded record with correct signatures
+[info] - should include interactionId and DegradedStatus in degraded record
+[info] - should include exception class name and message in failure reason
+[info] - should be generic over A (Int, List, Map all work)
+[info] GhostDetectorSpec:
+[info] GhostDetector.detect
+[info] - should return empty report for empty GIL entries
+[info] - should return no ghosts when all entries are audited
+[info] - should detect ghosts with Unknown classification for unaudited entries
+[info] - should classify ghosts as ComponentFailure when in degradedIds
+[info] - should handle mix of audited, degraded, and unknown entries
+[info] - should calculate ghostRate correctly
+[info] GhostClassification
+[info] - should have 4 values
+[info] GhostDetector.detectFromStores
+[info] - should find no ghosts when every entry has a linked audit record
+[info] - should report only the entries that genuinely lack an audit record
+[info] - should count records with no identifier as unlinkable rather than silently as ghosts
+[info] - should classify a ghost with a degraded record as ComponentFailure
+[info] InteractionLogSpec:
+[info] - InteractionId.generate produces unique IDs
+[info] - InteractionId stores and retrieves value
+[info] - register adds entry
+[info] - count increments after register
+[info] - exists returns true for registered ID
+[info] - exists returns false for unregistered ID
+[info] - entriesBetween covers all entries in window
+[info] - entriesBetween covers partial entries in window
+[info] - entriesBetween covers none when window excludes all
+[info] - GilEntry carries optional metadata
+[info] - GilEntry has empty metadata by default
+[info] - InteractionLog has no update method
+[info] - InteractionLog has no delete method
+[info] - InteractionLog has no remove method
+[info] FailurePostureSpec:
+[info] - FailurePosture has 3 values
+[info] - FailureAction has 3 values
+[info] - actionFor maps FailClosed to Blocked
+[info] - actionFor maps FailOpenFlagged to ProceededFlagged
+[info] - actionFor maps FailOpen to ProceededSilent
+[info] - ComponentId stores and retrieves value
+[info] - ComponentId has pre-defined Epg, Roc, Supervisor
+[info] - DegradedAuditRecord stores all failure info
+[info] - SignedDegradedRecord.sign signs with supervisor key
+[info] - SignedDegradedRecord has signedBy != onBehalfOf
+[info] DegradedRecordCodecSpec:
+[info] - round-trips and the supervisor signature verifies with the public key
+[info] - signed bytes are clad's existing format
+[info] - a malformed line is a Left
+[info] SupervisedEngineSpec:
+[info] SupervisedEngine
+[info] - should succeed with GIL registered and engine passing
+[info] - should stamp the GIL interaction id onto the audit record
+[info] - should register in GIL before evaluating
+[info] - should return Failed with Blocked when engine throws under FailClosed
+[info] - should return Failed with ProceededFlagged under FailOpenFlagged
+[info] - should block immediately when GIL fails under FailClosed
+[info] - should continue with gilRegistered=false when GIL fails under FailOpenFlagged
+[info] - should generate unique interaction IDs per evaluation
+[info] Run completed in 949 milliseconds.
+[info] Total number of tests run: 64
+[info] Suites: completed 8, aborted 0
+[info] Tests: succeeded 64, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 969 milliseconds.
+[info] Total number of tests run: 40
+[info] Suites: completed 3, aborted 0
+[info] Run completed in 937 milliseconds.
+[info] Total number of tests run: 71
+[info] Suites: completed 9, aborted 0
+[info] Tests: succeeded 71, failed 0, canceled 0, ignored 0, pending 0
+[info] Run completed in 947 milliseconds.
+[info] Total number of tests run: 11
+[info] Suites: completed 3, aborted 0
+[info] All tests passed.
+[info] Tests: succeeded 11, failed 0, canceled 2, ignored 0, pending 0
+[info] All tests passed.
+[info] Tests: succeeded 40, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 959 milliseconds.
+[info] Total number of tests run: 116
+[info] Suites: completed 6, aborted 0
+[info] Tests: succeeded 116, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 974 milliseconds.
+[info] Total number of tests run: 44
+[info] Suites: completed 6, aborted 0
+[info] Tests: succeeded 44, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 866 milliseconds.
+[info] Total number of tests run: 56
+[info] Suites: completed 6, aborted 0
+[info] Tests: succeeded 56, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
 [info] MonitoringEngineSpec:
 [info] MonitoringEngine with no detectors
 [info] - should produce no alerts
@@ -667,6 +651,27 @@
 [info] - should deliver events to all subscribers
 [info] - should track all published events
 [info] - should clear listeners and events
+[info] DetectorsSpec:
+[info] ComponentHealthDetector
+[info] - should fire on ComponentFailure with FailClosed as P2High
+[info] - should use P3Medium for FailOpenFlagged
+[info] - should use P3Medium for FailOpen
+[info] - should ignore non-ComponentFailure events
+[info] ConstraintViolationDetector
+[info] - should fire on ViolationDetected
+[info] - should pass through severity from event
+[info] - should ignore non-ViolationDetected events
+[info] GhostRateDetector
+[info] - should not fire when ghost rate is below threshold
+[info] - should fire when ghost rate exceeds threshold
+[info] - should not fire on empty window (only config events)
+[info] - should evict events outside the window
+[info] BlockRateAnomalyDetector
+[info] - should not fire when block rate is below threshold
+[info] - should fire when block rate exceeds threshold
+[info] - should ignore EPG evaluations (only count ROC)
+[info] AbstractWindowDetector
+[info] - should maintain sliding window
 [info] GovernanceEventSpec:
 [info] EvaluationCompleted
 [info] - should carry all fields correctly
@@ -691,15 +696,11 @@
 [info] - should filter by category
 [info] - should filter by severity
 [info] - should clear all alerts
-[info] Run completed in 1 second, 797 milliseconds.
-[info] Total number of tests run: 71
-[info] Suites: completed 9, aborted 0
-[info] Tests: succeeded 71, failed 0, canceled 0, ignored 0, pending 0
+[info] Run completed in 196 milliseconds.
+[info] Total number of tests run: 41
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
 [info] All tests passed.
-[info] AuthorshipFieldsSpec:
-[info] - new fields load
-[info] - old JSON without the fields still loads with defaults
-[info] - buildHierarchy succeeds with a procedural constraint and no evidence
 [info] AgentSpec:
 [info] Agent
 [info] - should store id, name, domains, and levels
@@ -711,6 +712,10 @@
 [info] - should reject unauthorized level
 [info] - should reject both domain and level
 [info] - should enforce non-overlapping domain isolation
+[info] AuthorshipFieldsSpec:
+[info] - new fields load
+[info] - old JSON without the fields still loads with defaults
+[info] - buildHierarchy succeeds with a procedural constraint and no evidence
 [info] ConfigLoaderSpec:
 [info] ConfigLoader.loadFromString
 [info] - should parse valid JSON
@@ -797,8 +802,15 @@
 [info] - should return error for unknown agent
 [info] execute
 [info] - should return error for unknown tool
-[info] GoldenVectorsSpec:
-[info] - published golden vectors match the Scala digest
+[info] EndToEndSpec:
+[info] - a valid bundle scores every non-probe requirement SATISFIED or the documented NOT_RUNs
+[info] - every requirement id in the spec catalogue is produced exactly once
+[info] - exit code 1 when anything is violated
+[info] PrivacyChecksSpec:
+[info] - digests, UUIDs and signatures are not PII
+[info] - an SSN in GIL metadata violates R-AI6
+[info] - an email in an alert summary violates R-AI6
+[info] - an extra field in an audit record (content smuggled in) violates R-AI6
 [info] LinkageChecksSpec:
 [info] - valid bundle: no ghosts
 [info] - an infra call with no interaction id is a ghost
@@ -807,51 +819,9 @@
 [info] - a GIL entry without a principal violates R-EA2
 [info] - ghosts inside the probe window do not count against the workload
 [info] - no infra file: R-EA1 NOT_RUN
-[info] JsonSupportSpec:
-[info] EntityEncoder
-[info] - should encode EvaluateResponse to JSON
-[info] EntityDecoder
-[info] - should decode JSON string to EvaluateRequest
-[info] - should handle request with default metadata
-[info] Round-trip encoding
-[info] - should preserve EvaluateResponse fields
-[info] ErrorResponse
-[info] - should encode correctly
-[info] HealthResponse
-[info] - should encode correctly
-[info] Run completed in 2 seconds, 88 milliseconds.
-[info] Total number of tests run: 41
-[info] Suites: completed 3, aborted 0
-[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] Run completed in 1 second, 803 milliseconds.
-[info] Total number of tests run: 27
-[info] Suites: completed 3, aborted 0
-[info] Tests: succeeded 27, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] Run completed in 1 second, 724 milliseconds.
-[info] Total number of tests run: 41
-[info] Suites: completed 3, aborted 0
-[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
-[info] GovernanceRoutesSpec:
-[info] POST /api/v1/evaluate
-[info] - should return 200 with allSatisfied true for clean prompt with audit_logging enabled
-[info] - should return 200 with allSatisfied false for prompt with PII (SSN)
-[info] GET /api/v1/config
-[info] - should return 200 with config summary
-[info] GET /api/v1/constraints
-[info] - should return 200 with constraint list
-[info] GET /api/v1/health
-[info] - should return 200 with healthy status
-[info] GET /api/v1/nonexistent
-[info] - should return 404
-[info] POST /api/v1/evaluate/output
-[info] - should return 200 with evaluation response
-[info] EndToEndSpec:
-[info] - a valid bundle scores every non-probe requirement SATISFIED or the documented NOT_RUNs
-[info] - every requirement id in the spec catalogue is produced exactly once
-[info] - exit code 1 when anything is violated
+[info] JdbcSpec:
+[info] - a rollback failure does not replace the original exception
+[info] - a close failure does not mask f's error, and alone becomes a Left
 [info] ConfigChecksSpec:
 [info] - valid bundle satisfies config requirements
 [info] - author equal to approver violates R-EA4
@@ -867,23 +837,18 @@
 [info] - a blocked interaction that still has a ROC record violates R-EPG-BLOCK
 [info] - a procedural attestation by a non-human violates R-EPG-REEVAL
 [info] - an unsatisfied procedural entry with no attestor (unattested) does not violate R-EPG-REEVAL
-[info] MdrChecksSpec:
-[info] - no ghosts and continuous heartbeats
-[info] - an unalerted ghost violates R-MDR-ALERT
-[info] - a ghost alerted within the detection delay satisfies R-MDR-ALERT
-[info] - a heartbeat gap is an ungoverned window
-[info] - without an MDR config the liveness check cannot run
 [info] BundleReaderSpec:
 [info] - reads every part of a valid bundle
 [info] - a missing file is None, an empty file is Some(empty)
 [info] - a missing bundle.json is an error
 [info] - an undecodable audit line is an error naming the file and line
 [info] - infra lines with a null interaction id read as None
-[info] Run completed in 1 second, 676 milliseconds.
-[info] Total number of tests run: 13
-[info] Suites: completed 2, aborted 0
-[info] Tests: succeeded 13, failed 0, canceled 0, ignored 0, pending 0
-[info] All tests passed.
+[info] GoldenVectorsSpec:
+[info] - published golden vectors match the Scala digest
+[info] GhostProbeScoringSpec:
+[info] - an injected ghost that was seen and alerted satisfies R-PROBE-GHOST
+[info] - an injected ghost without an alert violates R-PROBE-GHOST
+[info] - no probe results: NOT_RUN
 [info] RocChecksSpec:
 [info] - valid bundle
 [info] - a Critical deterministic failure delivered as pass violates R-ROC-DECISION
@@ -892,15 +857,12 @@
 [info] - a 2xx model call with no ROC record violates R-ROC-PRESENT
 [info] - a project threshold above the enterprise one violates R-ROC-THRESH
 [info] - degraded records: right posture satisfies, wrong posture violates, bad signature violates
-[info] PrivacyChecksSpec:
-[info] - digests, UUIDs and signatures are not PII
-[info] - an SSN in GIL metadata violates R-AI6
-[info] - an email in an alert summary violates R-AI6
-[info] - an extra field in an audit record (content smuggled in) violates R-AI6
-[info] GhostProbeScoringSpec:
-[info] - an injected ghost that was seen and alerted satisfies R-PROBE-GHOST
-[info] - an injected ghost without an alert violates R-PROBE-GHOST
-[info] - no probe results: NOT_RUN
+[info] MdrChecksSpec:
+[info] - no ghosts and continuous heartbeats
+[info] - an unalerted ghost violates R-MDR-ALERT
+[info] - a ghost alerted within the detection delay satisfies R-MDR-ALERT
+[info] - a heartbeat gap is an ungoverned window
+[info] - without an MDR config the liveness check cannot run
 [info] ChainChecksSpec:
 [info] - a valid bundle satisfies every chain requirement
 [info] - a broken link violates R-AI2
@@ -911,151 +873,97 @@
 [info] - an EPG block makes the interaction complete without a ROC record
 [info] - a truncated tail violates R-ANCHOR
 [info] - no audit file means NOT_RUN, never SATISFIED
-CLAD_GATEWAY_CALL iid=f72c5ec8-9244-4f99-9567-133ded554109 template=agent.answer outcome=pass overhead_ms=86
-CLAD_GATEWAY_CALL iid=f4cd5ea7-9486-46d0-af92-1019b258887c template=agent.answer outcome=rejected overhead_ms=1
-[info] Run completed in 2 seconds, 235 milliseconds.
+CLAD_GATEWAY_CALL iid=de85a1b8-ba30-4775-b1e2-87d793faaf9c template=agent.answer outcome=pass overhead_ms=22
+CLAD_GATEWAY_CALL iid=7f5bc783-9a4b-49cb-a51f-366470dfc76d template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=4d175803-128e-4ba1-b8cb-1fe33b5d8295 template=nope outcome=rejected overhead_ms=0
+[info] JsonSupportSpec:
+[info] EntityEncoder
+[info] - should encode EvaluateResponse to JSON
+[info] EntityDecoder
+[info] - should decode JSON string to EvaluateRequest
+[info] - should handle request with default metadata
+[info] Round-trip encoding
+[info] - should preserve EvaluateResponse fields
+[info] ErrorResponse
+[info] - should encode correctly
+[info] HealthResponse
+[info] - should encode correctly
+[info] GovernanceRoutesSpec:
+[info] POST /api/v1/evaluate
+[info] - should return 200 with allSatisfied true for clean prompt with audit_logging enabled
+[info] - should return 200 with allSatisfied false for prompt with PII (SSN)
+[info] GET /api/v1/config
+[info] - should return 200 with config summary
+[info] GET /api/v1/constraints
+[info] - should return 200 with constraint list
+[info] GET /api/v1/health
+[info] - should return 200 with healthy status
+[info] GET /api/v1/nonexistent
+[info] - should return 404
+[info] POST /api/v1/evaluate/output
+[info] - should return 200 with evaluation response
+CLAD_GATEWAY_CALL iid=def8df03-ef5b-4785-b575-cd901debaed3 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=0d86f157-2b08-43fb-81cd-e117eadddd22 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=6629b704-e3cd-4fa6-9dda-c74c696e798c template=agent.answer outcome=rejected overhead_ms=0
+[info] Run completed in 1 second, 886 milliseconds.
+[info] Total number of tests run: 27
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 27, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 1 second, 711 milliseconds.
+[info] Total number of tests run: 41
+[info] Suites: completed 3, aborted 0
+[info] Tests: succeeded 41, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[info] Run completed in 1 second, 718 milliseconds.
 [info] Total number of tests run: 57
 [info] Suites: completed 11, aborted 0
 [info] Tests: succeeded 57, failed 0, canceled 0, ignored 0, pending 0
 [info] All tests passed.
-CLAD_GATEWAY_CALL iid=f04b8af2-2e7c-41c1-9843-7d06de36e293 template=nope outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=4e2bbf21-535f-4fcd-aab5-930814417586 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=8ae1f9c1-60cb-4a7a-b9e4-67b964dac90d template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=4322be77-c928-4cd2-9cf9-6e606c397657 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=f932b87c-64b9-4159-a639-d5fd6c16f4f8 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=e7ff4e07-1f04-412a-8698-0255bec5126c template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=3cebbe86-6498-4864-838e-ef5ff4a7107f template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=9a70b67e-d795-4031-8526-cee79a6c91b5 template=agent.answer outcome=pass overhead_ms=2
-CLAD_GATEWAY_CALL iid=6589954a-9361-4511-99e4-8829cddaf953 template=router.jev outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=b601db25-81c7-4aa1-a8fb-67afbda03b78 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=f764a080-c980-4b52-9ed7-915d89d49ee7 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=11
-CLAD_GATEWAY_CALL iid=65535b5b-8566-4a1e-9521-ca656b5bc8dd template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=5074488f-d1b8-4424-ae65-ad2553909412 template=agent.answer outcome=blocked:gil_unavailable overhead_ms=0
-CLAD_GATEWAY_CALL iid=616bec12-d83c-4974-89b2-0fb22bfd16ca template=agent.answer outcome=blocked:approved_model overhead_ms=1
-CLAD_GATEWAY_CALL iid=589a124d-e897-4ce0-8c54-0791b2bd4a66 template=agent.answer outcome=blocked:contained overhead_ms=7
-CLAD_GATEWAY_CALL iid=c21cb793-a7fd-49d1-9dab-114867b530cf template=agent.answer outcome=pass overhead_ms=19
-CLAD_GATEWAY_CONTAINMENT_UNREADABLE malformed /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/contain9322020296790246729/contained.json: expected null got "n" at index 0
-CLAD_GATEWAY_CALL iid=2b67a1f2-3b0e-402f-9927-bd70863b589e template=agent.answer outcome=blocked:containment_unreadable overhead_ms=6
-CLAD_GATEWAY_CALL iid=5cf57269-ce79-4c73-88e0-5a008ebaa541 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=4
-CLAD_GATEWAY_CALL iid=9a396485-bb8a-46ff-a9dc-5bc725711b48 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=3
-CLAD_GATEWAY_CALL iid=5ce27986-f330-4613-aad3-c1e1b9d07e5d template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=4
-CLAD_GATEWAY_CALL iid=3d9fb89c-e033-4cd0-88c4-7ed731fdb5ab template=agent.answer outcome=pass overhead_ms=1
-CLAD_GATEWAY_CALL iid=c5c5a674-76a4-4ec0-a255-cd5ca54e668c template=agent.answer outcome=pass overhead_ms=1
-CLAD_GATEWAY_CALL iid=b31cfe81-f356-43c7-9715-5a5171509cc3 template=agent.answer outcome=pass overhead_ms=1
-CLAD_GATEWAY_CALL iid=fe41fdb8-e603-4188-a5d5-1ebdf510806c template=agent.answer outcome=pass overhead_ms=0
-CLAD_GATEWAY_CALL iid=c28fcaae-10a7-406d-8313-f110d0d8a749 template=agent.answer outcome=pass overhead_ms=1
-CLAD_GATEWAY_CALL iid=d1a36a5d-de06-4a52-97f3-592e63983cbc template=agent.answer outcome=blocked:approved_model overhead_ms=0
-CLAD_GATEWAY_CALL iid=9159d0a5-e107-48bb-a8bc-8a0115a67a15 template=agent.answer outcome=pass overhead_ms=0
-CLAD_GATEWAY_CALL iid=05e6ffa0-30e6-404e-b40e-fbe60873c797 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=a2370ff6-98df-49c0-b180-a917cbe7bd9e template=agent.answer outcome=pass overhead_ms=2
-CLAD_GATEWAY_CALL iid=5bb68445-ff58-4703-acd8-006f19fce956 template=agent.answer outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=bca00917-7d4e-4723-8be3-f0761d01306a template=agent.answer outcome=pass overhead_ms=167
-CLAD_GATEWAY_INTERNAL_ERROR iid=0f80e5d8-7f04-4109-ba8c-3e44d23a983f java.lang.RuntimeException: duplicate key value violates unique constraint gil_pkey SQLState 23505
-CLAD_GATEWAY_CALL iid=0f80e5d8-7f04-4109-ba8c-3e44d23a983f template=agent.answer outcome=unavailable overhead_ms=0
-CLAD_GATEWAY_INTERNAL_ERROR iid=2e32d102-b705-4f52-95a4-8b9b999d8f4c java.lang.RuntimeException: duplicate key value violates unique constraint gil_pkey SQLState 23505
-CLAD_GATEWAY_EPG_UNAVAILABLE iid=04dd2987-ca35-444c-9df7-9b70761fa580 ERROR: relation "configs" does not exist SQLState 42P01
-CLAD_GATEWAY_CALL iid=04dd2987-ca35-444c-9df7-9b70761fa580 template=agent.answer outcome=blocked:epg_unavailable overhead_ms=1
-CLAD_GATEWAY_CALL iid=03a2667e-7b23-4f6f-bbae-f3494049d6f1 template=agent.answer outcome=pass overhead_ms=79
-CLAD_GATEWAY_CALL iid=986acd3a-0f45-4499-b575-b111857633bb template=agent.answer outcome=pass overhead_ms=54
-CLAD_GATEWAY_CALL iid=cd17bfb7-857c-4bbb-b4d7-de9bab1b888a template=agent.sql outcome=rejected overhead_ms=0
-CLAD_GATEWAY_CALL iid=3a8faf29-4e3f-4e65-a491-2fbf846ab172 template=agent.answer outcome=blocked:contained overhead_ms=28
-CLAD_GATEWAY_CALL iid=601ea1b9-f93b-4328-a5e9-2845a43e2419 template=agent.answer outcome=blocked:contained overhead_ms=1
-CLAD_GATEWAY_CALL iid=e3290b93-62ab-4039-afeb-a7441942294f template=agent.answer outcome=pass overhead_ms=2
-CLAD_GATEWAY_WARN egress log /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/data11055532137296217289/access.log does not exist; the bundle has no infra.jsonl
-[info] CaddyLogSpec:
-[info] - only X-Clad-Interaction-Id is copied; Authorization and Cookie never appear
-[info] - a missing header gives null
-[info] - fractional epoch seconds keep milliseconds
-[info] - a known port maps to its provider host and an unknown port is kept
-[info] - a malformed line is a Left naming the file and line
-[info] - a line without request or status is malformed, not a fabricated entry
-[info] MainSpec:
-[info] - approval-digest prints the digest and that approval is pending for the unapproved fixture
-[info] - check on the fixture config returns 0
-[info] - serve without CLAD_GATEWAY_PORT returns 2 and names the variable
-[info] - a missing config directory variable exits 2 naming it, and an unknown command exits 2
-[info] - migrate does not print the passwords it was given
-[info] - keys generates both key pairs once, and export against a fresh database writes bundle.json
-[info] GatewaySpec:
-[info] - GIL is registered before upstream, the interaction id is shared, the system prompt leads, evidence ends the last user message
-[info] - a client system message is rejected: nothing registered, no upstream call
-[info] - an unknown template is rejected
-[info] - roles other than user, assistant and tool are rejected before registration
-[info] - a principal that keeps an @ after pseudonymisation is rejected before registration
-[info] - rows_json evidence cannot close the data block
-[info] - evidence on a template that takes none, or without a user message, is rejected before registration
-[info] - a contained project blocks passthrough too, with the gateway record
-[info] - a reply whose first choice has no message object is unavailable
-[info] - an unknown model tier is rejected
-[info] - a GIL failure blocks with gil_unavailable and calls nothing
-[info] - the unattested fixture is blocked by EPG with a block record and no upstream call
-[info] - a contained project is blocked with a gateway block:contained record; release lifts it
-[info] - a malformed containment file blocks rather than allowing calls
-[info] - an upstream failure for a Critical template blocks and leaves one supervisor-signed degraded record
-[info] - a 200 reply without choices is treated as unavailable, with a degraded record
-[info] - an empty choices list is treated as unavailable
-[info] - a Standard template upstream failure is Unavailable with the flagged action
-[info] - document_pages evidence cannot close the data block
-[info] - email principals pseudonymise to the same value in any case, and no GIL value holds an @
-[info] - after two delivered calls the records form one chain, verify, and epg records are Prompt
-[info] - passthrough registers the template's project, forwards with the interaction id and returns status and body
-[info] - passthrough to an upstream the template does not declare is rejected: nothing registered, nothing forwarded
-[info] - a passthrough 5xx or 429 is an upstream failure with a degraded record, not a delivered pass
-[info] - a passthrough 4xx other than 429 is the provider's answer and stays delivered with its status
-[info] - an internal error reaches the client as a fixed reason without the exception text
-[info] - an EPG storage failure blocks with a fixed epg_unavailable reason, not the SQL text
-[info] RoutesSpec:
-[info] - 200 carries the provider response, the clad block and the interaction header
-[info] - 403 for an unattested template names the interaction
-[info] - 400 for a system message
-[info] - 401 without a token and with an unknown token
-[info] - 400 principal_not_allowed_for_token for planner:u with the api token; the prefix itself and prefix:x are allowed
-[info] - malformed bodies are 400 governance_rejected, never 500
-[info] - passthrough returns the upstream's status and body, with the interaction header
-[info] - passthrough with an empty path reaches the upstream with an empty path
-[info] - passthrough keeps a multi-segment path and the upstream's non-200 status
-[info] - passthrough to an upstream the template does not declare is a 400 and reaches nothing
-[info] - passthrough needs a token, the headers and an allowed principal
-[info] - health needs no token
-[info] - contain then call is 403 contained; release then call is no longer contained
-[info] - admin routes refuse a client token, no token, and bad bodies or unknown projects are 400
-[info] - Clients.parse accepts a spec and rejects malformed ones
-[info] - passthrough refuses traversal, query, fragment and slash smuggling in path segments
-[info] - Clients.toString shows prefixes and a count, never a token
-[info] - a delivered passthrough reply with an unusable status is 502 with an error body, not a 500
-[info] - a principal of exactly <prefix>: is refused
-[info] YamlJsonSpec:
-[info] - an unquoted timestamp keeps the full instant, so Instant.parse still works
-[info] - an unquoted date-only value stays the date string
-[info] - an unquoted attested_at loads as an attestation
-[info] TemplatesSpec:
-[info] - all seven templates load, ids match file names, tiers come from the project
-[info] - slots in text equal declared slots
-[info] - render substitutes once, literally, and keeps JSON braces
-[info] - render refuses missing and undeclared slot values
-[info] - metadata names the model's registry status
-[info] - a non-human attestor is refused
-[info] - runtime values are required, never defaulted
-[info] - load refuses text slots that are not declared, naming the file
-[info] - load refuses a slots field that is not a mapping, naming the file
-[info] - render returns a Left for a hand-built template using an undeclared slot
-[info] - a model with status approved must name a human central approver
-[info] - a template declares its passthrough upstream, or none
-[info] HttpUpstreamSpec:
-[info] - request carries bearer key and interaction id, reply comes back
-[info] - 429 then 200 retries once with the configured wait
-[info] - 503 twice with one retry gives Left naming 503 and never leaks the key
-[info] - a non-retryable error status is Left without retry
-[info] - a 200 with an HTML body is Left
-[info] - a handler slower than the timeout is Left cannot reach
-[info] - a closed port is Left cannot reach
-[info] - passthrough posts the body byte for byte to base/path and returns status and body
-[info] - passthrough with an empty path posts to the base URL itself
-[info] - passthrough to an unknown name is Left
-[info] - an interrupt during the back-off sleep is Left and restores the interrupt flag
-[info] - passthrough joins a trailing-slash base and a leading-slash path with one slash
-[info] - a provider body that echoes the key is redacted in the error
-[info] - a passthrough body that echoes the key is redacted, whatever the status
+[info] Run completed in 1 second, 728 milliseconds.
+[info] Total number of tests run: 13
+[info] Suites: completed 2, aborted 0
+[info] Tests: succeeded 13, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+CLAD_GATEWAY_CALL iid=4a8c06af-08b9-46d9-b50c-ef6799eb75bd template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=7aa7bca0-909e-46a8-82c8-fe474feaf722 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=1bb7a65a-4d82-49f5-8960-f6b6eefe0171 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=70330c37-7985-4ec3-8ea1-13b1a0b376a3 template=agent.answer outcome=pass overhead_ms=3
+CLAD_GATEWAY_CALL iid=103c7f09-4bec-4917-b61e-82744dc39f45 template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_CALL iid=860467c1-3cc7-4457-aa27-f5478d4902fc template=router.jev outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=1baf7312-a43c-46cf-895e-2da4bc38b702 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=e35cf629-87e8-4479-9cc6-08e1be49c2a9 template=agent.answer outcome=pass overhead_ms=109
+CLAD_GATEWAY_CALL iid=127ce639-ac84-4df1-bdeb-5b7931b3f646 template=agent.answer outcome=blocked:approved_model overhead_ms=3
+CLAD_GATEWAY_CALL iid=b181658d-18fd-4edd-98f3-8eec1dddaca0 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=4
+CLAD_GATEWAY_CALL iid=6b508159-dcdb-4e13-97b7-5207cca17700 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=7477aeff-4851-45dd-8382-fc590756b43c template=agent.answer outcome=pass overhead_ms=46
+CLAD_GATEWAY_CALL iid=fb2b0ae7-0d96-4996-8846-e51d73f82d01 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=daceb040-ad2c-4372-9536-092101eb4558 template=agent.answer outcome=blocked:gil_unavailable overhead_ms=0
+CLAD_GATEWAY_CALL iid=ef88a48c-b0d3-458d-b91e-a133564d6773 template=agent.answer outcome=blocked:approved_model overhead_ms=0
+CLAD_GATEWAY_CALL iid=c126d8d0-5fde-4da3-b484-953dcf60b7a3 template=agent.answer outcome=pass overhead_ms=46
+CLAD_GATEWAY_CALL iid=ed420536-e0d0-40ad-ae5c-dcfc24bfb7a5 template=agent.sql outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=5d9d58b8-6e16-4a48-8567-c83647077cb8 template=agent.answer outcome=blocked:contained overhead_ms=1
+CLAD_GATEWAY_CALL iid=86ffaacc-73b2-49f1-9a93-1c03bfff7e91 template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_CALL iid=6f718e0c-1390-4ad1-a992-0b80709bf238 template=agent.answer outcome=blocked:contained overhead_ms=32
+CLAD_GATEWAY_CONTAINMENT_UNREADABLE malformed /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/contain2651890226347951065/contained.json: expected null got "n" at index 0
+CLAD_GATEWAY_CALL iid=35d4b468-f31e-4bd3-8d40-ea9ee527bd6a template=agent.answer outcome=blocked:containment_unreadable overhead_ms=8
+CLAD_GATEWAY_CALL iid=8923f48a-9594-4a6c-80e1-51b4766bed85 template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_CALL iid=da541768-17f0-4256-ab1a-30ca8b939409 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=2
+CLAD_GATEWAY_CALL iid=15f3cf16-f54d-4189-8f6d-e0a2f0293f95 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=1
+CLAD_GATEWAY_CALL iid=9984beff-52cc-43b2-a860-8551aad3e304 template=agent.answer outcome=rejected overhead_ms=0
+CLAD_GATEWAY_CALL iid=30deabe6-21ca-456f-aedf-ead48fd7e284 template=agent.answer outcome=blocked:upstream_unavailable overhead_ms=1
+CLAD_GATEWAY_CALL iid=530fb705-5625-4c0b-b07c-ad8e0997d14f template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_CALL iid=5cc8c157-61c6-4e8f-98eb-b52e398f967c template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_CALL iid=5a4251f2-5012-483a-b7ae-6784c33ac084 template=agent.answer outcome=pass overhead_ms=0
+CLAD_GATEWAY_CALL iid=21672c6c-5a3e-4247-a329-b999bb7fae74 template=agent.answer outcome=pass overhead_ms=0
+CLAD_GATEWAY_CALL iid=8e4b15b5-ca16-47a6-ba46-e49ee3f1b892 template=agent.answer outcome=pass overhead_ms=0
+CLAD_GATEWAY_CALL iid=b210d5f9-0f5f-4ffb-8a3a-96d9e29e66e6 template=agent.answer outcome=blocked:contained overhead_ms=1
+CLAD_GATEWAY_CALL iid=de74e393-409e-44fc-8ec0-eee1d5d4503b template=agent.answer outcome=pass overhead_ms=1
+CLAD_GATEWAY_INTERNAL_ERROR iid=ca892a32-9ac1-4743-b589-4bb765cdded6 java.lang.RuntimeException: duplicate key value violates unique constraint gil_pkey SQLState 23505
+CLAD_GATEWAY_CALL iid=ca892a32-9ac1-4743-b589-4bb765cdded6 template=agent.answer outcome=unavailable overhead_ms=0
+CLAD_GATEWAY_INTERNAL_ERROR iid=2714e077-65db-4158-86c8-dff5e978acef java.lang.RuntimeException: duplicate key value violates unique constraint gil_pkey SQLState 23505
+CLAD_GATEWAY_EPG_UNAVAILABLE iid=523499a4-f5ce-4b28-b320-2fc1655f2134 ERROR: relation "configs" does not exist SQLState 42P01
+CLAD_GATEWAY_CALL iid=523499a4-f5ce-4b28-b320-2fc1655f2134 template=agent.answer outcome=blocked:epg_unavailable overhead_ms=0
 [info] GovernanceSpec:
 [info] - the agent path has 6 enterprise, 1 department and 1 project constraint
 [info] - the exported config loads in clad, is deterministic, and has the path's mechanical checkers only
@@ -1077,30 +985,15 @@ CLAD_GATEWAY_WARN egress log /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/da
 [info] - an unknown evaluability is refused
 [info] - a project in two departments is refused
 [info] - an author not authorised for the domain and level is refused
-[info] EpgSpec:
-[info] - one entry per constraint on the path; a prompt with an SSN fails contains_pii
-[info] - an unattested template gives an unsatisfied procedural entry; pending models fail approved_model
-[info] - clad's own re-evaluation of the stored artifact agrees with the record
-[info] - the startup check passes every template's text; approvals and attestations are warnings
-[info] - the artifact digest is the digest of the stored content
-[info] - an attested template carries attestor and time into the procedural detail
-[info] - a template whose text violates a text constraint is a startup error, not a warning
-[info] JdbcSpec:
-[info] - a rollback failure does not replace the original exception
-[info] - a close failure does not mask f's error, and alone becomes a Left
-[info] KeysSpec:
-[info] - generate once, load, sign, verify; the private key is mode 600; the key id is 16 hex
-[info] - generate leaves exactly the two key files, the private one still mode 600
-[info] - generate when the key exists leaves both files byte-identical
-[info] - writeNew onto an existing private key is a Left, replaces nothing and leaves no temp file
-[info] - a key pair written by personal_finance's Python generate_keypair loads, with the same key id
-[info] - failures are Left, never thrown
-[info] MigrateSpec:
-[info] - every table gets the refuse-change triggers; the writer gets INSERT and SELECT only
-[info] - a password that is not alphanumeric is refused (it is inlined into ALTER ROLE)
-[info] - migrate is idempotent; the writer cannot change rows and the triggers stop even the superuser
-[info] - redaction removes the password from ALTER ROLE text
-[info] - a failing migration reports the statement index and never the password
+CLAD_GATEWAY_WARN egress log /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/data5998488557956185228/access.log does not exist; the bundle has no infra.jsonl
+[info] MainSpec:
+[info] - approval-digest prints the digest and that approval is pending for the unapproved fixture
+[info] - check on the fixture config returns 0
+[info] - a template declaring the chat upstream as its passthrough makes check and serve refuse, naming the template
+[info] - serve without CLAD_GATEWAY_PORT returns 2 and names the variable
+[info] - a missing config directory variable exits 2 naming it, and an unknown command exits 2
+[info] - migrate does not print the passwords it was given
+[info] - keys generates both key pairs once, and export against a fresh database writes bundle.json
 [info] RoundTripSpec:
 [info] - records written by the gateway export to a bundle that conformance verifies
 [info]   + R-AI2 -> Satisfied 
@@ -1132,15 +1025,123 @@ CLAD_GATEWAY_WARN egress log /var/folders/w3/f21j370n301bd66fc27z8t9r0000gp/T/da
 [info] R-CS -> NotRun not implemented by the conformance module 
 [info] - a database where migrate has not run gives a bundle without gil.jsonl or audit.jsonl
 [info] - export refuses a directory that already holds files
+[info] RoutesSpec:
+[info] - 200 carries the provider response, the clad block and the interaction header
+[info] - 403 for an unattested template names the interaction
+[info] - 400 for a system message
+[info] - 401 without a token and with an unknown token
+[info] - 400 principal_not_allowed_for_token for planner:u with the api token; the prefix itself and prefix:x are allowed
+[info] - malformed bodies are 400 governance_rejected, never 500
+[info] - passthrough returns the upstream's status and body, with the interaction header
+[info] - passthrough with an empty path reaches the upstream with an empty path
+[info] - passthrough keeps a multi-segment path and the upstream's non-200 status
+[info] - passthrough to an upstream the template does not declare is a 400 and reaches nothing
+[info] - passthrough needs a token, the headers and an allowed principal
+[info] - health needs no token
+[info] - contain then call is 403 contained; release then call is no longer contained
+[info] - admin routes refuse a client token, no token, and bad bodies or unknown projects are 400
+[info] - Clients.parse accepts a spec and rejects malformed ones
+[info] - passthrough refuses traversal, query, fragment and slash smuggling in path segments
+[info] - Clients.toString shows prefixes and a count, never a token
+[info] - a delivered passthrough reply with an unusable status is 502 with an error body, not a 500
+[info] - a principal of exactly <prefix>: is refused
+[info] HttpUpstreamSpec:
+[info] - request carries bearer key and interaction id, reply comes back
+[info] - 429 then 200 retries once with the configured wait
+[info] - 503 twice with one retry gives Left naming 503 and never leaks the key
+[info] - a non-retryable error status is Left without retry
+[info] - a 200 with an HTML body is Left
+[info] - a handler slower than the timeout is Left cannot reach
+[info] - a closed port is Left cannot reach
+[info] - passthrough posts the body byte for byte to base/path and returns status and body
+[info] - passthrough with an empty path posts to the base URL itself
+[info] - passthrough to an unknown name is Left
+[info] - an interrupt during the back-off sleep is Left and restores the interrupt flag
+[info] - passthrough joins a trailing-slash base and a leading-slash path with one slash
+[info] - a provider body that echoes the key is redacted in the error
+[info] - a passthrough body that echoes the key is redacted, whatever the status
+[info] YamlJsonSpec:
+[info] - an unquoted timestamp keeps the full instant, so Instant.parse still works
+[info] - an unquoted date-only value stays the date string
+[info] - an unquoted attested_at loads as an attestation
+[info] KeysSpec:
+[info] - generate once, load, sign, verify; the private key is mode 600; the key id is 16 hex
+[info] - generate leaves exactly the two key files, the private one still mode 600
+[info] - generate when the key exists leaves both files byte-identical
+[info] - writeNew onto an existing private key is a Left, replaces nothing and leaves no temp file
+[info] - a key pair written by personal_finance's Python generate_keypair loads, with the same key id
+[info] - failures are Left, never thrown
+[info] CaddyLogSpec:
+[info] - only X-Clad-Interaction-Id is copied; Authorization and Cookie never appear
+[info] - a missing header gives null
+[info] - fractional epoch seconds keep milliseconds
+[info] - a known port maps to its provider host and an unknown port is kept
+[info] - a malformed line is a Left naming the file and line
+[info] - a line without request or status is malformed, not a fabricated entry
+[info] TemplatesSpec:
+[info] - all seven templates load, ids match file names, tiers come from the project
+[info] - slots in text equal declared slots
+[info] - render substitutes once, literally, and keeps JSON braces
+[info] - render refuses missing and undeclared slot values
+[info] - metadata names the model's registry status
+[info] - a non-human attestor is refused
+[info] - runtime values are required, never defaulted
+[info] - load refuses text slots that are not declared, naming the file
+[info] - load refuses a slots field that is not a mapping, naming the file
+[info] - render returns a Left for a hand-built template using an undeclared slot
+[info] - a model with status approved must name a human central approver
+[info] - a template declares its passthrough upstream, or none
+[info] GatewaySpec:
+[info] - GIL is registered before upstream, the interaction id is shared, the system prompt leads, evidence ends the last user message
+[info] - a client system message is rejected: nothing registered, no upstream call
+[info] - an unknown template is rejected
+[info] - roles other than user, assistant and tool are rejected before registration
+[info] - a principal that keeps an @ after pseudonymisation is rejected before registration
+[info] - rows_json evidence cannot close the data block
+[info] - evidence on a template that takes none, or without a user message, is rejected before registration
+[info] - a contained project blocks passthrough too, with the gateway record
+[info] - a reply whose first choice has no message object is unavailable
+[info] - an unknown model tier is rejected
+[info] - a GIL failure blocks with gil_unavailable and calls nothing
+[info] - the unattested fixture is blocked by EPG with a block record and no upstream call
+[info] - a contained project is blocked with a gateway block:contained record; release lifts it
+[info] - a malformed containment file blocks rather than allowing calls
+[info] - an upstream failure for a Critical template blocks and leaves one supervisor-signed degraded record
+[info] - a 200 reply without choices is treated as unavailable, with a degraded record
+[info] - an empty choices list is treated as unavailable
+[info] - a Standard template upstream failure is Unavailable with the flagged action
+[info] - document_pages evidence cannot close the data block
+[info] - email principals pseudonymise to the same value in any case, and no GIL value holds an @
+[info] - after two delivered calls the records form one chain, verify, and epg records are Prompt
+[info] - passthrough registers the template's project, forwards with the interaction id and returns status and body
+[info] - passthrough to an upstream the template does not declare is rejected: nothing registered, nothing forwarded
+[info] - a passthrough 5xx or 429 is an upstream failure with a degraded record, not a delivered pass
+[info] - a passthrough 4xx other than 429 is the provider's answer and stays delivered with its status
+[info] - an internal error reaches the client as a fixed reason without the exception text
+[info] - an EPG storage failure blocks with a fixed epg_unavailable reason, not the SQL text
+[info] MigrateSpec:
+[info] - every table gets the refuse-change triggers; the writer gets INSERT and SELECT only
+[info] - a password that is not alphanumeric is refused (it is inlined into ALTER ROLE)
+[info] - migrate is idempotent; the writer cannot change rows and the triggers stop even the superuser
+[info] - redaction removes the password from ALTER ROLE text
+[info] - a failing migration reports the statement index and never the password
+[info] EpgSpec:
+[info] - one entry per constraint on the path; a prompt with an SSN fails contains_pii
+[info] - an unattested template gives an unsatisfied procedural entry; pending models fail approved_model
+[info] - clad's own re-evaluation of the stored artifact agrees with the record
+[info] - the startup check passes every template's text; approvals and attestations are warnings
+[info] - the artifact digest is the digest of the stored content
+[info] - an attested template carries attestor and time into the procedural detail
+[info] - a template whose text violates a text constraint is a startup error, not a warning
 [info] PgStoreSpec:
 [info] - concurrent appends form one chain
 [info] - a second store instance (a restart) continues the stored chain
 [info] - the anchor names the chain length and head
 [info] - concurrent appends leave a parseable anchor naming the full chain
 [info] - register, configs and artifacts are stored; configs and artifacts are idempotent
-[info] Run completed in 4 seconds, 957 milliseconds.
-[info] Total number of tests run: 135
+[info] Run completed in 4 seconds, 51 milliseconds.
+[info] Total number of tests run: 136
 [info] Suites: completed 14, aborted 0
-[info] Tests: succeeded 135, failed 0, canceled 0, ignored 0, pending 0
+[info] Tests: succeeded 136, failed 0, canceled 0, ignored 0, pending 0
 [info] All tests passed.
-[success] Total time: 12 s, completed Oct 17, 2026, 12:44:43 PM
+[success] Total time: 7 s, completed Oct 17, 2026, 12:54:38 PM
