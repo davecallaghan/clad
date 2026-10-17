@@ -22,15 +22,23 @@ object Checkers:
   private val Guarantee = Vector("""guaranteed? returns?""", """risk[- ]free""", """can'?t lose""", """no risk""")
     .map(r => java.util.regex.Pattern.compile(r, java.util.regex.Pattern.CASE_INSENSITIVE))
   private val Hundred = BigDecimal(100)
-  private val Token = """(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(\s*%)?""".r
+  // An optional sign (before or after $), the digits, decimals and a percent sign. A number glued to letters or
+  // digits by a word character or hyphen (401k, S6, 1099-INT, W-2, 2026-10-17) is an identifier, not a figure.
+  private val Token =
+    """(?<![\w.])(?<![A-Za-z]-)(?<!\d-)(?:(-)\$?|\$(-)?)?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(\s*%)?(?!\w)(?!-[A-Za-z0-9])""".r
+  /** Accounting negatives in page text: (50.00) and ($50.00) read as -50.00. */
+  private val Accounting = """\(\s*(\$?\d[\d,]*(?:\.\d+)?)\s*\)""".r
 
   /** A figure as written: its value, the decimals shown and whether it was a percentage. */
   private final case class Figure(value: BigDecimal, decimals: Int, percent: Boolean)
 
-  private def figures(text: String): Vector[Figure] =
-    Token.findAllMatchIn(text).map { m =>
-      val frac = Option(m.group(2)).map(_.drop(1)).getOrElse("")
-      Figure(BigDecimal(m.group(1).replace(",", "") + (if frac.isEmpty then "" else "." + frac)), frac.length, m.group(3) != null)
+  private def figures(text: String, accounting: Boolean = false): Vector[Figure] =
+    val src = if accounting then Accounting.replaceAllIn(text, m => java.util.regex.Matcher.quoteReplacement("-" + m.group(1))) else text
+    Token.findAllMatchIn(src).map { m =>
+      val frac = Option(m.group(4)).map(_.drop(1)).getOrElse("")
+      val magnitude = BigDecimal(m.group(3).replace(",", "") + (if frac.isEmpty then "" else "." + frac))
+      val negative = m.group(1) != null || m.group(2) != null
+      Figure(if negative then -magnitude else magnitude, frac.length, m.group(5) != null)
     }.toVector
 
   private def numeric(n: Double): Figure =
@@ -38,11 +46,11 @@ object Checkers:
     Figure(BigDecimal(bd), math.max(bd.scale, 0), false)
 
   /** Every number in a JSON value: JSON numbers as they are, numbers inside strings by the text rules. */
-  private def jsonFigures(v: ujson.Value): Vector[Figure] = v match
+  private def jsonFigures(v: ujson.Value, accounting: Boolean = false): Vector[Figure] = v match
     case ujson.Num(n) => Vector(numeric(n))
-    case ujson.Str(s) => figures(s)
-    case ujson.Arr(a) => a.toVector.flatMap(jsonFigures)
-    case o: ujson.Obj => o.value.values.toVector.flatMap(jsonFigures)
+    case ujson.Str(s) => figures(s, accounting)
+    case ujson.Arr(a) => a.toVector.flatMap(jsonFigures(_, accounting))
+    case o: ujson.Obj => o.value.values.toVector.flatMap(jsonFigures(_, accounting))
     case _            => Vector.empty
 
   private def matches(f: Figure, row: BigDecimal): Boolean =
@@ -53,8 +61,8 @@ object Checkers:
   private def ignored(f: Figure, runtime: Runtime): Boolean =
     f.decimals == 0 && !f.percent && f.value.abs < BigDecimal(runtime.groundingIgnoreBelow)
 
-  private def grounded(claims: Vector[Figure], evidence: ujson.Value, runtime: Runtime): Boolean =
-    val rows = jsonFigures(evidence).map(_.value)
+  private def grounded(claims: Vector[Figure], evidence: ujson.Value, runtime: Runtime, accounting: Boolean): Boolean =
+    val rows = jsonFigures(evidence, accounting).map(_.value)
     claims.filterNot(ignored(_, runtime)).forall(f => rows.exists(matches(f, _)))
 
   def applicable(property: String, ctx: OutputContext): Boolean = property match
@@ -94,9 +102,9 @@ object Checkers:
   def check(property: String, ctx: OutputContext, runtime: Runtime, roc: RocConfig, gov: Governance): Either[String, Boolean] =
     property match
       case "numbers_grounded" =>
-        Right(ctx.evidence.forall(ev => grounded(figures(ctx.content.replace("$", "")), ev, runtime)))
+        Right(ctx.evidence.forall(ev => grounded(figures(ctx.content), ev, runtime, accounting = false)))
       case "extraction_grounded" =>
-        Right(ctx.evidence.forall(ev => parse(ctx.content).exists(j => grounded(jsonFigures(j), ev, runtime))))
+        Right(ctx.evidence.forall(ev => parse(ctx.content).exists(j => grounded(jsonFigures(j), ev, runtime, accounting = true))))
       case "schema_valid" =>
         ctx.responseSchema.fold[Either[String, Boolean]](Right(true))(schemaValid(ctx.content, _))
       case "tool_calls_valid" => Right(toolCallsValid(ctx))

@@ -92,6 +92,32 @@ class CheckersSpec extends AnyFunSuite:
     assert(!run("route_valid", ctx("garbage")))
   }
 
+  test("signs: a leading minus (before or after $) is part of the figure") {
+    assert(run("numbers_grounded", ctx("a loss of -$1,234.50 this year", evidence = rows("""[{"pnl": -1234.5}]"""))))
+    assert(run("numbers_grounded", ctx("a loss of $-1,234.50 this year", evidence = rows("""[{"pnl": -1234.5}]"""))))
+    assert(!run("numbers_grounded", ctx("a loss of -$1,234.50 this year", evidence = rows("""[{"pnl": 1234.5}]"""))))
+    assert(run("numbers_grounded", ctx("down -5.5%", evidence = rows("""[{"chg": -0.055}]"""))))
+    assert(!run("numbers_grounded", ctx("down 5.5%", evidence = rows("""[{"chg": -0.055}]"""))))
+  }
+
+  test("extraction_grounded: -50 matches page text -50.00 and accounting (50.00)") {
+    assert(run("extraction_grounded", ctx("""{"adj": -50}""", evidence = Some(ujson.Arr("adjustment -50.00 total")))))
+    assert(run("extraction_grounded", ctx("""{"adj": -50}""", evidence = Some(ujson.Arr("adjustment (50.00) total")))))
+    assert(run("extraction_grounded", ctx("""{"adj": -50}""", evidence = Some(ujson.Arr("adjustment ($50.00) total")))))
+    assert(!run("extraction_grounded", ctx("""{"adj": 50}""", evidence = Some(ujson.Arr("adjustment (50.00) total")))))
+  }
+
+  test("identifiers and ISO dates are not figures; a standalone year is") {
+    val ev = rows("""[{"v": 1.5}]""")
+    assert(run("numbers_grounded", ctx("Your 401k plan", evidence = ev)))
+    assert(run("numbers_grounded", ctx("The S6 model", evidence = ev)))
+    assert(run("numbers_grounded", ctx("Form 1099-INT and W-2 filed", evidence = ev)))
+    assert(run("numbers_grounded", ctx("Valid on 2026-10-17", evidence = ev)))
+    assert(!run("numbers_grounded", ctx("You retire in 2045", evidence = ev)))
+    assert(run("numbers_grounded", ctx("You retire in 2045", evidence = rows("""[{"year": 2045}]"""))))
+    assert(run("numbers_grounded", ctx("The balance was 1234.50.", evidence = rows("""[{"b": 1234.5}]"""))))
+  }
+
   test("an unknown property is an error") {
     assert(Checkers.check("nope", ctx(), rt, roc, gov).isLeft)
   }
