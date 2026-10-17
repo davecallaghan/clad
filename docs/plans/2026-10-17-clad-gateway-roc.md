@@ -62,6 +62,10 @@ object RocConfig { def load(dir: java.nio.file.Path, gov: clad.gateway.config.Go
   - `thresholds`: `ThresholdConfig(property, flagThreshold, riskTier, owner, version, level)` for each applicable threshold, plus `ThresholdConfig("tau_max", tauMax, "Critical", owner, version, "enterprise")`.
   
   Every caller (EPG, the startup check, export) now passes `cfg.roc`, so one digest covers both.
+- **The approval covers ROC too.** `Governance.approvalDigest` becomes the sha256 of the canonical JSON `{"constraints": <constraints.yaml without approval>, "roc": <roc.yaml>}`. The thresholds and output constraints are governed constraints, so the human approval of the constraint set must cover them. Consequences:
+  - an approval recorded before `roc.yaml` exists no longer matches, and the set goes back to pending;
+  - `approval-digest` prints the new digest;
+  - test that changing a τ in `roc.yaml` changes the digest and puts the approval back to pending.
 
 `roc.yaml` format (personal_finance's version is written in Task 9):
 
