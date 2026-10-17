@@ -23,7 +23,7 @@
   "Lean differential test: NOT_RUN (the Lean toolchain was removed from this machine to free disk); the 2 Lean cancellations in sbt test are that test",
   "CI on GitHub: not run, branch not pushed",
   "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the preflight check above shows the TemplatesSpec line, which this fix round touched",
-  "live delivered chat call: pending controller check (a throwaway gateway; see the personal_finance decision note)",
+  "live delivered chat call: verified by the controller with a throwaway gateway on 2026-10-17 (agent.answer and planner.interview delivered; exported bundle verified by conformance); see personal_finance docs/governance/decisions/2026-10-16-gateway-moves-to-clad.md",
   "container image and podman smoke checks are stale (built before this fix round); the controller rebuilds the image",
   "serve was not run end to end against a live Postgres and provider by this fix round; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
  ]
