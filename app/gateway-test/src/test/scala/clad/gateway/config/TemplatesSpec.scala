@@ -79,3 +79,28 @@ class TemplatesSpec extends AnyFunSuite:
     val x = Template("h", "1", "p", "Standard", "m", "t", "hi {{x}}", "text", "none", Map.empty)
     assert(Templates.render(x, Map.empty).left.exists(_.contains("undeclared")))
   }
+
+  private def modelsFile(rows: String): Path =
+    val f = java.nio.file.Files.createTempFile("models", ".yaml")
+    java.nio.file.Files.writeString(f, s"provider: p\ntiers: {large: m1}\napproved:\n$rows\n")
+    f
+
+  test("a model with status approved must name a human central approver") {
+    val gov = Fixtures.config.governance
+    def load(row: String) = Templates.loadModels(modelsFile(row), gov)
+    assert(load("  - {id: m1, status: approved, approved_by: null, approved_at: null}").left.exists(e => e.contains("m1") && e.contains("approved_by")))
+    assert(load("  - {id: m1, status: approved, approved_by: claude, approved_at: 2026-10-16}").left.exists(_.contains("m1")))
+    assert(load("  - {id: m1, status: approved, approved_by: nobody, approved_at: 2026-10-16}").left.exists(_.contains("m1")))
+    assert(load("  - {id: m1, status: approved, approved_by: david, approved_at: 2026-10-16}").map(_.statusOf("m1")) == Right("approved"))
+    assert(load("  - {id: m1, status: pending, approved_by: null, approved_at: null}").map(_.statusOf("m1")) == Right("pending"))
+  }
+
+  test("a template declares its passthrough upstream, or none") {
+    val d = java.nio.file.Files.createTempDirectory("prompts")
+    val project = Fixtures.config.governance.projects.keySet.toVector.sorted.headOption.getOrElse("p")
+    def write(id: String, extra: String) = java.nio.file.Files.writeString(d.resolve(s"$id.yaml"),
+      s"id: $id\nversion: 1\nproject: $project\nmodel_tier: large\nresponse_format: text\nevidence_format: none\nslots: {}\n${extra}text: hi\n")
+    write("a.with", "passthrough: jev\n"); write("a.without", "")
+    val loaded = Templates.load(d, t.models, Fixtures.config.governance).fold(fail(_), identity)
+    assert(loaded.get("a.with").flatMap(_.passthrough).contains("jev") && loaded.get("a.without").flatMap(_.passthrough).isEmpty)
+  }

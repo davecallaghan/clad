@@ -20,12 +20,13 @@ object ApprovedFixtures:
     Files.writeString(dir.resolve("attestations.yaml"),
       """attestations: [{template_id: agent.answer, template_version: "1", attestor: david, attested_at: "2026-10-16T10:00:00Z", rationale: reviewed}]""")
     val models = dir.resolve("models.yaml")
-    Files.writeString(models, Files.readString(models).replace("status: pending", "status: approved"))
+    Files.writeString(models, Files.readString(models).replace("status: pending, approved_by: null", "status: approved, approved_by: david"))
     Files.writeString(dir.resolve("prompts").resolve("router.jev.yaml"),
       """id: router.jev
         |version: 1
         |project: router
         |model_tier: small
+        |passthrough: jev
         |response_format: text
         |evidence_format: none
         |slots: {}

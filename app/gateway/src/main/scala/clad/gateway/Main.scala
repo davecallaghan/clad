@@ -144,6 +144,9 @@ object Main:
     val built = for
       cfg <- GatewayConfig.load(dir)
       epg <- Epg.build(cfg)
+      declared = cfg.templates.all.flatMap(_.passthrough).toSet
+      _ <- declared.find(!upstreamKeys.contains(_)).fold[Either[String, Unit]](Right(()))(n =>
+        Left(s"a template declares passthrough to $n, which is not in CLAD_GATEWAY_UPSTREAMS"))
       _ <- Either.cond(report(cfg, epg), (), "the startup check found errors; the gateway does not start")
       comp <- Keys.load(keysDir, "components")
       sup <- Keys.load(keysDir, "supervisor")
@@ -152,7 +155,7 @@ object Main:
     yield
       val store = PgStore(writerUrl, cfg.runtime.chainLockKey, ChainAnchorStore(anchors), comp)
       val gateway = Gateway(cfg, epg, store, comp, sup, HttpUpstream(chat._1, chat._2, cfg.runtime),
-        HttpPassthrough(upstreamKeys, cfg.runtime), data.resolve("containment.json"), () => Instant.now())
+        HttpPassthrough(upstreamKeys.filter((n, _) => declared.contains(n)), cfg.runtime), data.resolve("containment.json"), () => Instant.now())
       Routes(gateway, clients).routes
     built.fold(fail, routes =>
       val base = EmberServerBuilder.default[IO].withPort(port)

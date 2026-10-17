@@ -10,7 +10,7 @@ object GatewayConfig:
   def loadWith(dir: Path, runtime: Runtime): Either[String, GatewayConfig] =
     for
       gov <- Governance.load(dir.resolve("constraints.yaml"))
-      models <- Templates.loadModels(dir.resolve("models.yaml"))
+      models <- Templates.loadModels(dir.resolve("models.yaml"), gov)
       templates <- Templates.load(dir.resolve("prompts"), models, gov)
       attestations <- Attestations.load(dir.resolve("attestations.yaml"), gov.humans)
     yield GatewayConfig(gov, templates, attestations, runtime)

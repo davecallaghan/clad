@@ -14,8 +14,11 @@ final class MemoryStore extends GatewayStore:
   val configs = mutable.Map.empty[String, String]
   val artifacts = mutable.Map.empty[String, String]
   var failRegister: Boolean = false
+  var explodeRegister: Option[RuntimeException] = None
+  var failPutConfig: Option[String] = None
 
   def register(entry: GilEntry): Either[String, Unit] = synchronized {
+    explodeRegister.foreach(e => throw e)
     if failRegister then Left("db down")
     else GatewayStore.requiredKeys.find(k => !entry.metadata.contains(k)) match
       case Some(k) => Left(s"GIL metadata needs $k")
@@ -38,7 +41,7 @@ final class MemoryStore extends GatewayStore:
   def degraded(r: SignedDegradedRecord): Either[String, Unit] = synchronized { degradedLines += r; Right(()) }
 
   def putConfig(digest: String, project: String, json: String): Either[String, Unit] = synchronized {
-    configs.getOrElseUpdate(digest, json); Right(())
+    failPutConfig.toLeft(()).map { _ => configs.getOrElseUpdate(digest, json); () }
   }
 
   def putArtifact(digest: String, json: String): Either[String, Unit] = synchronized {

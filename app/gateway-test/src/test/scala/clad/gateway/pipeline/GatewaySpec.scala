@@ -216,3 +216,50 @@ class GatewaySpec extends AnyFunSuite:
     assert(pass.calls.toSeq == Seq(("jev", "", """{"x":1}""", iid)) && resp("status").num == 200 && resp("body").str == "{}")
     assert(rig.store.lines.isEmpty)
   }
+
+  test("passthrough to an upstream the template does not declare is rejected: nothing registered, nothing forwarded") {
+    val pass = FakePassthrough()
+    val rig = Rig(true, pass = pass)
+    for (name, template) <- Seq(("openai", "router.jev"), ("jev", "agent.answer"), ("OPENAI", "router.jev")) do
+      assert(rig.gw.passthrough(name, "chat/completions", template, "api", None, "{}").isInstanceOf[GatewayResult.Rejected], s"$name via $template")
+    assert(rig.store.gil.isEmpty && rig.store.lines.isEmpty && rig.store.degradedLines.isEmpty && pass.calls.isEmpty)
+  }
+
+  private def passWith(status: Int): (Rig, GatewayResult) =
+    val rig = Rig(true, pass = new FakePassthrough { override def forward(n: String, p: String, b: String, i: String) = Right((status, "boom")) })
+    (rig, rig.gw.passthrough("jev", "", "router.jev", "api", None, "{}"))
+
+  test("a passthrough 5xx or 429 is an upstream failure with a degraded record, not a delivered pass") {
+    for status <- Seq(500, 502, 503, 429) do
+      val (rig, r) = passWith(status)
+      assert(r.isInstanceOf[GatewayResult.Unavailable], s"$status gave $r")
+      assert(rig.store.degradedLines.size == 1 && rig.store.degradedLines.head.record.failureReason.contains(status.toString))
+      assert(rig.store.degradedLines.head.record.actionTaken == FailureAction.ProceededFlagged)
+  }
+
+  test("a passthrough 4xx other than 429 is the provider's answer and stays delivered with its status") {
+    for status <- Seq(400, 404, 422) do
+      val (rig, r) = passWith(status)
+      r match
+        case GatewayResult.Delivered(_, "pass", v) => assert(v("status").num == status)
+        case other                                  => fail(s"$status gave $other")
+      assert(rig.store.degradedLines.isEmpty)
+  }
+
+  test("an internal error reaches the client as a fixed reason without the exception text") {
+    val rig = Rig(true)
+    rig.store.explodeRegister = Some(RuntimeException("duplicate key value violates unique constraint gil_pkey SQLState 23505"))
+    rig.gw.complete(answerRequest()) match
+      case GatewayResult.Unavailable(_, reason) => assert(reason == "internal_error")
+      case other                                => fail(s"got $other")
+    rig.gw.passthrough("jev", "", "router.jev", "api", None, "{}") match
+      case GatewayResult.Unavailable(_, reason) => assert(reason == "internal_error")
+      case other                                => fail(s"got $other")
+  }
+
+  test("an EPG storage failure blocks with a fixed epg_unavailable reason, not the SQL text") {
+    val rig = Rig(true)
+    rig.store.failPutConfig = Some("ERROR: relation \"configs\" does not exist SQLState 42P01")
+    val why = blocked(rig.gw.complete(answerRequest()))
+    assert(why == "epg_unavailable" && !why.contains("SQL"))
+  }

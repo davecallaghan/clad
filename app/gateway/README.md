@@ -29,7 +29,7 @@ exits 2 and names it. Secrets are never printed.
 
 | Command | Does | Needs |
 |---|---|---|
-| `serve` | loads config, runs the startup check (errors exit 1; warnings print `CLAD_GATEWAY_WARN ...`), serves | `CLAD_GATEWAY_CONFIG_DIR`, `CLAD_GATEWAY_KEYS_DIR`, `CLAD_GATEWAY_DATA_DIR`, `CLAD_GATEWAY_WRITER_URL`, `CLAD_GATEWAY_UPSTREAMS` (`name=url,...`; `openai` is the chat upstream and every named upstream is a passthrough target), `CLAD_GATEWAY_KEY_<NAME>` per upstream (upper-cased), `CLAD_GATEWAY_TOKENS` (`token=prefix,...`), `CLAD_GATEWAY_ADMIN_TOKEN`, `CLAD_GATEWAY_PORT`. Optional: `CLAD_GATEWAY_HOST` (set `0.0.0.0` in a container; otherwise http4s's default bind address applies) |
+| `serve` | loads config, runs the startup check (errors exit 1; warnings print `CLAD_GATEWAY_WARN ...`), serves | `CLAD_GATEWAY_CONFIG_DIR`, `CLAD_GATEWAY_KEYS_DIR`, `CLAD_GATEWAY_DATA_DIR`, `CLAD_GATEWAY_WRITER_URL`, `CLAD_GATEWAY_UPSTREAMS` (`name=url,...`; `openai` is the chat upstream; an upstream is a passthrough target only if a template declares `passthrough: <name>`, and startup fails if a template names an upstream that is not listed), `CLAD_GATEWAY_KEY_<NAME>` per upstream (upper-cased), `CLAD_GATEWAY_TOKENS` (`token=prefix,...`), `CLAD_GATEWAY_ADMIN_TOKEN`, `CLAD_GATEWAY_PORT`. Optional: `CLAD_GATEWAY_HOST` (set `0.0.0.0` in a container; otherwise http4s's default bind address applies) |
 | `migrate` | creates the governance schemas, roles and grants | `CLAD_GATEWAY_ADMIN_URL`, `CLAD_GATEWAY_WRITER_PASSWORD`, `CLAD_GATEWAY_READER_PASSWORD` |
 | `keys` | generates the `components` and `supervisor` Ed25519 pairs if absent; prints a backup reminder | `CLAD_GATEWAY_KEYS_DIR` |
 | `export --since T --until T --out DIR [--probe-since T --probe-until T]` | writes the evidence bundle (`DIR` must be new or empty) | `CLAD_GATEWAY_READER_URL`, `CLAD_GATEWAY_EGRESS_LOG`, `CLAD_GATEWAY_LISTENERS` (`port=host,...`), `CLAD_GATEWAY_CONFIG_DIR`, `CLAD_GATEWAY_KEYS_DIR`, `CLAD_GATEWAY_DATA_DIR`, `CLAD_GATEWAY_APP` |
@@ -49,7 +49,10 @@ and `clad.principal` must start with it. Admin routes need the separate admin to
   and `clad.outcome`, header `X-Clad-Interaction-Id`); 403 `governance_block`; 400 `governance_rejected` (nothing
   registered); 503 `unavailable` (a degraded record exists).
 - `POST /v1/passthrough/{upstream}/{path}`: forwards body and path to the named upstream with `X-Clad-Template`,
-  `X-Clad-Principal`, `X-Clad-Session`; no EPG record (provider-owned prompt).
+  `X-Clad-Principal`, `X-Clad-Session`; no EPG record (provider-owned prompt). Allowed only to the upstream the
+  request's template declares (`passthrough: <upstream>` in the template YAML); any other upstream, including
+  `openai`, is a 400 and nothing is registered. An upstream 5xx or 429 is an upstream failure (degraded record,
+  tier posture as for chat); other 4xx statuses are the provider's answer and are returned as they are.
 - `POST /admin/contain {project, reason}` and `POST /admin/release {project}`: containment, a human action.
 - `GET /v1/health`: static in this version.
 

@@ -117,6 +117,12 @@ class RoutesSpec extends AnyFunSuite:
     assert(status.code == 418)
   }
 
+  test("passthrough to an upstream the template does not declare is a 400 and reaches nothing") {
+    val pass = FakePassthrough()
+    val (status, body, _) = post(Rig(pass = pass), "/v1/passthrough/openai/chat/completions", Some("tok-api"), """{"model":"x","messages":[]}""", passHeaders*)
+    assert(status == Status.BadRequest && errType(body) == "governance_rejected" && pass.calls.isEmpty)
+  }
+
   test("passthrough needs a token, the headers and an allowed principal") {
     val rig = Rig()
     assert(post(rig, "/v1/passthrough/jev", None, "{}", passHeaders*)._1 == Status.Unauthorized)

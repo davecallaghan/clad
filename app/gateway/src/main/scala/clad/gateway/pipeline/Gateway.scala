@@ -19,6 +19,11 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
   private val ComponentGateway = "gateway"
   private val ComponentEpg = "epg"
   private val Lock = Object()
+  /** What a client sees for a server-side failure: the detail goes to stderr with the interaction id, never to the client. */
+  private val InternalError = "internal_error"
+  private val EpgUnavailable = "epg_unavailable"
+  private val ServerErrorClass = 5
+  private val TooManyRequests = 429
 
   private val posture: Map[String, FailurePosture] = Map(
     "Critical" -> FailurePosture.FailClosed, "Standard" -> FailurePosture.FailOpenFlagged, "Low" -> FailurePosture.FailOpen)
@@ -35,7 +40,7 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
       try run(req, iid, spent)
       catch case NonFatal(e) =>
         System.err.println(s"CLAD_GATEWAY_INTERNAL_ERROR iid=$iid ${e.getClass.getName}: ${e.getMessage}")
-        Unavailable(Some(iid), s"internal error: ${e.getMessage}")
+        Unavailable(Some(iid), InternalError)
     val (id, outcome) = result match
       case Delivered(i, o, _)  => (i, o)
       case Blocked(i, r)       => (i, s"blocked:$r")
@@ -175,7 +180,9 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
         r.artifactDigest, r.configDigest)
     yield r
     outcome match
-      case Left(why) => Left(s"epg_unavailable: $why")
+      case Left(why) =>
+        System.err.println(s"CLAD_GATEWAY_EPG_UNAVAILABLE iid=$iid $why")
+        Left(EpgUnavailable)
       case Right(r) if r.blocked =>
         Left(r.entries.find(!_.satisfied).map(_.constraint.property.value).getOrElse("epg_blocked"))
       case Right(_) => Right(())
@@ -222,6 +229,8 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
     try
       cfg.templates.get(templateId) match
         case None => Rejected(s"unknown template $templateId")
+        case Some(t) if !t.passthrough.contains(name) =>
+          Rejected(s"template $templateId does not declare passthrough to $name")
         case Some(t) =>
           pseudonym(principal) match
             case Left(why) => Rejected(why)
@@ -236,12 +245,14 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
                       try forwarder.forward(name, path, body, iid)
                       catch case NonFatal(e) => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
                     reply match
+                      case Right((status, _)) if status / 100 == ServerErrorClass || status == TooManyRequests =>
+                        fail(t, iid, s"HTTP $status")
                       case Right((status, text)) => Delivered(iid, "pass", ujson.Obj("status" -> status, "body" -> text))
                       case Left(why)             => fail(t, iid, why)
               }
     catch case NonFatal(e) =>
       System.err.println(s"CLAD_GATEWAY_INTERNAL_ERROR iid=$iid ${e.getClass.getName}: ${e.getMessage}")
-      Unavailable(Some(iid), s"internal error: ${e.getMessage}")
+      Unavailable(Some(iid), InternalError)
 
   def contain(project: String, reason: String): Either[String, Unit] = update(project, Some(reason))
   def release(project: String): Either[String, Unit] = update(project, None)

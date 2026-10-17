@@ -78,6 +78,12 @@ object BundleExport:
         ids + (role -> id)
     }
 
+  /** A configured egress log that does not exist is left out of the bundle, loudly. */
+  private def present(p: Path): Boolean =
+    val exists = Files.exists(p)
+    if !exists then System.err.println(s"CLAD_GATEWAY_WARN egress log $p does not exist; the bundle has no infra.jsonl")
+    exists
+
   def write(out: Path, since: Instant, until: Instant, probe: Option[(Instant, Instant)], readerUrl: String,
             egressLog: Option[Path], listeners: Map[String, String], anchorDir: Path, keysDir: Path,
             governance: Governance, app: String): Either[String, Path] =
@@ -91,7 +97,7 @@ object BundleExport:
           keyIds <- keyFiles(out, keysDir)
           anchor <- ChainAnchorStore(anchorDir).read.toEither.left.map(e => s"cannot read the chain anchor in $anchorDir: ${e.getMessage}")
           _ <- Jdbc.withSnapshot(readerUrl)(c => tables(out, c, since, until))
-          infra <- egressLog.filter(Files.exists(_)).fold[Either[String, Option[Vector[ujson.Obj]]]](Right(None))(
+          infra <- egressLog.filter(present).fold[Either[String, Option[Vector[ujson.Obj]]]](Right(None))(
             p => CaddyLog.read(p, listeners).map(Some(_)))
         yield
           anchor.foreach(a => jsonl(out.resolve("anchors.jsonl"), Seq(ujson.write(ujson.Obj("ts" -> a.anchor.updatedAt.toString,

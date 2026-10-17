@@ -152,7 +152,10 @@ Responses:
 ### 6.2 `POST /v1/passthrough/{upstream}/{path}`
 
 For providers that are not chat models (personal_finance's Jev router). The body and the path are forwarded to the
-configured upstream; `X-Clad-Template`, `X-Clad-Principal` and `X-Clad-Session` headers carry the context. The
+upstream that the request's template declares (`passthrough: <upstream name>` in the template YAML). A request for
+any other upstream, the chat upstream included, is a 400 `governance_rejected` and nothing is registered, so a client
+token cannot use passthrough to reach a provider with an arbitrary body. An upstream 5xx or 429 is an upstream
+failure (degraded record, tier posture as for chat); other 4xx statuses are the provider's answer and are returned. The `X-Clad-Template`, `X-Clad-Principal` and `X-Clad-Session` headers carry the context. The
 gateway registers the GIL entry, adds `X-Clad-Interaction-Id`, and runs the project's deterministic output
 constraints on the JSON reply (for Jev, `route_valid`). There is no EPG record: the prompt surface is
 provider-owned (External governability), which the adopter records as residual risk.

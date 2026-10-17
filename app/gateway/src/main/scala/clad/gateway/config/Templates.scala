@@ -5,7 +5,8 @@ import scala.jdk.CollectionConverters.*
 import scala.util.matching.Regex
 
 final case class Template(id: String, version: String, project: String, tier: String, model: String, modelTier: String,
-                          text: String, responseFormat: String, evidenceFormat: String, slots: Map[String, String])
+                          text: String, responseFormat: String, evidenceFormat: String, slots: Map[String, String],
+                          passthrough: Option[String] = None)
 
 final case class Models(provider: String, tiers: Map[String, String], statuses: Map[String, String]):
   def statusOf(id: String): String = statuses.getOrElse(id, "unapproved")
@@ -33,13 +34,18 @@ object Templates:
       if unbound.nonEmpty then Left(s"${t.id}: text uses undeclared slots ${unbound.toVector.sorted.mkString(", ")}")
       else Right(Slot.replaceAllIn(t.text, m => Regex.quoteReplacement(vars.getOrElse(m.group(1), ""))))
 
-  def loadModels(path: Path): Either[String, Models] =
+  /** A model with status approved must name approved_by, a declared human who is a central approver. */
+  def loadModels(path: Path, gov: Governance): Either[String, Models] =
     Loading.guard(path) {
       try
         val o = YamlJson.read(path).obj
         val rows = Seq("approved", "classifier").flatMap(k => o.get(k).map(_.arr.toSeq).getOrElse(Seq.empty))
-        Right(Models(o("provider").str, o("tiers").obj.map((k, v) => k -> v.str).toMap,
-          rows.map(r => r("id").str -> r("status").str).toMap))
+        def approver(r: ujson.Value): String = r.obj.get("approved_by").collect { case ujson.Str(s) => s }.getOrElse("")
+        rows.find(r => r("status").str == "approved" && !(gov.humans.contains(approver(r)) && gov.centralApprovers.contains(approver(r)))) match
+          case Some(r) => Left(s"$path: model ${r("id").str} is approved but approved_by '${approver(r)}' is not a human central approver")
+          case None =>
+            Right(Models(o("provider").str, o("tiers").obj.map((k, v) => k -> v.str).toMap,
+              rows.map(r => r("id").str -> r("status").str).toMap))
       catch case e: NoSuchElementException => Left(s"$path: missing field ${e.getMessage}")
     }
 
@@ -71,9 +77,13 @@ object Templates:
                     s"${f.getFileName}: slots in text ${used.toVector.sorted.mkString("[", ", ", "]")} do not match declared slots ${slots.keySet.toVector.sorted.mkString("[", ", ", "]")}")
                   p <- gov.projects.get(project).toRight(s"$id: unknown project $project")
                   model <- models.tiers.get(o("model_tier").str).toRight(s"$id: unknown model tier ${o("model_tier").str}")
+                  passthrough <- o.get("passthrough") match
+                    case None | Some(ujson.Null) => Right(None)
+                    case Some(ujson.Str(n)) if n.nonEmpty => Right(Some(n))
+                    case Some(_) => Left(s"${f.getFileName}: passthrough must be an upstream name")
                 yield m + (id -> Template(id, o("version") match { case ujson.Str(s) => s; case v => v.render() },
                   project, p.tier, model, o("model_tier").str, text, o("response_format").str,
-                  o("evidence_format").str, slots))
+                  o("evidence_format").str, slots, passthrough))
             catch case e: NoSuchElementException => Left(s"${f.getFileName}: missing field ${e.getMessage}")
           }
         }
