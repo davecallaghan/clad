@@ -82,21 +82,33 @@ object BundleExport:
             egressLog: Option[Path], listeners: Map[String, String], anchorDir: Path, keysDir: Path,
             governance: Governance, app: String): Either[String, Path] =
     try
-      Files.createDirectories(out)
-      for
-        keyIds <- keyFiles(out, keysDir)
-        anchor <- ChainAnchorStore(anchorDir).read.toEither.left.map(e => s"cannot read the chain anchor in $anchorDir: ${e.getMessage}")
-        _ <- Jdbc.withConnection(readerUrl)(c => tables(out, c, since, until))
-      yield
-        anchor.foreach(a => jsonl(out.resolve("anchors.jsonl"), Seq(ujson.write(ujson.Obj("ts" -> a.anchor.updatedAt.toString,
-          "chainLength" -> a.anchor.count, "headDigest" -> a.anchor.headDigest)))))
-        egressLog.filter(Files.exists(_)).foreach(p => jsonl(out.resolve("infra.jsonl"), CaddyLog.read(p, listeners).map(ujson.write(_))))
-        val meta = ujson.Obj("bundleVersion" -> 1, "app" -> app, "window" -> window(since, until))
-        probe.foreach((s, e) => meta("probeWindow") = window(s, e))
-        meta("projects") = governance.bundleProjects
-        meta("keys") = ujson.Obj.from(keyIds.toSeq.map((r, id) => r -> ujson.Str(id)))
-        meta("exportedAt") = Instant.now().toString
-        meta("exporter") = ExporterName
-        Files.writeString(out.resolve("bundle.json"), ujson.write(meta, indent = 2), UTF_8)
-        out
+      if nonEmptyDir(out) then Left(s"$out is not empty: a reused directory could keep stale files, so export to a new one")
+      else
+        Files.createDirectories(out)
+        // Order matters: the anchor is read first, then every table in one REPEATABLE READ snapshot. An anchor
+        // older than the chain is always consistent for R-ANCHOR; the reverse order could see an anchor ahead of it.
+        for
+          keyIds <- keyFiles(out, keysDir)
+          anchor <- ChainAnchorStore(anchorDir).read.toEither.left.map(e => s"cannot read the chain anchor in $anchorDir: ${e.getMessage}")
+          _ <- Jdbc.withSnapshot(readerUrl)(c => tables(out, c, since, until))
+          infra <- egressLog.filter(Files.exists(_)).fold[Either[String, Option[Vector[ujson.Obj]]]](Right(None))(
+            p => CaddyLog.read(p, listeners).map(Some(_)))
+        yield
+          anchor.foreach(a => jsonl(out.resolve("anchors.jsonl"), Seq(ujson.write(ujson.Obj("ts" -> a.anchor.updatedAt.toString,
+            "chainLength" -> a.anchor.count, "headDigest" -> a.anchor.headDigest)))))
+          infra.foreach(rows => jsonl(out.resolve("infra.jsonl"), rows.map(ujson.write(_))))
+          val meta = ujson.Obj("bundleVersion" -> 1, "app" -> app, "window" -> window(since, until))
+          probe.foreach((s, e) => meta("probeWindow") = window(s, e))
+          meta("projects") = governance.bundleProjects
+          meta("keys") = ujson.Obj.from(keyIds.toSeq.map((r, id) => r -> ujson.Str(id)))
+          meta("exportedAt") = Instant.now().toString
+          meta("exporter") = ExporterName
+          Files.writeString(out.resolve("bundle.json"), ujson.write(meta, indent = 2), UTF_8)
+          out
     catch case NonFatal(e) => Left(s"bundle export failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+
+  private def nonEmptyDir(p: Path): Boolean =
+    Files.isDirectory(p) && {
+      val s = Files.list(p)
+      try s.findAny().isPresent finally s.close()
+    }

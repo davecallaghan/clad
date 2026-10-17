@@ -12,6 +12,14 @@ object Jdbc:
   def withTransaction[A](url: String)(f: Connection => A): Either[String, A] =
     withConnection(url)(c => transacted(c)(f))
 
+  /** One read-only REPEATABLE READ transaction: every query in f sees the same snapshot. */
+  def withSnapshot[A](url: String)(f: Connection => A): Either[String, A] =
+    withConnection(url) { c =>
+      c.setReadOnly(true)
+      c.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ)
+      transacted(c)(f)
+    }
+
   /** Runs f on c and closes c. A close failure is suppressed onto f's exception when there is one; when f
     * succeeded and only close fails, the close failure is the Left. */
   private[store] def using[A](c: Connection)(f: Connection => A): Either[String, A] =

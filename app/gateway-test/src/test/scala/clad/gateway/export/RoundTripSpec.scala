@@ -31,6 +31,10 @@ class RoundTripSpec extends AnyFunSuite:
     val start = Instant.now().minusSeconds(60)
     (1 to 3).foreach(_ => gw.complete(answerRequest()))
     gw.complete(answerRequest(template = "agent.sql"))
+    // a contained project: the gateway's block record names a config that must be in the bundle
+    assert(gw.contain("agent", "incident") == Right(()))
+    gw.complete(answerRequest())
+    assert(gw.release("agent") == Right(()))
     val log = Files.createTempFile("access", ".log")
     Files.writeString(log, up.calls.map((_, iid) => ujson.write(ujson.Obj("ts" -> Instant.now().getEpochSecond.toDouble,
       "status" -> 200, "request" -> ujson.Obj("method" -> "POST", "uri" -> "/v1/openai/chat/completions", "host" -> "egress:8081",
@@ -63,4 +67,14 @@ class RoundTripSpec extends AnyFunSuite:
     assert(Files.exists(out.resolve("infra.jsonl")))
     assert(!Files.exists(out.resolve("gil.jsonl")))
     assert(!Files.exists(out.resolve("audit.jsonl")))
+  }
+
+  test("export refuses a directory that already holds files") {
+    val db = TestDatabase.fresh()
+    val out = Files.createTempDirectory("bundle")
+    Files.writeString(out.resolve("stale.jsonl"), "x\n")
+    val r = BundleExport.write(out, Instant.now().minusSeconds(60), Instant.now(), None, db.readerUrl, None, Map.empty,
+      Files.createTempDirectory("anchors"), keysDir(), Fixtures.approvedConfig().governance, "personal_finance")
+    assert(r.left.exists(_.contains("not empty")), r)
+    assert(!Files.exists(out.resolve("bundle.json")))
   }
