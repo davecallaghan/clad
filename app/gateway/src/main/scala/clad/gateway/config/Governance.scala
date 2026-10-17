@@ -1,6 +1,7 @@
 package clad.gateway.config
 
 import clad.config.*
+import clad.gateway.roc.{OutputConstraintDef, RocConfig}
 import java.nio.file.Path
 
 final case class AgentDef(id: String, name: String, kind: String, domains: Vector[String], levels: Vector[String])
@@ -22,8 +23,13 @@ final class Governance private (
   def path(project: String): Vector[ConstraintDef] =
     enterprise ++ departments(projects(project).department) ++ projectConstraints(project)
 
-  def approvalDigest: String =
-    Canonical.sha256(Canonical.render(ujson.Obj.from(raw.value.toSeq.filterNot(_._1 == "approval"))))
+  def departmentNames: Set[String] = departments.keySet
+
+  /** The approval covers the constraints and the ROC configuration (thresholds and output constraints are governed too). */
+  def approvalDigest(roc: RocConfig): String =
+    Canonical.sha256(Canonical.render(ujson.Obj(
+      "constraints" -> ujson.Obj.from(raw.value.toSeq.filterNot(_._1 == "approval")),
+      "roc" -> roc.raw)))
 
   private def approval: Map[String, ujson.Value] = raw.value.get("approval") match
     case Some(o: ujson.Obj) => o.value.toMap
@@ -31,20 +37,33 @@ final class Governance private (
 
   private def str(m: Map[String, ujson.Value], k: String): Option[String] = m.get(k).collect { case ujson.Str(s) => s }
 
-  def approvalPending: Option[String] =
+  def approvalPending(roc: RocConfig): Option[String] =
     val a = approval
     if !str(a, "status").contains("approved") then Some(s"approval status is ${str(a, "status").getOrElse("absent")}")
-    else if !str(a, "constraints_digest").contains(approvalDigest) then
+    else if !str(a, "constraints_digest").contains(approvalDigest(roc)) then
       Some("approval constraints_digest does not match the current constraints")
     else if str(a, "approved_at").isEmpty then Some("approval has no approved_at")
     else None
 
-  private def exportedApprover(c: ConstraintDef): String =
-    if approvalPending.isEmpty && str(approval, "approved_by").contains(c.approver) then c.approver else ""
+  private def exportedApprover(c: ConstraintDef, roc: RocConfig): String =
+    if approvalPending(roc).isEmpty && str(approval, "approved_by").contains(c.approver) then c.approver else ""
 
-  private def cc(c: ConstraintDef): ConstraintConfig =
+  private def cc(roc: RocConfig)(c: ConstraintDef): ConstraintConfig =
     ConstraintConfig(c.property, if c.ob then "obligation" else "prohibition", c.level, c.domain, c.version,
-      c.evaluability, c.author, exportedApprover(c))
+      c.evaluability, c.author, exportedApprover(c, roc))
+
+  private def outputConstraint(tier: String)(c: OutputConstraintDef): OutputConstraintConfig =
+    OutputConstraintConfig(c.property, if c.ob then "obligation" else "prohibition", tier,
+      Map("kind" -> c.kind) ++ c.category.map("category" -> _))
+
+  /** The project's output constraints and the thresholds that apply to it, plus tau_max (the cap on Critical τ). */
+  private def outputConfig(project: String, tier: String, roc: RocConfig): (Seq[OutputConstraintConfig], Seq[ThresholdConfig]) =
+    val applicable = roc.forProject(project)
+    val properties = applicable.map(_.property).toSet
+    val thresholds = roc.thresholds.filter(th => properties.contains(th.property) && roc.thresholdAppliesTo(th, project, this))
+      .map(th => ThresholdConfig(th.property, th.tau, tier, th.owner, th.version, th.level))
+    (applicable.map(outputConstraint(tier)),
+     thresholds :+ ThresholdConfig("tau_max", roc.tauMax, "Critical", roc.owner, roc.version, "enterprise"))
 
   private def binding(ch: CheckerDef): CheckerBinding = ch.kind match
     case "regex"   => CheckerBinding(ch.property, "regex", Map("patterns" -> ch.patterns.mkString(","), "mode" -> "any"))
@@ -52,21 +71,22 @@ final class Governance private (
                                                                "threshold" -> ch.threshold.toString))
     case _         => CheckerBinding(ch.property, "structural", Map("key" -> ch.key, "value" -> ch.value))
 
-  def governanceConfig(project: String): GovernanceConfig =
+  def governanceConfig(project: String, roc: RocConfig): GovernanceConfig =
     val p = projects(project)
     val mechanical = path(project).filter(_.evaluability == "mechanical").map(_.property).distinct.sorted
     val posture = Governance.Posture(p.tier)
+    val (outputs, thresholds) = outputConfig(project, p.tier, roc)
     GovernanceConfig(
       name = name, version = version, project = project,
       agents = agents.map(a => AgentConfig(a.id, a.name, a.domains, a.levels, a.kind)),
-      constraints = ConstraintHierarchyConfig(enterprise.map(cc), departments(p.department).map(cc),
-                                              projectConstraints(project).map(cc)),
-      checkers = mechanical.map(m => binding(checkers(m))),
+      constraints = ConstraintHierarchyConfig(enterprise.map(cc(roc)), departments(p.department).map(cc(roc)),
+                                              projectConstraints(project).map(cc(roc))),
+      checkers = mechanical.map(m => binding(checkers(m))), outputConstraints = outputs, thresholds = thresholds,
       failurePosture = FailurePostureConfig(posture, posture, "fail-closed"),
       centralApprovers = centralApprovers, criticalDomains = criticalDomains)
 
-  def configJson(project: String): String = ConfigWriter.toPrettyJson(governanceConfig(project))
-  def configDigest(project: String): String = Canonical.sha256(configJson(project))
+  def configJson(project: String, roc: RocConfig): String = ConfigWriter.toPrettyJson(governanceConfig(project, roc))
+  def configDigest(project: String, roc: RocConfig): String = Canonical.sha256(configJson(project, roc))
 
   def bundleProjects: ujson.Obj = ujson.Obj.from(projects.toSeq.sortBy(_._1).map((n, p) =>
     n -> ujson.Obj("tier" -> p.tier, "expectedComponents" -> ujson.Arr.from(p.expectedComponents.map(ujson.Str(_))))))

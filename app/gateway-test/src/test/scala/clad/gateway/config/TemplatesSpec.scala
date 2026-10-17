@@ -5,7 +5,10 @@ import java.nio.file.{Path, Paths}
 
 object Fixtures:
   val dir: Path = Paths.get(getClass.getResource("/governance").toURI)
-  val runtime: Runtime = Runtime(chainLockKey = 7243001L, upstreamRetries = 1, upstreamTimeoutSeconds = 5, upstreamRetryWaitMillis = 10)
+  private def loadRuntime(path: Path): Runtime = Runtime.load(path).fold(e => throw AssertionError(e), identity)
+  /** Every test Runtime comes from a yaml file under test resources, never from literals in Scala. */
+  val runtime: Runtime = loadRuntime(dir.resolve("runtime.yaml"))
+  def runtimeVariant(name: String): Runtime = loadRuntime(Paths.get(getClass.getResource(s"/runtime/$name.yaml").toURI))
   def config: GatewayConfig = GatewayConfig.loadWith(dir, runtime).fold(e => throw AssertionError(e), identity)
   def approvedConfig(): GatewayConfig = ApprovedFixtures.load()
   val sample: Map[String, String] = Map("catalog" -> "- tax_drag_ratio (dimensions: scenario, year)",

@@ -1,0 +1,22 @@
+# Test fixture for the ROC configuration (same shape as an adopter's roc.yaml).
+version: "1"
+tau_max: 0.5          # test fixture: cap on any Critical project's tau
+owner: david
+constraints:
+  - {property: numbers_grounded, type: obligation, kind: deterministic, templates: [agent.answer]}
+  - {property: extraction_grounded, type: obligation, kind: deterministic, templates: [doc.extract_1099]}
+  - {property: schema_valid, type: obligation, kind: deterministic, templates: [agent.plan_metrics, doc.extract_1099]}
+  - {property: tool_calls_valid, type: obligation, kind: deterministic, templates: [planner.chat, planner.interview]}
+  - {property: contains_pii, type: prohibition, kind: deterministic}
+  - {property: guarantee_language, type: prohibition, kind: deterministic}
+  - {property: specialized_advice, type: prohibition, kind: classifier, category: S6, projects: [agent, assistant, planner-chat]}
+  - {property: unsafe_content, type: prohibition, kind: classifier, projects: [agent, assistant, planner-chat, doc-extract]}
+  - {property: route_valid, type: obligation, kind: deterministic, templates: [router.jev]}
+thresholds:
+  - {property: specialized_advice, level: enterprise, tau: 0.5, version: "1"}   # test fixture
+  - {property: unsafe_content, level: enterprise, tau: 0.5, version: "1"}       # test fixture
+router_intents: [metric_question, data_question, plan_edit, general]
+retry_variant: "Use only numbers that appear in the data block, exactly as written there."
+safe_responses:
+  agent.answer: "I can't state that reliably from the data."
+  default: "I can't help with that request."

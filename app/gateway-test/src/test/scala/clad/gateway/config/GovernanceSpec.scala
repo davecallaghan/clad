@@ -6,6 +6,7 @@ import java.nio.file.{Files, Path, Paths}
 class GovernanceSpec extends AnyFunSuite:
   val fixture: Path = Paths.get(getClass.getResource("/governance/constraints.yaml").toURI)
   def real: Governance = Governance.load(fixture).fold(e => fail(e), identity)
+  def roc: clad.gateway.roc.RocConfig = clad.gateway.roc.RocConfig.load(Fixtures.dir, real).fold(e => fail(e), identity)
   def mutated(f: ujson.Obj => Unit): Either[String, Governance] =
     val copy = ujson.read(ujson.write(YamlJson.read(fixture))) match
       case o: ujson.Obj => o
@@ -20,32 +21,32 @@ class GovernanceSpec extends AnyFunSuite:
 
   test("the exported config loads in clad, is deterministic, and has the path's mechanical checkers only") {
     val g = real
-    assert(g.configJson("agent") == g.configJson("agent"))
-    val cfg = clad.config.ConfigLoader.loadFromString(g.configJson("agent")).fold(e => fail(e.mkString), identity)
+    assert(g.configJson("agent", roc) == g.configJson("agent", roc))
+    val cfg = clad.config.ConfigLoader.loadFromString(g.configJson("agent", roc)).fold(e => fail(e.mkString), identity)
     assert(clad.config.ConfigLoader.buildHierarchy(cfg).isRight)
     assert(cfg.checkers.map(_.property).toSet == Set("contains_pii", "zdr_provider", "approved_model",
       "untrusted_data_rule", "security_recommendation_instruction", "grounding_instruction", "scenario_attribution"))
-    assert(g.configDigest("agent").startsWith("sha256:"))
+    assert(g.configDigest("agent", roc).startsWith("sha256:"))
   }
 
   test("pending approval exports an empty approver") {
     val g = real
-    assert(g.approvalPending.isDefined)
-    val cfg = g.governanceConfig("agent")
+    assert(g.approvalPending(roc).isDefined)
+    val cfg = g.governanceConfig("agent", roc)
     val all = cfg.constraints.enterprise ++ cfg.constraints.department ++ cfg.constraints.project
     assert(all.forall(c => c.approver == "" && c.author == "claude"))
   }
 
   test("a matching approval exports the approver; an edit afterwards puts the set back to pending") {
-    val digest = real.approvalDigest
+    val digest = real.approvalDigest(roc)
     def approve(o: ujson.Obj): Unit =
       o("approval") = ujson.Obj("status" -> "approved", "approved_by" -> "david", "approved_at" -> "2026-10-16",
                                 "constraints_digest" -> digest)
     val approved = mutated(approve).fold(e => fail(e), identity)
-    assert(approved.approvalPending.isEmpty)
-    assert(approved.governanceConfig("agent").constraints.enterprise.forall(_.approver == "david"))
+    assert(approved.approvalPending(roc).isEmpty)
+    assert(approved.governanceConfig("agent", roc).constraints.enterprise.forall(_.approver == "david"))
     val edited = mutated { o => approve(o); o("enterprise").arr(0).obj("version") = "2" }.fold(e => fail(e), identity)
-    assert(edited.approvalPending.exists(_.contains("digest")))
+    assert(edited.approvalPending(roc).exists(_.contains("digest")))
   }
 
   test("bundle projects carry tier and expected components") {

@@ -1,8 +1,10 @@
 package clad.gateway.config
 
+import clad.gateway.roc.RocConfig
 import java.nio.file.Path
 
-final case class GatewayConfig(governance: Governance, templates: Templates, attestations: Attestations, runtime: Runtime)
+final case class GatewayConfig(governance: Governance, templates: Templates, attestations: Attestations, runtime: Runtime,
+                          roc: RocConfig)
 
 object GatewayConfig:
   def load(dir: Path): Either[String, GatewayConfig] = Runtime.load(dir.resolve("runtime.yaml")).flatMap(loadWith(dir, _))
@@ -13,4 +15,5 @@ object GatewayConfig:
       models <- Templates.loadModels(dir.resolve("models.yaml"), gov)
       templates <- Templates.load(dir.resolve("prompts"), models, gov)
       attestations <- Attestations.load(dir.resolve("attestations.yaml"), gov.humans)
-    yield GatewayConfig(gov, templates, attestations, runtime)
+      roc <- RocConfig.load(dir, gov)
+    yield GatewayConfig(gov, templates, attestations, runtime, roc)

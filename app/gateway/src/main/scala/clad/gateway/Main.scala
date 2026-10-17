@@ -9,6 +9,7 @@ import clad.gateway.epg.{Epg, StartupCheck}
 import clad.gateway.http.{Clients, Routes}
 import clad.gateway.keys.Keys
 import clad.gateway.pipeline.Gateway
+import clad.gateway.roc.RocConfig
 import clad.gateway.store.{Migrate, PgStore}
 import clad.gateway.upstream.{HttpPassthrough, HttpUpstream}
 import com.comcast.ip4s.{Host, Port}
@@ -86,9 +87,14 @@ object Main:
     outcome.fold(fail, ok => if ok then 0 else 1)
 
   private def approvalDigest(env: Env): Int =
-    Governance.load(env.path("CLAD_GATEWAY_CONFIG_DIR").resolve("constraints.yaml")).fold(fail, g =>
-      println(s"constraints_digest: ${g.approvalDigest}")
-      println(g.approvalPending.fold("approval: approved")(why => s"approval: pending ($why)"))
+    val dir = env.path("CLAD_GATEWAY_CONFIG_DIR")
+    val loaded = for
+      g <- Governance.load(dir.resolve("constraints.yaml"))
+      roc <- RocConfig.load(dir, g)
+    yield (g, roc)
+    loaded.fold(fail, (g, roc) =>
+      println(s"constraints_digest: ${g.approvalDigest(roc)}")
+      println(g.approvalPending(roc).fold("approval: approved")(why => s"approval: pending ($why)"))
       0)
 
   private def migrate(env: Env): Int =

@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 /** The only place test Runtime values are built: every variant derives from the shared fixture. */
 object Rt:
   val base: Runtime = Fixtures.runtime
-  val fastTimeout: Runtime = base.copy(upstreamTimeoutSeconds = 1)
+  val fastTimeout: Runtime = Fixtures.runtimeVariant("fast-timeout")
   val oneRetry: Runtime = base.copy(upstreamRetries = 1)
 
 class HttpUpstreamSpec extends AnyFunSuite:

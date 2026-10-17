@@ -138,9 +138,9 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
     register(c, iid, now) match
       case Left(_) => Blocked(iid, "gil_unavailable")
       case Right(_) =>
-        val digest = cfg.governance.configDigest(c.t.project)
+        val digest = cfg.governance.configDigest(c.t.project, cfg.roc)
         // the record names this config, so the bundle must be able to resolve it
-        val rec = store.putConfig(digest, c.t.project, cfg.governance.configJson(c.t.project)).flatMap(_ =>
+        val rec = store.putConfig(digest, c.t.project, cfg.governance.configJson(c.t.project, cfg.roc)).flatMap(_ =>
           appendRecord(iid, ComponentGateway, Surface.Delivery, s"block:$reason", Vector.empty,
             Canonical.sha256(c.rendered), digest))
         rec.left.foreach(e => System.err.println(s"CLAD_GATEWAY_RECORD_FAILED iid=$iid $e"))

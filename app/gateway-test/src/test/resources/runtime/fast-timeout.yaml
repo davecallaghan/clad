@@ -1,0 +1,9 @@
+# Test fixture Runtime: these values bound nothing in main code (main reads every number from the adopter's runtime.yaml).
+chain_lock_key: 7243001          # test fixture
+upstream_retries: 1              # test fixture
+upstream_timeout_seconds: 1      # test fixture
+upstream_retry_wait_ms: 10       # test fixture
+latency_budget_ms: 30000         # test fixture
+max_retries: 2                   # test fixture
+retry_similarity: 0.9            # test fixture
+grounding_ignore_below: 10       # test fixture

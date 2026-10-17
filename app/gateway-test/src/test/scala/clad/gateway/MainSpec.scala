@@ -8,7 +8,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 
 class MainSpec extends AnyFunSuite:
-  /** The fixture governance directory plus a runtime.yaml, which the shared fixture deliberately lacks. */
+  /** A copy of the fixture governance directory (which includes runtime.yaml and roc.yaml). */
   private def configDir(): Path =
     val dir = Files.createTempDirectory("cfg")
     val from = Fixtures.dir
@@ -18,10 +18,6 @@ class MainSpec extends AnyFunSuite:
       if Files.isDirectory(p) then Files.createDirectories(target) else Files.copy(p, target)
     }
     finally s.close()
-    val rt = Fixtures.runtime
-    Files.writeString(dir.resolve("runtime.yaml"), Seq("chain_lock_key" -> rt.chainLockKey, "upstream_retries" -> rt.upstreamRetries,
-      "upstream_timeout_seconds" -> rt.upstreamTimeoutSeconds, "upstream_retry_wait_ms" -> rt.upstreamRetryWaitMillis)
-      .map((k, v) => s"$k: $v").mkString("\n"))
     dir
 
   private final case class Ran(code: Int, out: String, err: String)

@@ -28,7 +28,7 @@ final class Epg private (cfg: GatewayConfig, hierarchies: Map[String, EvaluableH
       val artifactJson = ujson.write(ujson.Obj("content" -> rendered,
         "metadata" -> ujson.Obj.from(metadata.toSeq.sortBy(_._1).map((k, v) => k -> ujson.Str(v)))))
       EpgResult(entries, Canonical.sha256(rendered), artifactJson,
-        cfg.governance.configDigest(t.project), cfg.governance.configJson(t.project))
+        cfg.governance.configDigest(t.project, cfg.roc), cfg.governance.configJson(t.project, cfg.roc))
 
   private def entry(r: ConstraintResult, c: EvaluabilityClass, at: Instant): AuditEntry =
     AuditEntry(r.constraint, r.version, c, r.satisfied, r.detail, at)
@@ -50,7 +50,7 @@ object Epg:
     cfg.governance.projects.keys.toVector.sorted.foldLeft[Either[String, Map[String, EvaluableHierarchy]]](Right(Map.empty)) {
       (acc, p) =>
         acc.flatMap { m =>
-          ConfigLoader.loadFromString(cfg.governance.configJson(p)).flatMap(ConfigLoader.buildHierarchy)
+          ConfigLoader.loadFromString(cfg.governance.configJson(p, cfg.roc)).flatMap(ConfigLoader.buildHierarchy)
             .left.map(es => s"project $p: ${es.mkString("; ")}").map(h => m + (p -> h))
         }
     }.map(Epg(cfg, _))

@@ -1,0 +1,9 @@
+# Test fixture for the classifier profile.
+id: llama_guard
+model: meta-llama/Llama-Guard-4-12B
+version: "4"
+upstream: deepinfra
+verdict_tokens: 2     # test fixture: tokens the classifier call generates to reach its verdict
+measured_fp: null
+measured_fn: null
+validated_at: null

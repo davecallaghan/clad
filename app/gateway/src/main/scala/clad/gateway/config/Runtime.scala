@@ -3,7 +3,8 @@ package clad.gateway.config
 import java.nio.file.Path
 
 /** Every number the gateway uses, from the adopter's runtime.yaml (no defaults: a missing key is an error). */
-final case class Runtime(chainLockKey: Long, upstreamRetries: Int, upstreamTimeoutSeconds: Int, upstreamRetryWaitMillis: Int)
+final case class Runtime(chainLockKey: Long, upstreamRetries: Int, upstreamTimeoutSeconds: Int, upstreamRetryWaitMillis: Int,
+                          latencyBudgetMillis: Int, maxRetries: Int, retrySimilarity: Double, groundingIgnoreBelow: Double)
 
 object Runtime:
   def load(path: Path): Either[String, Runtime] = Loading.guard(path)(fromJson(YamlJson.read(path)))
@@ -16,5 +17,9 @@ object Runtime:
         retries <- num("upstream_retries")
         wait <- num("upstream_timeout_seconds")
         pause <- num("upstream_retry_wait_ms")
-      yield Runtime(lock.toLong, retries.toInt, wait.toInt, pause.toInt)
+        budget <- num("latency_budget_ms")
+        maxRetries <- num("max_retries")
+        similarity <- num("retry_similarity")
+        ignoreBelow <- num("grounding_ignore_below")
+      yield Runtime(lock.toLong, retries.toInt, wait.toInt, pause.toInt, budget.toInt, maxRetries.toInt, similarity, ignoreBelow)
     }
