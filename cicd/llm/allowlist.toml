@@ -2,3 +2,19 @@
 # line), value, justification, source (a requirement ID or link) and approver. An entry missing
 # any of them is VIOLATED. Entries match by content hash, so editing the value invalidates them.
 # An agent cannot supply a source or an approver: ask a human.
+
+[[entry]]
+file = "app/gateway-test/src/test/scala/clad/gateway/config/TemplatesSpec.scala"
+line_hash = "sha256:abb9472ae4322a5bad2f0a9101e55bd12c444baecce5aee3dc57bb5dfec052b5"
+value = "test-only Runtime values (val runtime: Runtime = Runtime(chainLockKey = 7243001L, upst)"
+justification = "Test fixture Runtime for gateway-test: the plan builds Runtime in Scala tests instead of a fixture file; these values bound nothing in main code (main reads every number from the adopter's runtime.yaml)."
+source = "docs/plans/2026-10-16-clad-gateway.md, Global Constraints (tests build Runtime values in Scala)"
+approver = "david (approved 2026-10-17; entry written by Claude at his instruction)"
+
+[[entry]]
+file = "app/gateway-test/src/test/scala/clad/gateway/upstream/HttpUpstreamSpec.scala"
+line_hash = "sha256:ad7159ebdb43e20bc5db2a489b07c8aff31a04cb53c14ac36314d4a7bd4c659c"
+value = "test-only Runtime values (val fastTimeout: Runtime = base.copy(upstreamTimeoutSeconds )"
+justification = "Test fixture Runtime for gateway-test: the plan builds Runtime in Scala tests instead of a fixture file; these values bound nothing in main code (main reads every number from the adopter's runtime.yaml)."
+source = "docs/plans/2026-10-16-clad-gateway.md, Global Constraints (tests build Runtime values in Scala)"
+approver = "david (approved 2026-10-17; entry written by Claude at his instruction)"
