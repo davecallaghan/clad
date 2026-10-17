@@ -1,44 +1,39 @@
 {
- "task": "conformance module (docs/plans/2026-10-15-conformance.md, Tasks 1-15)",
- "status": "complete",
- "commit": "700f03796368339c34bc28df5c41e8c31426b93a",
- "tree_hash": "bdf08ba6d8c18695061e9272e53225327ac6f58c",
+ "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance)",
+ "status": "incomplete",
+ "commit": "805081629cecb79b6de215ff8adf6d83163d7ab1",
+ "tree_hash": "b4f81a5cb7035968da7b0b8068c665c39091705f",
  "artifact_digests": {},
  "checks": [
   {
    "id": "sbt_test",
    "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/conformance/sbt-test.txt"
+   "evidence_path": "cicd/llm/evidence/gateway/sbt-test.txt"
   },
   {
-   "id": "preflight",
+   "id": "image_build",
    "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/conformance/preflight.txt"
+   "evidence_path": "cicd/llm/evidence/gateway/image-build.txt"
   },
   {
-   "id": "differential_test",
+   "id": "podman_run_approval_digest_exits_2_naming_config_dir",
    "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/conformance/differential.txt"
+   "evidence_path": "cicd/llm/evidence/gateway/podman-run-approval-digest.txt"
   },
   {
-   "id": "no_cancelled_tests",
+   "id": "preflight_task_11_files",
    "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/conformance/no-cancelled-tests.txt"
-  },
-  {
-   "id": "worm_probe_real_postgres",
-   "verdict": "SATISFIED",
-   "required": false,
-   "evidence_path": "cicd/llm/evidence/conformance/worm-probe-real-postgres.txt"
+   "evidence_path": "cicd/llm/evidence/gateway/preflight.txt"
   }
  ],
  "not_verified": [
-  "full Lean proof check (lake build of every theorem in lean/): not run; only the clad-difftest target and its imports were built",
-  "invented_limits NOT_RUN sub-checks: budget_below_capacity, escalation",
-  "ghost probe send() against a real egress proxy: not run; only scoring is unit-tested",
-  "evidence bundle from a real application (personal_finance exporter): not run",
-  "spec section 9 fixture bundle in conformance-test/src/test/resources/bundles/minimal/: end-to-end test builds the bundle in a temp directory instead",
+  "ROC (runtime output controls) is not implemented in this version",
+  "MDR (monitoring worker) is not implemented in this version",
+  "/v1/health is static ({\"status\":\"ok\"}): it does not probe store, keys, config or upstreams",
+  "Lean differential test: NOT_RUN (the Lean toolchain was removed from this machine to free disk); the 2 Lean cancellations in sbt test are that test",
   "CI on GitHub: not run, branch not pushed",
-  "WORM probe ran against one table only (governance.gil); audit_record and degraded_record had no rows yet, and pf_gov_writer is refused by privilege (42501), so the triggers were not what the probe exercised"
+  "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the Task 11 preflight covered only Task 11 files",
+  "Tasks 12-14 (personal_finance switch to the gateway) are not done",
+  "serve was not run end to end against a live Postgres and provider; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
  ]
 }
