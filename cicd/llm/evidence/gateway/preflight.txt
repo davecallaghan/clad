@@ -1,0 +1,5 @@
+invented_limits    SATISFIED     (2 files, 0 findings; NOT_RUN sub-checks: ['budget_below_capacity', 'escalation'])
+ruff_profile       not applicable (no given path is in this gate's scope)
+safeguard_removal  not applicable (no given path is in this gate's scope)
+governed_write     not applicable (no given path is in this gate's scope)
+json: /Users/david/workspace/clad-conformance/cicd/llm/ledger/preflight.json

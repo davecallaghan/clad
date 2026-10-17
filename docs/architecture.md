@@ -38,6 +38,9 @@ flowchart TD
     config --> mcp
     config --> conformance
     integrity --> conformance
+    api --> gateway
+    audit --> gateway
+    config --> gateway
 
     runtime["<b>runtime</b><br/><i>+ upickle</i>"]
     integrity["<b>integrity</b><br/><i>+ output</i>"]
@@ -47,10 +50,12 @@ flowchart TD
     mcp["<b>mcp</b><br/><i>+ runtime, output,<br/>audit, integrity</i>"]
     conformance["<b>conformance</b><br/><i>+ core, evaluation, runtime,<br/>audit, output</i><br/><i>+ postgresql jdbc</i>"]
 
+    gateway["<b>gateway</b><br/><i>+ core, evaluation, runtime,<br/>audit, output, integrity, config, api</i><br/><i>+ http4s, postgresql jdbc, snakeyaml</i>"]
+
     classDef mod fill:#eef2f7,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
     classDef leaf fill:#e7ecf2,stroke:#9aa6b8,color:#2a3547,rx:6,ry:6;
     class core,evaluation,runtime,audit,integrity,output,config mod;
-    class monitoring,api,mcp,conformance leaf;
+    class monitoring,api,mcp,conformance,gateway leaf;
 ```
 
 ### Conformance
@@ -62,6 +67,15 @@ code (public-key signature checks, digest recomputation, prompt re-evaluation, g
 optionally probes the live system (WORM storage, an injected bypass call), and writes a scorecard
 with one verdict per requirement. See `app/conformance/README.md` and
 `docs/specs/2026-10-15-conformance-design.md`.
+
+### Gateway
+
+`gateway` is a deployable service that puts the EPG in front of an application's LLM calls. Applications post
+chat-completion requests (or passthrough calls for non-chat providers) to it with a template id and slot values; it
+renders the governed prompt, evaluates it against the adopter's constraint hierarchy, calls the provider, and appends
+signed records to a hash chain in Postgres with an on-disk anchor. Its `export` command writes the evidence bundle that
+`conformance` verifies. ROC and MDR are not in this version, and `/v1/health` is static. See `app/gateway/README.md` and
+`docs/specs/2026-10-16-clad-gateway-design.md`.
 
 ## Key Domain Types
 

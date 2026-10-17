@@ -1,0 +1,2 @@
+clad-gateway: CLAD_GATEWAY_CONFIG_DIR is not set
+exit=2

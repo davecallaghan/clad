@@ -60,3 +60,6 @@ __pycache__/
 
 # Python environment for the LLM gate hooks and tests (cicd/llm/setup_env.sh)
 .venv-llm/
+
+# gateway image build input (tools/build-gateway-image.sh)
+app/gateway/clad-gateway.jar

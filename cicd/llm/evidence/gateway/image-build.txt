@@ -1,0 +1,26 @@
+[info] welcome to sbt 1.10.7 (Homebrew Java 27)
+[info] loading settings for project app-build from plugins.sbt...
+[info] loading project definition from /Users/david/workspace/clad-conformance/app/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (21597 settings) ...
+[info] set current project to clad (in build file:/Users/david/workspace/clad-conformance/app/)
+[info] Assembly jar up to date: /Users/david/workspace/clad-conformance/app/gateway/target/scala-3.3.8/clad-gateway.jar
+[success] Total time: 1 s, completed Oct 17, 2026, 11:55:13 AM
+STEP 1/7: FROM docker.io/library/eclipse-temurin:17.0.12_7-jre
+STEP 2/7: RUN useradd --create-home --uid 10001 clad
+--> cfa43f146df3
+STEP 3/7: COPY clad-gateway.jar /opt/clad/clad-gateway.jar
+--> 0370ab7b8e78
+STEP 4/7: RUN printf '#!/bin/sh\nexec java -jar /opt/clad/clad-gateway.jar "$@"\n' > /usr/local/bin/clad-gateway && chmod +x /usr/local/bin/clad-gateway
+--> 7fdf112b5915
+STEP 5/7: USER clad
+--> ea9f42e4ad65
+STEP 6/7: ENTRYPOINT ["clad-gateway"]
+--> c1cb5107acdf
+STEP 7/7: CMD ["serve"]
+COMMIT localhost/clad-gateway:0.1.0-SNAPSHOT
+--> 0e569e4e03f1
+Successfully tagged localhost/clad-gateway:latest
+Successfully tagged localhost/clad-gateway:0.1.0-SNAPSHOT
+0e569e4e03f1297375cac9cbf9d15a3755286944e894870009ca48b8d642966f
+built localhost/clad-gateway:0.1.0-SNAPSHOT

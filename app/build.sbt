@@ -276,7 +276,15 @@ lazy val gateway = project
       "org.http4s"    %% "http4s-dsl"          % http4sVersion,
       "org.typelevel" %% "cats-effect"         % catsEffectVersion
     ),
-    Compile / mainClass := Some("clad.gateway.Main")
+    Compile / mainClass := Some("clad.gateway.Main"),
+    assembly / assemblyJarName := "clad-gateway.jar",
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", xs @ _*) if xs.lastOption.exists(n => n.endsWith(".SF") || n.endsWith(".DSA") || n.endsWith(".RSA")) => MergeStrategy.discard
+      case "reference.conf" => MergeStrategy.concat
+      case x =>
+        val previous = (assembly / assemblyMergeStrategy).value
+        previous(x)
+    }
   )
 
 lazy val `gateway-test` = project
