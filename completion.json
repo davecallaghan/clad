@@ -1,8 +1,8 @@
 {
  "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance, done: commits 92b6f26..69de8af), final-review fixes C1-C6",
  "status": "incomplete",
- "commit": "c5ea9294c51da06e4df7ac271fe66b0935cf8dee",
- "tree_hash": "0da3f46809f8feb7d6313a308ab2d7d256ac5376",
+ "commit": "48d929ad662ac82dd5773597df070d8db4773b23",
+ "tree_hash": "44c4a3c2427395fca9f29bfcc28398f7fd8a0505",
  "artifact_digests": {},
  "checks": [
   {
