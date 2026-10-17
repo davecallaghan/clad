@@ -272,6 +272,7 @@ lazy val gateway = project
     libraryDependencies ++= Seq(
       "org.yaml"       % "snakeyaml"           % "2.3",
       "org.postgresql" % "postgresql"          % "42.7.4",
+      "com.networknt"  % "json-schema-validator" % "1.5.1",
       "org.http4s"    %% "http4s-ember-server" % http4sVersion,
       "org.http4s"    %% "http4s-dsl"          % http4sVersion,
       "org.typelevel" %% "cats-effect"         % catsEffectVersion
