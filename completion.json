@@ -1,8 +1,8 @@
 {
- "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance)",
+ "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance, done: commits 92b6f26..69de8af), final-review fixes C1-C6",
  "status": "incomplete",
- "commit": "805081629cecb79b6de215ff8adf6d83163d7ab1",
- "tree_hash": "b4f81a5cb7035968da7b0b8068c665c39091705f",
+ "commit": "d193079a5910638ba5524348f3fbc0cb8a000d6e",
+ "tree_hash": "798d080cd4d7a10c76bb8d187666ef2115a6d807",
  "artifact_digests": {},
  "checks": [
   {
@@ -11,18 +11,8 @@
    "evidence_path": "cicd/llm/evidence/gateway/sbt-test.txt"
   },
   {
-   "id": "image_build",
-   "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/gateway/image-build.txt"
-  },
-  {
-   "id": "podman_run_approval_digest_exits_2_naming_config_dir",
-   "verdict": "SATISFIED",
-   "evidence_path": "cicd/llm/evidence/gateway/podman-run-approval-digest.txt"
-  },
-  {
-   "id": "preflight_task_11_files",
-   "verdict": "SATISFIED",
+   "id": "preflight_changed_files",
+   "verdict": "VIOLATED",
    "evidence_path": "cicd/llm/evidence/gateway/preflight.txt"
   }
  ],
@@ -32,8 +22,9 @@
   "/v1/health is static ({\"status\":\"ok\"}): it does not probe store, keys, config or upstreams",
   "Lean differential test: NOT_RUN (the Lean toolchain was removed from this machine to free disk); the 2 Lean cancellations in sbt test are that test",
   "CI on GitHub: not run, branch not pushed",
-  "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the Task 11 preflight covered only Task 11 files",
-  "Tasks 12-14 (personal_finance switch to the gateway) are not done",
-  "serve was not run end to end against a live Postgres and provider; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
+  "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the preflight check above shows the TemplatesSpec line, which this fix round touched",
+  "live delivered chat call: pending controller check (a throwaway gateway; see the personal_finance decision note)",
+  "container image and podman smoke checks are stale (built before this fix round); the controller rebuilds the image",
+  "serve was not run end to end against a live Postgres and provider by this fix round; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
  ]
 }

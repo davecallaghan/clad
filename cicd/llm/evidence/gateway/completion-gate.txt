@@ -1,36 +1,37 @@
 {
+ "gate": "completion_evidence",
+ "verdict": "SATISFIED",
+ "kind": "deciding",
+ "findings": [],
+ "scope_size": 1,
  "blind_spots": [
   "whether an evidence file says what its check claims (existence is checked, content is not)",
   "checks the claim does not list",
   "free-text fields (recorded, never scored)"
  ],
+ "sub_checks": {
+  "schema": "RUN",
+  "checks": "RUN",
+  "digests": "NOT_RUN"
+ },
+ "notes": [],
  "details": {
-  "free_text": {
-   "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance)"
-  },
+  "status": "incomplete",
   "not_verified": [
    "ROC (runtime output controls) is not implemented in this version",
    "MDR (monitoring worker) is not implemented in this version",
    "/v1/health is static ({\"status\":\"ok\"}): it does not probe store, keys, config or upstreams",
    "Lean differential test: NOT_RUN (the Lean toolchain was removed from this machine to free disk); the 2 Lean cancellations in sbt test are that test",
    "CI on GitHub: not run, branch not pushed",
-   "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the Task 11 preflight covered only Task 11 files",
-   "Tasks 12-14 (personal_finance switch to the gateway) are not done",
-   "serve was not run end to end against a live Postgres and provider; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
+   "invented_limits VIOLATED on two test-only Runtime literal lines (gateway-test TemplatesSpec.scala:8 and HttpUpstreamSpec.scala:13), awaiting a human allowlist decision; the preflight check above shows the TemplatesSpec line, which this fix round touched",
+   "live delivered chat call: pending controller check (a throwaway gateway; see the personal_finance decision note)",
+   "container image and podman smoke checks are stale (built before this fix round); the controller rebuilds the image",
+   "serve was not run end to end against a live Postgres and provider by this fix round; only the argument/env paths, check, approval-digest, migrate, keys and export are tested"
   ],
-  "status": "incomplete"
+  "free_text": {
+   "task": "clad-gateway (docs/plans/2026-10-16-clad-gateway.md, Tasks 1-11 in clad; Tasks 12-14 in personal_finance, done: commits 92b6f26..69de8af), final-review fixes C1-C6"
+  }
  },
- "findings": [],
- "gate": "completion_evidence",
- "kind": "deciding",
- "notes": [],
- "scope_size": 1,
- "sub_checks": {
-  "checks": "RUN",
-  "digests": "NOT_RUN",
-  "schema": "RUN"
- },
- "timestamp": "2026-10-17T15:55:40+00:00",
- "tree_hash": "b4f81a5cb7035968da7b0b8068c665c39091705f",
- "verdict": "SATISFIED"
+ "tree_hash": null,
+ "timestamp": "2026-10-17T16:45:18+00:00"
 }
