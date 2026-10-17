@@ -23,6 +23,7 @@ import java.time.format.DateTimeParseException
 object Main:
   private final class Usage(message: String) extends Exception(message)
 
+  private val ChatUpstream = "openai"
   private val KeyRoles = Seq("components", "supervisor")
   private val Commands = "serve | migrate | keys | export --since <t> --until <t> --out <dir> [--probe-since <t> --probe-until <t>] | approval-digest | check"
 
@@ -65,8 +66,14 @@ object Main:
 
   private def loadConfig(env: Env): Either[String, GatewayConfig] = GatewayConfig.load(env.path("CLAD_GATEWAY_CONFIG_DIR"))
 
+  /** The chat upstream is governed by the full pipeline; a template may never make it a passthrough target. */
+  private def chatPassthrough(cfg: GatewayConfig): Vector[String] =
+    cfg.templates.all.filter(_.passthrough.contains(ChatUpstream)).map(t =>
+      s"${t.id}: passthrough: $ChatUpstream is the chat upstream and must not be a passthrough target")
+
   private def report(cfg: GatewayConfig, epg: Epg): Boolean =
-    val r = StartupCheck.run(cfg, epg)
+    val r0 = StartupCheck.run(cfg, epg)
+    val r = r0.copy(errors = chatPassthrough(cfg) ++ r0.errors)
     r.warnings.foreach(w => println(s"CLAD_GATEWAY_WARN $w"))
     r.errors.foreach(e => Console.err.println(s"CLAD_GATEWAY_ERROR $e"))
     r.errors.isEmpty
@@ -135,7 +142,7 @@ object Main:
     val writerUrl = env.req("CLAD_GATEWAY_WRITER_URL")
     val upstreamUrls = pairs(env.req("CLAD_GATEWAY_UPSTREAMS"), "CLAD_GATEWAY_UPSTREAMS")
     val upstreamKeys = upstreamUrls.map((name, url) => name -> (url, env.req(s"CLAD_GATEWAY_KEY_${name.toUpperCase}")))
-    val chat = upstreamKeys.getOrElse("openai", throw Usage("CLAD_GATEWAY_UPSTREAMS must name an upstream called openai (the chat upstream)"))
+    val chat = upstreamKeys.getOrElse(ChatUpstream, throw Usage(s"CLAD_GATEWAY_UPSTREAMS must name an upstream called $ChatUpstream (the chat upstream)"))
     val tokens = env.req("CLAD_GATEWAY_TOKENS")
     val adminToken = env.req("CLAD_GATEWAY_ADMIN_TOKEN")
     val port = Port.fromInt(env.req("CLAD_GATEWAY_PORT").toIntOption.getOrElse(throw Usage("CLAD_GATEWAY_PORT is not a number")))

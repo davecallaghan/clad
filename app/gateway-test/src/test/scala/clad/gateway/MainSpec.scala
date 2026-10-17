@@ -43,6 +43,23 @@ class MainSpec extends AnyFunSuite:
     assert(r.code == 0, r.out + r.err)
   }
 
+  private def declaringOpenai(): Path =
+    val dir = configDir()
+    val f = dir.resolve("prompts").resolve("assistant.general.yaml")
+    Files.writeString(f, Files.readString(f).replaceFirst("(?m)^model_tier:.*$", "$0\npassthrough: openai"))
+    dir
+
+  test("a template declaring the chat upstream as its passthrough makes check and serve refuse, naming the template") {
+    val c = run(Seq("check"), Map("CLAD_GATEWAY_CONFIG_DIR" -> declaringOpenai().toString))
+    assert(c.code == 1 && c.err.contains("CLAD_GATEWAY_ERROR assistant.general: passthrough: openai"), c.err)
+    val env = Map("CLAD_GATEWAY_CONFIG_DIR" -> declaringOpenai().toString, "CLAD_GATEWAY_KEYS_DIR" -> "keys",
+      "CLAD_GATEWAY_DATA_DIR" -> "data", "CLAD_GATEWAY_WRITER_URL" -> "jdbc:postgresql://unused/db",
+      "CLAD_GATEWAY_UPSTREAMS" -> "openai=http://upstream.invalid", "CLAD_GATEWAY_KEY_OPENAI" -> "k",
+      "CLAD_GATEWAY_TOKENS" -> "t=api", "CLAD_GATEWAY_ADMIN_TOKEN" -> "a", "CLAD_GATEWAY_PORT" -> "1")
+    val s = run(Seq("serve"), env)
+    assert(s.code == 1 && s.err.contains("CLAD_GATEWAY_ERROR assistant.general: passthrough: openai"), s.err)
+  }
+
   test("serve without CLAD_GATEWAY_PORT returns 2 and names the variable") {
     val env = Map("CLAD_GATEWAY_CONFIG_DIR" -> configDir().toString, "CLAD_GATEWAY_KEYS_DIR" -> "keys", "CLAD_GATEWAY_DATA_DIR" -> "data",
       "CLAD_GATEWAY_WRITER_URL" -> "jdbc:postgresql://unused/db", "CLAD_GATEWAY_UPSTREAMS" -> "openai=http://upstream.invalid",
