@@ -48,6 +48,19 @@ class HttpUpstreamSpec extends AnyFunSuite:
     }
   }
 
+  test("plain-http requests carry no h2c upgrade headers, for chat and for passthrough") {
+    val upgrade = ArrayBuffer.empty[(Option[String], Option[String], Option[String])]
+    def note(ex: HttpExchange): Unit =
+      val h = ex.getRequestHeaders
+      upgrade.synchronized(upgrade += ((Option(h.getFirst("Upgrade")), Option(h.getFirst("HTTP2-Settings")), Option(h.getFirst("Connection")))))
+    withServer((ex, _, _) => { note(ex); reply(ex, 200, ok) }) { (url, _) =>
+      assert(HttpUpstream(url, "k", Rt.base, _ => ()).complete(req, "iid").isRight)
+      assert(HttpPassthrough(Map("jev" -> (url, "k")), Rt.base).forward("jev", "x", "{}", "iid").isRight)
+    }
+    assert(upgrade.size == 2)
+    assert(upgrade.forall((u, settings, conn) => u.isEmpty && settings.isEmpty && !conn.exists(_.toLowerCase.contains("upgrade"))), upgrade.toString)
+  }
+
   test("429 then 200 retries once with the configured wait") {
     val sleeps = ArrayBuffer.empty[Long]
     withServer((ex, _, n) => if n == 1 then reply(ex, 429, "slow") else reply(ex, 200, ok)) { (url, seen) =>

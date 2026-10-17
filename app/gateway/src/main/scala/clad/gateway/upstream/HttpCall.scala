@@ -9,7 +9,8 @@ import java.time.Duration
 /** One POST with the configured timeout and retries. Never throws: every failure is a Left naming the exception class only,
   * so neither the key nor the request body can reach an error message. */
 private[upstream] final class HttpCall(runtime: Runtime, sleep: Long => Unit):
-  private val client = HttpClient.newHttpClient()
+  // HTTP/1.1 only: on plain http the default HTTP/2 client sends an h2c Upgrade, which the egress proxy forwards and the provider rejects
+  private val client = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).followRedirects(HttpClient.Redirect.NEVER).build()
 
   def post(url: String, key: String, interactionId: String, body: String): Either[String, (Int, String)] =
     attempt(url, key, interactionId, body, runtime.upstreamRetries)
