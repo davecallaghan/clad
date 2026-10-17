@@ -102,3 +102,17 @@ class LlamaGuardSpec extends AnyFunSuite:
       assert(b("temperature").num == 0.0 && b("messages").arr.toVector == convo)
     }
   }
+
+  test("a verdict split across tokens fails closed, whichever way it splits") {
+    for parts <- Seq(Seq("un", "safe"), Seq("uns", "afe"), Seq("\n\n", "un", "safe")) do
+      run(reply(parts.map(tok(_, Some(0.0))))) { (g, _) =>
+        assert(g.score(convo, "iid") == Left("classifier verdict split across tokens"), parts.toString)
+      }
+  }
+
+  test("a verdict token with a leading newline is scored as that verdict") {
+    run(reply(Seq(tok("\nunsafe", Some(0.0)), tok("\n", Some(0.0)), tok("S6", Some(0.0))))) { (g, _) =>
+      val s = g.score(convo, "iid").toOption.get
+      assert(s.verdict == "unsafe" && s.unsafe == 1.0 && s.categories == Map("S6" -> 1.0))
+    }
+  }

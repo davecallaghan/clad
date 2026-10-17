@@ -20,6 +20,8 @@ final class LlamaGuard(upstream: Upstream, profile: ClassifierProfile) extends G
     upstream.complete(request, interactionId).flatMap(parse)
 
 object LlamaGuard:
+  val Split = "classifier verdict split across tokens"
+  private val Verdicts = Set("safe", "unsafe")
   val NoVerdict = "classifier reply has no verdict logprob"
   private val CategoryCode = "S[0-9]+".r
 
@@ -37,9 +39,23 @@ object LlamaGuard:
 
   private def parse(reply: ujson.Value): Either[String, GuardScores] =
     val toks = tokens(reply)
-    val at = toks.indexWhere(t => t.text.trim == "safe" || t.text.trim == "unsafe")
+    val at = toks.indexWhere(_.text.trim.nonEmpty)
     if at < 0 then Left(NoVerdict)
     else
+      val word = verdictWord(toks, at)
+      if !Verdicts.contains(word) then Left(NoVerdict)
+      else if word != toks(at).text.trim then Left(Split)
+      else scoreVerdict(toks, at)
+
+  /** The text of the verdict line: from the first non-blank token to the first newline after it. */
+  private def verdictWord(toks: Vector[Tok], at: Int): String =
+    val rest = toks.drop(at)
+    val (head, tail) = rest.tail.span(!_.text.contains('\n'))
+    val closing = tail.headOption.map(_.text.takeWhile(_ != '\n')).getOrElse("")
+    (rest.head.text +: head.map(_.text) :+ closing).mkString.trim
+
+  private def scoreVerdict(toks: Vector[Tok], at: Int): Either[String, GuardScores] =
+    {
       val verdict = toks(at)
       verdict.logprob match
         case None => Left(NoVerdict)
@@ -52,6 +68,7 @@ object LlamaGuard:
           if coded.isEmpty then Left("classifier reply has no category token")
           else if coded.exists(_.logprob.isEmpty) then Left("classifier reply has no category logprob")
           else Right(GuardScores(unsafe, coded.map(t => t.text.trim -> unsafe * math.exp(t.logprob.get)).toMap, "unsafe"))
+    }
 
   /** When the verdict is safe no category is generated, so each Llama Guard category (S1 to S14) gets the P(unsafe) upper bound. */
   val SafeCategories: Vector[String] = (1 to 14).map(i => s"S$i").toVector
