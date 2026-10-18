@@ -202,6 +202,67 @@ class RocSpec extends AnyFunSuite:
     assert(roc().evaluate(t, request("q"), ujson.Obj("choices" -> ujson.Arr()), None, "i-empty", false, at).isLeft)
   }
 
+  /** A reply whose message and choice carry fields the ROC does not evaluate, each holding `hidden`. */
+  private def withUnevaluated(r: ujson.Value, hidden: String): ujson.Value =
+    val c = ujson.read(ujson.write(r))
+    val choice = c("choices")(0)
+    choice("message")("reasoning_content") = hidden
+    choice("message")("reasoning") = hidden
+    choice("message")("refusal") = hidden
+    choice("message")("audio") = ujson.Obj("transcript" -> hidden)
+    choice("message")("function_call") = ujson.Obj("name" -> "f", "arguments" -> hidden)
+    choice("logprobs") = ujson.Obj("content" -> ujson.Arr.from(hidden.split(" ").map(tok => ujson.Obj("token" -> tok, "logprob" -> -0.1))))
+    c
+
+  private def choiceOf(v: ujson.Value): ujson.Obj = v("choices")(0).obj
+
+  test("the safe response is a fresh choice: no reasoning, logprobs or other field of the blocked message survives") {
+    val t = template("agent.answer")
+    val blocked = withUnevaluated(reply(ungrounded), "secretly 9.99 which is high")
+    val o = record("i-hidden-safe", t, ok(roc().evaluate(t, request("drag?"), blocked, Some(rows), "i-hidden-safe", true, at)))
+    assert(o.outcome == "fallback:safe_response", o.toString)
+    val json = ujson.write(o.delivered)
+    assert(!json.contains("9.99") && !json.contains("which is high") && !json.contains("secretly"), json)
+    assert(choiceOf(o.delivered).value.keySet == Set("index", "message", "finish_reason"))
+    assert(message(o.delivered).value.keySet == Set("role", "content") && choiceOf(o.delivered)("finish_reason").str == "stop")
+  }
+
+  test("a redacted reply carries no SSN anywhere, including the reasoning fields") {
+    val t = template("assistant.general")
+    val blocked = withUnevaluated(reply("Your SSN 123-45-6789 is on file."), "thinking about 123-45-6789")
+    val o = record("i-hidden-pii", t, ok(roc().evaluate(t, request("ssn?"), blocked, None, "i-hidden-pii", false, at)))
+    assert(o.outcome == "fallback:redacted" && !ujson.write(o.delivered).contains("123-45-6789"), ujson.write(o.delivered))
+  }
+
+  test("a passing reply is delivered without its unevaluated fields") {
+    val t = template("assistant.general")
+    val o = record("i-hidden-pass", t, ok(roc().evaluate(t, request("hi"), withUnevaluated(reply("Hello."), "unseen words"), None,
+      "i-hidden-pass", false, at)))
+    assert(o.outcome == "pass" && content(o.delivered) == "Hello." && !ujson.write(o.delivered).contains("unseen"))
+    assert(message(o.delivered).value.keySet == Set("role", "content") && choiceOf(o.delivered).value.keySet == Set("index", "message", "finish_reason"))
+  }
+
+  private def blocks(parts: (String, String)*): ujson.Value =
+    ujson.Obj("id" -> "r1", "choices" -> ujson.Arr(ujson.Obj("index" -> 0, "finish_reason" -> "stop", "message" -> ujson.Obj(
+      "role" -> "assistant", "content" -> ujson.Arr.from(parts.map((k, s) => ujson.Obj("type" -> k, "text" -> s)))))))
+
+  test("content as blocks: the text blocks are evaluated and delivered as a plain string, reasoning blocks dropped") {
+    val t = template("assistant.general")
+    val o = record("i-blocks", t, ok(roc().evaluate(t, request("hi"),
+      blocks("text" -> "Hello", "reasoning" -> "the user's SSN is 123-45-6789", "text" -> "world."), None, "i-blocks", false, at)))
+    assert(o.outcome == "pass", o.toString)
+    assert(content(o.delivered) == "Hello\nworld." && !ujson.write(o.delivered).contains("123-45-6789"))
+    val r = record("i-blocks-pii", t, ok(roc().evaluate(t, request("hi"),
+      blocks("text" -> "SSN 123-45-6789", "reasoning" -> "x"), None, "i-blocks-pii", false, at)))
+    assert(r.outcome == "fallback:redacted" && content(r.delivered) == "SSN [redacted]")
+  }
+
+  test("a Critical template without a synchronous classifier is a Left") {
+    val t = template("agent.answer")
+    val r = roc().evaluate(t, request("q"), reply(grounded), Some(rows), "i-crit-async", false, at)
+    assert(r.left.exists(_.contains("Critical")), r.toString)
+  }
+
   private def bundle(records: Vector[(String, Template, String, Vector[AuditEntry], String)]): Bundle =
     val meta = BundleMeta(1, "gateway-test", Window(at.minusSeconds(60), at.plusSeconds(60)), None,
       cfg.governance.projects.map((n, p) => n -> ProjectSpec(p.tier, p.expectedComponents)), Map.empty)

@@ -32,10 +32,13 @@ final class Roc(cfg: GatewayConfig, guard: Guard, retry: (ujson.Obj, String) => 
 
   private def critical(t: Template): Boolean = t.tier == "Critical"
 
-  /** Left is a component failure (an unreadable reply, a checker or classifier error); the caller fails per posture. */
+  /** Left is a component failure (an unreadable reply, a checker or classifier error, or a Critical template asked to
+    * run without its synchronous classifier); the caller fails per posture. */
   def evaluate(t: Template, request: ujson.Obj, reply: ujson.Value, evidence: Option[ujson.Value], iid: String,
                classifierSync: Boolean, at: java.time.Instant): Either[String, RocOutcome] =
     for
+      _ <- Either.cond(classifierSync || !critical(t), (),
+        s"roc: ${t.id} is Critical and its classifier must run synchronously (spec 8.3)")
       out <- ModelOutput.of(reply)
       first <- stages(t, request, out, evidence, iid, classifierSync, at)
       result <- decide(t, request, reply, out, evidence, iid, classifierSync, at, first)
@@ -139,26 +142,26 @@ final class Roc(cfg: GatewayConfig, guard: Guard, retry: (ujson.Obj, String) => 
       case "block" if first.failed == Vector("contains_pii") && first.overTau.isEmpty =>
         gov.checkers.get("contains_pii").toRight("roc: contains_pii: no checker is defined in constraints.yaml")
           .flatMap(ch => Fallbacks.redact(out.content, ch.patterns)).flatMap { redacted =>
-            val r = out.copy(content = redacted)
+            val r = out.copy(content = redacted, nullContent = false)
             stages(t, request, r, evidence, iid, sync, at).flatMap { e =>
               if decision(t, e) == "pass" then
-                Fallbacks.deliver(reply, Some(redacted), dropToolCalls = false).map(outcome("fallback:redacted", _, e.entries))
+                Fallbacks.deliver(reply, r).map(outcome("fallback:redacted", _, e.entries))
               else safe
             }
           }
       case "block" if first.failed.exists(Grounding.contains) =>
         retries(t, request, evidence, iid, sync, at, Vector(out.text), 0).flatMap {
-          case Some((r, e)) => Fallbacks.deliver(r, None, dropToolCalls = false).map(outcome("fallback:retry", _, e.entries))
+          case Some((r, o, e)) => Fallbacks.deliver(r, o).map(outcome("fallback:retry", _, e.entries))
           case None         => safe
         }
       case "block" => safe
-      case other   => Fallbacks.deliver(reply, None, dropToolCalls = false).map(outcome(other, _))
+      case other   => Fallbacks.deliver(reply, out).map(outcome(other, _))
 
   /** Up to max_retries retries, each the same request plus the variant line. A failed retry whose output is more than
     * retry_similarity similar to an earlier failed output ends the retries: calling again would not help. A retry
     * whose upstream call fails ends them too, and the safe response is delivered, never the unchecked output. */
   private def retries(t: Template, request: ujson.Obj, evidence: Option[ujson.Value], iid: String, sync: Boolean,
-                      at: Instant, failedOutputs: Vector[String], attempt: Int): Either[String, Option[(ujson.Value, Evaluation)]] =
+                      at: Instant, failedOutputs: Vector[String], attempt: Int): Either[String, Option[(ujson.Value, ModelOutput, Evaluation)]] =
     if attempt >= runtime.maxRetries then Right(None)
     else retry(Fallbacks.withVariant(request, roc.retryVariant), iid).flatMap(r => ModelOutput.of(r).map(r -> _)) match
       case Left(err) =>
@@ -166,16 +169,16 @@ final class Roc(cfg: GatewayConfig, guard: Guard, retry: (ujson.Obj, String) => 
         Right(None)
       case Right((r, o)) =>
         stages(t, request, o, evidence, iid, sync, at).flatMap { e =>
-          if decision(t, e) == "pass" then Right(Some(r -> e))
+          if decision(t, e) == "pass" then Right(Some((r, o, e)))
           else if failedOutputs.exists(Fallbacks.similarity(o.text, _) > runtime.retrySimilarity) then Right(None)
           else retries(t, request, evidence, iid, sync, at, failedOutputs :+ o.text, attempt + 1)
         }
 
   /** The governed safe response: the template's, else the default; for an answer over evidence rows, the rows follow
-    * as a table. The blocked text and its tool calls are gone. */
+    * as a table. It is a fresh choice: nothing of the blocked message (text, tool calls, reasoning, logprobs) remains. */
   private def safeResponse(t: Template, reply: ujson.Value, evidence: Option[ujson.Value]): Either[String, ujson.Value] =
     roc.safeResponses.get(t.id).orElse(roc.safeResponses.get("default"))
       .toRight(s"roc.yaml: no safe response for ${t.id} and no default").flatMap { base =>
         val rows = if t.evidenceFormat == "rows_json" then evidence.flatMap(Fallbacks.table) else None
-        Fallbacks.deliver(reply, Some(rows.fold(base)(tb => base + "\n\n" + tb)), dropToolCalls = true)
+        Fallbacks.safe(reply, rows.fold(base)(tb => base + "\n\n" + tb))
       }
