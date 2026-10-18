@@ -45,8 +45,12 @@ final case class RocConfig(constraints: Vector[OutputConstraintDef], thresholds:
 
   /** The lowest applicable level wins; a property with no threshold at all is held to tau_max, the cap every τ sits under. */
   def tau(property: String, project: String, governance: Governance): Double =
+    threshold(property, project, governance).map(_.tau).getOrElse(tauMax)
+
+  /** The threshold that sets τ for this property in this project: the lowest applicable level; None means tau_max. */
+  def threshold(property: String, project: String, governance: Governance): Option[ThresholdDef] =
     thresholds.filter(th => th.property == property && thresholdAppliesTo(th, project, governance))
-      .sortBy(th => -RocConfig.Levels.indexOf(th.level)).headOption.map(_.tau).getOrElse(tauMax)
+      .sortBy(th => -RocConfig.Levels.indexOf(th.level)).headOption
 
 object RocConfig:
   val Levels: Vector[String] = Vector("enterprise", "department", "project")
