@@ -9,7 +9,7 @@ import clad.gateway.epg.{Epg, StartupCheck}
 import clad.gateway.http.{Clients, Routes}
 import clad.gateway.keys.Keys
 import clad.gateway.pipeline.Gateway
-import clad.gateway.roc.{LlamaGuard, RocConfig}
+import clad.gateway.roc.{LlamaGuard, RocConfig, Validation}
 import clad.gateway.store.{Migrate, PgStore}
 import clad.gateway.upstream.{HttpPassthrough, HttpUpstream}
 import com.comcast.ip4s.{Host, Port}
@@ -27,7 +27,7 @@ object Main:
 
   private val ChatUpstream = "openai"
   private val KeyRoles = Seq("components", "supervisor")
-  private val Commands = "serve | migrate | keys | export --since <t> --until <t> --out <dir> [--probe-since <t> --probe-until <t>] | approval-digest | check"
+  private val Commands = "serve | migrate | keys | export --since <t> --until <t> --out <dir> [--probe-since <t> --probe-until <t>] | approval-digest | check | validate-classifier --project <name>"
 
   def main(args: Array[String]): Unit = sys.exit(run(args.toSeq, sys.env))
 
@@ -39,6 +39,7 @@ object Main:
       case Seq("export", rest*)   => exportBundle(Env(env), flags(rest))
       case Seq("approval-digest") => approvalDigest(Env(env))
       case Seq("check")           => check(Env(env))
+      case Seq("validate-classifier", rest*) => validateClassifier(Env(env), flags(rest))
       case _                      => throw Usage(s"usage: clad-gateway <$Commands>")
     catch case u: Usage =>
       Console.err.println(s"clad-gateway: ${u.getMessage}")
@@ -97,6 +98,37 @@ object Main:
       println(s"constraints_digest: ${g.approvalDigest(roc)}")
       println(g.approvalPending(roc).fold("approval: approved")(why => s"approval: pending ($why)"))
       0)
+
+  /** Scores the human-reviewed labelled set and writes <data>/classifier-validation.json (the config mount is read-only);
+    * prints the profile lines the operator copies into classifiers/llama_guard.yaml. */
+  private def validateClassifier(env: Env, f: Map[String, String]): Int =
+    val project = f.getOrElse("--project", throw Usage("validate-classifier: --project is required (the declared project the calls are registered under)"))
+    val dir = env.path("CLAD_GATEWAY_CONFIG_DIR")
+    val keysDir = env.path("CLAD_GATEWAY_KEYS_DIR")
+    val data = env.path("CLAD_GATEWAY_DATA_DIR")
+    val writerUrl = env.req("CLAD_GATEWAY_WRITER_URL")
+    val upstreamUrls = pairs(env.req("CLAD_GATEWAY_UPSTREAMS"), "CLAD_GATEWAY_UPSTREAMS")
+    val outcome = for
+      cfg <- GatewayConfig.load(dir)
+      read <- Validation.read(Validation.file(dir))
+      (digest, items) = read
+      _ <- Validation.attested(cfg, digest)
+      url <- upstreamUrls.get(cfg.roc.classifier.upstream).toRight(
+        s"the classifier profile names upstream ${cfg.roc.classifier.upstream}, which is not in CLAD_GATEWAY_UPSTREAMS")
+      key = env.req(s"CLAD_GATEWAY_KEY_${cfg.roc.classifier.upstream.toUpperCase}")
+      comp <- Keys.load(keysDir, "components")
+      anchors <- createDir(data.resolve("anchors"))
+      store = PgStore(writerUrl, cfg.runtime.chainLockKey, ChainAnchorStore(anchors), comp)
+      guard = LlamaGuard(HttpUpstream(url, key, cfg.runtime), cfg.roc.classifier)
+      result <- Validation.run(cfg, items, digest, guard, store, project, () => Instant.now())
+      out <- Validation.write(data, result)
+    yield (result, out)
+    outcome.fold(fail, { case (r, out) =>
+      println(s"${r.items} items, fp ${r.fp}, fn ${r.fn}, misclassified: ${r.misclassified.mkString(", ")}")
+      println(s"written to $out; copy into classifiers/llama_guard.yaml:")
+      r.profileLines.foreach(println)
+      0
+    })
 
   private def migrate(env: Env): Int =
     Migrate.run(env.req("CLAD_GATEWAY_ADMIN_URL"), env.req("CLAD_GATEWAY_WRITER_PASSWORD"), env.req("CLAD_GATEWAY_READER_PASSWORD"))

@@ -101,3 +101,16 @@ class MainSpec extends AnyFunSuite:
     val noOut = run(Seq("export", "--since", "2026-01-01T00:00:00Z", "--until", "2026-01-02T00:00:00Z"), env)
     assert(noOut.code == 2 && noOut.err.contains("--out"), noOut.err)
   }
+
+  test("validate-classifier needs --project, and refuses an unattested labelled set before calling anything") {
+    val noProject = run(Seq("validate-classifier"), Map.empty)
+    assert(noProject.code == 2 && noProject.err.contains("--project"), noProject.err)
+    val dir = configDir()
+    Files.writeString(dir.resolve("classifiers").resolve("validation.jsonl"),
+      """{"id": "a", "conversation": [{"role": "user", "content": "q"}], "expected": "safe"}""" + "\n")
+    val env = Map("CLAD_GATEWAY_CONFIG_DIR" -> dir.toString, "CLAD_GATEWAY_KEYS_DIR" -> dir.toString,
+      "CLAD_GATEWAY_DATA_DIR" -> dir.toString, "CLAD_GATEWAY_WRITER_URL" -> "jdbc:postgresql://unused",
+      "CLAD_GATEWAY_UPSTREAMS" -> "openai=http://unused")
+    val r = run(Seq("validate-classifier", "--project", "assistant"), env)
+    assert(r.code == 1 && r.err.contains("no attestation of classifier.llama_guard.validation"), r.err)
+  }
