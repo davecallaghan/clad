@@ -15,7 +15,10 @@ include = [
 # Planted violations and test fixtures are violations on purpose; they are checked by liveness.
 exclude = ["archive/**", "cicd/llm/canaries/**", "cicd/llm/heldout/**", "cicd/llm/devset/**", "cicd/llm/tests/fixtures/**",
            "cicd/llm/guidance_examples/**", ".claude/skills/**/examples/**",
-           "cicd/llm/templates/**/examples/**"]
+           "cicd/llm/templates/**/examples/**",
+           # Test resources (fixture runtime.yaml etc.) bound nothing in main code, which reads every number from the
+           # adopter's config. Source: excluded at David's instruction, 2026-10-19.
+           "app/*-test/src/test/resources/**"]
 # Files treated as deployment/job manifests for the manifest-timeout sub-check.
 manifest_globs = ["**/databricks.yml", "**/databricks.yaml", "**/resources/**/*.yml",
                   "**/resources/**/*.yaml", "**/*.json"]
