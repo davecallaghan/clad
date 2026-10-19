@@ -208,3 +208,13 @@ class AuditVerifierSpec extends AnyFlatSpec with Matchers:
     report.failures should contain(AuditVerifier.MissingRecordedDigest(0))
     report.isFullyVerified shouldBe false
   }
+
+  it should "verify records that carry an interaction id, component, surface and outcome, and catch a relabelled outcome" in {
+    val r = mkRecord(PropertyId.unsafe("contains_pii"), true).copy(interactionId = Some(InteractionId("0192f0c0-0000-7000-8000-000000000001")),
+      component = Some("roc"), surface = Some(Surface.Output), outcome = Some("pass"))
+    val chain = buildChain(r, mkRecord(PropertyId.unsafe("contains_pii"), true).copy(component = Some("epg")))
+    AuditVerifier.verify(chain.records, kms).isFullyVerified shouldBe true
+    val relabelled = chain.records.updated(0, chain.records(0).copy(record = chain.records(0).record.copy(outcome = Some("block"))))
+    AuditVerifier.verify(relabelled, kms).failures.exists(_.isInstanceOf[AuditVerifier.DigestMismatch]) shouldBe true
+  }
+

@@ -121,8 +121,13 @@ object AuditVerifier:
       verify(records, kms)
     })
 
+  /** AuditRecord's canonical form, restated so verification does not trust the record's own digest code. It must
+    * track that form: component, surface, outcome and interaction id, when present, lead it (they were added to
+    * AuditRecord after this copy was written, and every gateway record then failed verification here). */
   private def recomputeDigest(record: AuditRecord): String =
-    val canonical = s"${record.artifactDigest}|${record.configDigest}|${record.timestamp}|${record.previousDigest}|" +
+    val optional = record.component.fold("")(c => s"component:$c|") + record.surface.fold("")(s => s"surface:$s|") +
+      record.outcome.fold("")(o => s"outcome:$o|") + record.interactionId.fold("")(id => s"interaction:${id.value}|")
+    val canonical = optional + s"${record.artifactDigest}|${record.configDigest}|${record.timestamp}|${record.previousDigest}|" +
       record.entries.map(e =>
         s"${e.constraint.property.value}:${e.constraintVersion}:${e.evaluabilityClass}:${e.satisfied}"
       ).sorted.mkString("|")
