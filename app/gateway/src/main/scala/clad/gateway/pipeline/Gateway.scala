@@ -72,6 +72,7 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
           register(c, iid, clock()) match
             case Left(_) => Blocked(iid, "gil_unavailable")
             case Right(_) =>
+              signal(c, iid)
               runEpg(c, iid) match
                 case Left(why) => Blocked(iid, why)
                 case Right(()) => callUpstream(c, body(c), iid, spent)
@@ -183,6 +184,15 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
 
   private def register(c: Checked, iid: String, now: Instant): Either[String, Unit] =
     store.register(GilEntry(InteractionId(iid), now, metadata(c, c.req.evidence.map(e => Canonical.sha256(evidenceText(e))))))
+
+  // 5b: input signals (monitoring data: a failed write is logged and the call goes on; signals never change the outcome)
+  private val inputs = InputDetectors(cfg.inputDetectors)
+
+  private def signal(c: Checked, iid: String): Unit =
+    val at = clock()
+    inputs.scan(InputDetectors.texts(c.req.messages, c.req.vars)).foreach(s =>
+      store.inputSignal(iid, s, at).left.foreach(e =>
+        System.err.println(s"CLAD_GATEWAY_SIGNAL_NOT_STORED iid=$iid detector=${s.detector} $e")))
 
   // 6: EPG
   private def runEpg(c: Checked, iid: String): Either[String, Unit] =

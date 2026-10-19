@@ -13,6 +13,8 @@ trait GatewayStore:
   def putConfig(digest: String, project: String, json: String): Either[String, Unit]
   /** Idempotent. */
   def putArtifact(digest: String, json: String): Either[String, Unit]
+  /** One input detector observation; never the input text. */
+  def inputSignal(interactionId: String, s: clad.gateway.pipeline.InputSignal, at: java.time.Instant): Either[String, Unit]
 
 object GatewayStore:
   val requiredKeys: Vector[String] = Vector("project", "principal", "tier")

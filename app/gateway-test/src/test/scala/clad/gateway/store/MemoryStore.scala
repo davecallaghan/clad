@@ -44,6 +44,11 @@ final class MemoryStore extends GatewayStore:
     failPutConfig.toLeft(()).map { _ => configs.getOrElseUpdate(digest, json); () }
   }
 
+  val signals = mutable.ArrayBuffer.empty[(String, clad.gateway.pipeline.InputSignal, java.time.Instant)]
+  var failSignals: Boolean = false
+  def inputSignal(interactionId: String, s: clad.gateway.pipeline.InputSignal, at: java.time.Instant): Either[String, Unit] =
+    synchronized { if failSignals then Left("signal store down") else { signals += ((interactionId, s, at)); Right(()) } }
+
   def putArtifact(digest: String, json: String): Either[String, Unit] = synchronized {
     artifacts.getOrElseUpdate(digest, json); Right(())
   }

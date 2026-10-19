@@ -91,6 +91,20 @@ final class PgStore(writerUrl: String, lockKey: Long, anchors: ChainAnchorStore,
       ()
     }
 
+  def inputSignal(interactionId: String, s: clad.gateway.pipeline.InputSignal, at: java.time.Instant): Either[String, Unit] =
+    Jdbc.withConnection(writerUrl) { c =>
+      val ps = c.prepareStatement("INSERT INTO governance.input_signal (interaction_id, detector, detector_version, category, " +
+        "score, observed_at) VALUES (?::uuid, ?, ?, ?, ?, ?)")
+      ps.setString(1, interactionId)
+      ps.setString(2, s.detector)
+      ps.setString(3, s.version)
+      ps.setString(4, s.category)
+      ps.setDouble(5, s.score)
+      ps.setTimestamp(6, Timestamp.from(at))
+      ps.executeUpdate()
+      ()
+    }
+
   def putConfig(digest: String, project: String, json: String): Either[String, Unit] =
     Jdbc.withConnection(writerUrl) { c =>
       val ps = c.prepareStatement("INSERT INTO governance.config_version (digest, project, body) VALUES (?, ?, ?) ON CONFLICT (digest) DO NOTHING")

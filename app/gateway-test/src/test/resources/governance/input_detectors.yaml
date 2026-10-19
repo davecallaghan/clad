@@ -1,0 +1,8 @@
+# Test fixture for the input detectors (same shape as an adopter's input_detectors.yaml).
+version: "1"
+injection:
+  - {id: ignore_instructions, pattern: "ignore (all|your|previous) (rules|instructions)"}
+  - {id: reveal_prompt, pattern: "print your system prompt"}
+  - {id: role_override, pattern: "you are now"}
+length:
+  max_chars: 8000          # test fixture
