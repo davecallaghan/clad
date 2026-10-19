@@ -282,6 +282,8 @@ lazy val gateway = project
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", xs @ _*) if xs.lastOption.exists(n => n.endsWith(".SF") || n.endsWith(".DSA") || n.endsWith(".RSA")) => MergeStrategy.discard
       case "reference.conf" => MergeStrategy.concat
+      // JPMS descriptors (json-schema-validator, Jackson, slf4j): the fat jar runs on the classpath, where they are unused
+      case PathList(xs @ _*) if xs.lastOption.contains("module-info.class") => MergeStrategy.discard
       case x =>
         val previous = (assembly / assemblyMergeStrategy).value
         previous(x)
