@@ -303,9 +303,29 @@ lazy val `gateway-test` = project
     )
   )
 
+lazy val mdr = project
+  .in(file("mdr"))
+  .dependsOn(gateway, monitoring)
+  .settings(
+    commonSettings,
+    name := "clad-mdr",
+    Compile / mainClass := Some("clad.mdr.Main"),
+    assembly / assemblyJarName := "clad-mdr.jar",
+    assembly / assemblyMergeStrategy := (gateway / assembly / assemblyMergeStrategy).value
+  )
+
+lazy val `mdr-test` = project
+  .in(file("mdr-test"))
+  .dependsOn(mdr, `gateway-test` % "test->test", conformance)
+  .settings(
+    commonSettings,
+    name := "clad-mdr-test",
+    libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.2.19")
+  )
+
 lazy val root = project
   .in(file("."))
-  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest, conformance, `conformance-test`, gateway, `gateway-test`)
+  .aggregate(core, `core-test`, evaluation, `evaluation-test`, runtime, `runtime-test`, audit, `audit-test`, output, `output-test`, integrity, `integrity-test`, monitoring, `monitoring-test`, config, `config-test`, api, `api-test`, mcp, `mcp-test`, difftest, conformance, `conformance-test`, gateway, `gateway-test`, mdr, `mdr-test`)
   .settings(
     commonSettings,
     name := "clad",

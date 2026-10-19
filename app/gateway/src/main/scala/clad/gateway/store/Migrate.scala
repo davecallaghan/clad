@@ -6,7 +6,8 @@ package clad.gateway.store
   * and TRUNCATE on every table, so even the owner role cannot rewrite history without dropping the trigger first. */
 object Migrate:
   val Tables: Vector[String] = Vector("governance.gil", "governance.audit_record", "governance.degraded_record",
-    "governance.config_version", "governance.artifact", "governance.input_signal", "mdr.alert", "mdr.incident")
+    "governance.config_version", "governance.artifact", "governance.input_signal", "mdr.alert", "mdr.incident",
+    "mdr.alert_delivery")
 
   private val Ddl: Vector[String] = Vector(
     "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'clad_gov_owner') THEN CREATE ROLE clad_gov_owner NOLOGIN; END IF; END $$",
@@ -33,6 +34,13 @@ object Migrate:
     "CREATE TABLE IF NOT EXISTS mdr.heartbeat (ts timestamptz NOT NULL, detector text NOT NULL)",
     """CREATE TABLE IF NOT EXISTS mdr.incident (incident_id uuid PRIMARY KEY, alert_id uuid NOT NULL,
       |  opened_at timestamptz NOT NULL, locker_path text NOT NULL)""".stripMargin,
+    // MDR additions: a dedupe key so a restarted worker never repeats an alert, webhook deliveries (an undelivered
+    // alert is retried), and the reason an incident's evidence locker could not be exported
+    "ALTER TABLE mdr.alert ADD COLUMN IF NOT EXISTS dedupe_key text",
+    "CREATE UNIQUE INDEX IF NOT EXISTS alert_dedupe_key ON mdr.alert (dedupe_key)",
+    """CREATE TABLE IF NOT EXISTS mdr.alert_delivery (alert_id uuid PRIMARY KEY, delivered_at timestamptz NOT NULL,
+      |  target text NOT NULL)""".stripMargin,
+    "ALTER TABLE mdr.incident ADD COLUMN IF NOT EXISTS export_error text",
     """CREATE OR REPLACE FUNCTION governance.refuse_change() RETURNS trigger LANGUAGE plpgsql AS $$
       |  BEGIN RAISE EXCEPTION 'governance records are append-only (% on %)', TG_OP, TG_TABLE_NAME; END $$""".stripMargin)
 
@@ -43,7 +51,7 @@ object Migrate:
       "GRANT USAGE ON SCHEMA mdr TO clad_gov_reader",
       "GRANT INSERT, SELECT ON ALL TABLES IN SCHEMA governance TO clad_gov_writer",
       "GRANT SELECT ON ALL TABLES IN SCHEMA governance TO clad_gov_reader",
-      "GRANT INSERT, SELECT ON mdr.alert, mdr.heartbeat, mdr.incident TO clad_gov_reader")
+      "GRANT INSERT, SELECT ON mdr.alert, mdr.heartbeat, mdr.incident, mdr.alert_delivery TO clad_gov_reader")
     val triggers = Tables.flatMap { t =>
       val name = t.split("\\.")(1)
       Vector(

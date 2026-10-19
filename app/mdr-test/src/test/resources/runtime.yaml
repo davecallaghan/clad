@@ -1,0 +1,27 @@
+# Operational values for the governance layer. Each value has its source.
+chain_lock_key: 7243001          # arbitrary advisory-lock id for audit-chain appends (any constant works)
+latency_budget_ms: 2000          # CLAD wp2: Critical classifier budget 500ms-2s; upper bound chosen
+upstream_timeout_seconds: 60     # the former LlmClient timeout
+upstream_retry_wait_ms: 1000     # the former LlmClient retry wait
+upstream_retries: 1              # one retry on 429/503, as the existing LlmClient did
+max_retries: 1                   # CLAD wp2: at most one retry for Critical
+retry_similarity: 0.9            # skip a retry whose output is this similar to the failed one (token Jaccard)
+grounding_ignore_below: 10       # integers below this are counts and ordinals, not figures (spec 8.2)
+roc_background_workers: 1        # threads for Standard-tier classifier calls after delivery: assistant is the one Standard project with classifier constraints; the queue is unbounded, so a busy thread delays a record, never drops it
+config_bounds:                   # MDR S_config bounds
+  temperature_max: 1.0
+  max_tokens_max: 4000
+mdr:
+  interval_seconds: 60
+  in_flight_grace_seconds: 120
+  degraded_ratio_alert: 0.05
+  injection_window_seconds: 600
+  injection_alert_count: 3
+  block_rate_multiple: 3.0
+  block_rate_baseline_hours: 24
+  review_cadence_days: 90
+severity_due_minutes:            # CLAD mdr: P1 15 min, P2 1 h, P3 4 h, P4 next business day
+  P1: 15
+  P2: 60
+  P3: 240
+  P4: 1440

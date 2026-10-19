@@ -26,6 +26,25 @@ class MigrateSpec extends AnyFunSuite:
       assert(Jdbc.withConnection(db.adminUrl)(_.createStatement().execute(stmt)).left.exists(_.contains("append-only")), stmt)
   }
 
+  test("the MDR additions: a dedupe key that is unique, an append-only delivery table, an incident export error") {
+    val db = TestDatabase.fresh()
+    assert(Migrate.run(db.adminUrl, TestDatabase.WriterPw, TestDatabase.ReaderPw) == Right(()), "migrate twice")
+    def alert(key: String) = Jdbc.withConnection(db.readerUrl)(_.createStatement().execute(
+      "INSERT INTO mdr.alert (alert_id, raised_at, severity, taxonomy, detector, interaction_ids, summary, due_at, dedupe_key) " +
+        s"VALUES (gen_random_uuid(), now(), 'P1', 'governance', 'ghosts', '{}', 's', now(), '$key')"))
+    assert(alert("ghost:a").isRight)
+    assert(alert("ghost:a").isLeft, "a second alert with the same dedupe key")
+    Jdbc.withConnection(db.readerUrl)(_.createStatement().execute(
+      "INSERT INTO mdr.alert_delivery VALUES (gen_random_uuid(), now(), 'log')")).fold(fail(_), identity)
+    assert(Jdbc.withConnection(db.readerUrl)(_.createStatement().execute("UPDATE mdr.alert_delivery SET target = 'x'")).isLeft)
+    assert(Jdbc.withConnection(db.adminUrl)(_.createStatement().execute("UPDATE mdr.alert_delivery SET target = 'x'"))
+      .left.exists(_.contains("append-only")))
+    Jdbc.withConnection(db.readerUrl)(_.createStatement().execute(
+      "INSERT INTO mdr.incident VALUES (gen_random_uuid(), gen_random_uuid(), now(), '/l', 'export failed')")).fold(fail(_), identity)
+    assert(Jdbc.withConnection(db.readerUrl)(_.createStatement().execute("INSERT INTO governance.gil VALUES " +
+      "(gen_random_uuid(), now(), 'agent', 'test', 'Critical', '{}')")).isLeft, "MDR never writes governance.*")
+  }
+
   test("redaction removes the password from ALTER ROLE text") {
     val out = Migrate.redact("ALTER ROLE clad_gov_writer PASSWORD 'sekretpw1'")
     assert(!out.contains("sekretpw1"))
