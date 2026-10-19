@@ -27,7 +27,8 @@ class RoutesSpec extends AnyFunSuite:
     val cfg = if approved then Fixtures.approvedConfig() else Fixtures.config
     val up = FakeUpstream()
     val gw = Gateway(cfg, Epg.build(cfg).fold(e => throw AssertionError(e), identity), MemoryStore(), components, supervisor, up,
-      pass, Files.createTempDirectory("contain").resolve("contained.json"), () => now)
+      pass, Files.createTempDirectory("contain").resolve("contained.json"), () => now, FixedGuard(Right(guardScores(0.01))),
+      QueuedExecutor())
     val clients = Clients.parse("tok-api=api,tok-planner=planner", Admin).fold(e => throw AssertionError(e), identity)
     val client = Client.fromHttpApp(Routes(gw, clients).routes.orNotFound)
 
@@ -95,7 +96,7 @@ class RoutesSpec extends AnyFunSuite:
   test("passthrough returns the upstream's status and body, with the interaction header") {
     val rig = Rig()
     val (status, body, header) = post(rig, "/v1/passthrough/jev/chat/x", Some("tok-api"), """{"a":1}""", passHeaders*)
-    assert(status == Status.Ok && header.isDefined && body == ujson.Obj())
+    assert(status == Status.Ok && header.isDefined && body == ujson.read(ValidRoute))
   }
 
   test("passthrough with an empty path reaches the upstream with an empty path") {

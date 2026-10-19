@@ -7,6 +7,7 @@ constraints:
   - {property: extraction_grounded, type: obligation, kind: deterministic, templates: [doc.extract_1099]}
   - {property: schema_valid, type: obligation, kind: deterministic, templates: [agent.plan_metrics, doc.extract_1099]}
   - {property: tool_calls_valid, type: obligation, kind: deterministic, templates: [planner.chat, planner.interview]}
+  - {property: route_valid, type: obligation, kind: deterministic, projects: [router]}
   - {property: contains_pii, type: prohibition, kind: deterministic}
   - {property: guarantee_language, type: prohibition, kind: deterministic}
   - {property: specialized_advice, type: prohibition, kind: classifier, category: S6, projects: [agent, assistant, planner-chat]}

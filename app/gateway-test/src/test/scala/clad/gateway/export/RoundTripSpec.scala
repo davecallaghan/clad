@@ -27,7 +27,8 @@ class RoundTripSpec extends AnyFunSuite:
     val up = FakeUpstream()
     val containment = Files.createTempFile("c", ".json")
     Files.writeString(containment, "{}")   // nothing contained; an empty file would be unreadable and block every call
-    val gw = Gateway(cfg, Epg.build(cfg).toOption.get, store, comp, sup, up, NoPassthrough, containment, () => Instant.now())
+    val gw = Gateway(cfg, Epg.build(cfg).toOption.get, store, comp, sup, up, NoPassthrough, containment, () => Instant.now(),
+      FixedGuard(Right(guardScores(0.01))), QueuedExecutor())
     val start = Instant.now().minusSeconds(60)
     (1 to 3).foreach(_ => gw.complete(answerRequest()))
     gw.complete(answerRequest(template = "agent.sql"))

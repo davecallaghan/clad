@@ -49,6 +49,21 @@ final class Roc(cfg: GatewayConfig, guard: Guard, retry: (ujson.Obj, String) => 
                     at: java.time.Instant): Either[String, Vector[AuditEntry]] =
     ModelOutput.of(reply).flatMap(classify(t, request, _, iid, at)).map(_.entries)
 
+  /** A passthrough reply (router.jev): the template's deterministic constraints on the reply body, with no request,
+    * evidence or classifier. Any unsatisfied constraint is `fallback:safe_response`, delivered as the empty answer `{}`
+    * that the caller falls back from (spec 8.2). A passthrough template a classifier applies to is a Left: nothing here
+    * can run it, and the startup check refuses such a configuration. */
+  def evaluatePassthrough(t: Template, body: String, at: Instant): Either[String, RocOutcome] =
+    val classifiers = roc.forTemplate(t).filter(_.kind == "classifier").map(_.property)
+    if classifiers.nonEmpty then
+      Left(s"roc: ${t.id} is a passthrough and cannot run its classifier constraints ${classifiers.mkString(", ")}")
+    else
+      deterministic(t, ujson.Obj(), ModelOutput(body, Vector.empty), None, at).map { e =>
+        val digest = Canonical.sha256(body)
+        if e.failed.isEmpty then RocOutcome("pass", e.entries, ujson.Str(body), digest, Vector.empty)
+        else RocOutcome("fallback:safe_response", e.entries, ujson.Str(Roc.EmptyAnswer), digest, e.failed)
+      }
+
   /** Stage 3. A deterministic failure blocks at every tier: spec 8.3 names Critical, and for Standard the only other
     * reading (pass) would deliver an unsatisfied entry as pass. A score at or over τ flags Standard and blocks Critical. */
   private def decision(t: Template, e: Evaluation): String =
@@ -182,3 +197,7 @@ final class Roc(cfg: GatewayConfig, guard: Guard, retry: (ujson.Obj, String) => 
         val rows = if t.evidenceFormat == "rows_json" then evidence.flatMap(Fallbacks.table) else None
         Fallbacks.safe(reply, rows.fold(base)(tb => base + "\n\n" + tb))
       }
+
+object Roc:
+  /** What a blocked passthrough delivers: an empty JSON object, which the caller treats as no answer. */
+  val EmptyAnswer = "{}"

@@ -42,6 +42,19 @@ class EpgSpec extends AnyFunSuite:
     assert(rep.warnings.exists(_.contains("approved_model")) && rep.warnings.exists(_.contains("attest")))
   }
 
+  test("the startup check refuses an unapproved classifier and a classifier constraint on a passthrough template") {
+    val approved = Fixtures.approvedConfig()
+    val models = approved.templates.models
+    val unapproved = approved.copy(templates = clad.gateway.config.Templates(approved.templates.byId,
+      models.copy(statuses = models.statuses + (approved.roc.classifier.model -> "pending"))))
+    val e1 = StartupCheck.run(unapproved, Epg.build(unapproved).fold(fail(_), identity)).errors
+    assert(e1.exists(e => e.contains("classifier llama_guard") && e.contains("not approved")), e1)
+    val routed = approved.copy(roc = approved.roc.copy(constraints = approved.roc.constraints.map(c =>
+      if c.property == "unsafe_content" then c.copy(projects = c.projects + "router") else c)))
+    val e2 = StartupCheck.run(routed, Epg.build(routed).fold(fail(_), identity)).errors
+    assert(e2.exists(e => e.contains("router.jev") && e.contains("unsafe_content")), e2)
+  }
+
   test("the artifact digest is the digest of the stored content") {
     val r = epg.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
     assert(r.artifactDigest == clad.gateway.config.Canonical.sha256(ujson.read(r.artifactJson)("content").str))

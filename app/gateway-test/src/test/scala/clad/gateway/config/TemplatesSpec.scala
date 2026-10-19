@@ -10,7 +10,7 @@ object Fixtures:
   val runtime: Runtime = loadRuntime(dir.resolve("runtime.yaml"))
   def runtimeVariant(name: String): Runtime = loadRuntime(Paths.get(getClass.getResource(s"/runtime/$name.yaml").toURI))
   def config: GatewayConfig = GatewayConfig.loadWith(dir, runtime).fold(e => throw AssertionError(e), identity)
-  def approvedConfig(): GatewayConfig = ApprovedFixtures.load()
+  def approvedConfig(alsoAttest: String*): GatewayConfig = ApprovedFixtures.load(alsoAttest)
   val sample: Map[String, String] = Map("catalog" -> "- tax_drag_ratio (dimensions: scenario, year)",
     "vanna_context" -> "Tables: gold_scenario_summary(scenario, year)", "today" -> "2026-10-16", "schema" -> "person: name")
 

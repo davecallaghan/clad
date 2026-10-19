@@ -27,4 +27,16 @@ object StartupCheck:
         }
     }
     // Left = error, Right = warning; deployment warnings and procedural warnings share the Right side.
-    Report(found.collect { case Left(e) => e }, found.collect { case Right(w) => w })
+    Report(found.collect { case Left(e) => e } ++ roc(cfg), found.collect { case Right(w) => w })
+
+  /** The classifier must be an approved model, and no classifier constraint may apply to a passthrough template:
+    * the ROC can run only deterministic checks on a passthrough reply. */
+  private def roc(cfg: GatewayConfig): Vector[String] =
+    val model = cfg.roc.classifier.model
+    val status = cfg.templates.models.statusOf(model)
+    val unapproved = Option.when(status != "approved")(s"classifier ${cfg.roc.classifier.id}: model $model is $status, not approved in models.yaml")
+    val passthrough = cfg.templates.all.filter(_.passthrough.nonEmpty).flatMap { t =>
+      cfg.roc.forTemplate(t).filter(_.kind == "classifier").map(c =>
+        s"${t.id}: classifier constraint ${c.property} applies to a passthrough template, whose reply only deterministic checks can evaluate")
+    }
+    unapproved.toVector ++ passthrough

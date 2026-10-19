@@ -28,7 +28,7 @@ class RocConfigSpec extends AnyFunSuite:
     RocConfig.load(dir, gov)
 
   test("the fixture loads, with the classifier profile") {
-    assert(roc.constraints.size == 8 && roc.thresholds.size == 2 && roc.routerIntents.contains("plan_edit"))
+    assert(roc.constraints.size == 9 && roc.thresholds.size == 2 && roc.routerIntents.contains("plan_edit"))
     assert(roc.classifier.id == "llama_guard" && roc.classifier.verdictTokens > 0 && roc.classifier.measuredFp.isEmpty)
     assert(roc.safeResponses.contains("default") && roc.retryVariant.nonEmpty)
   }
@@ -123,7 +123,8 @@ class RocConfigSpec extends AnyFunSuite:
       Set("specialized_advice" -> 0.5, "unsafe_content" -> 0.5, "tau_max" -> 0.5))
     assert(cfg.thresholds.exists(t => t.property == "tau_max" && t.riskTier == "Critical" && t.level == "enterprise"))
     assert(ConfigLoader.loadFromString(gov.configJson("agent", roc)).flatMap(ConfigLoader.buildHierarchy).isRight)
-    assert(gov.governanceConfig("router", roc).outputConstraints.map(_.property).toSet == Set("contains_pii", "guarantee_language"))
+    assert(gov.governanceConfig("router", roc).outputConstraints.map(_.property).toSet ==
+      Set("route_valid", "contains_pii", "guarantee_language"))
   }
 
   test("a conformance RocChecks run over a bundle built from that config gives R-ROC-THRESH satisfied") {

@@ -9,7 +9,7 @@ import clad.gateway.epg.{Epg, StartupCheck}
 import clad.gateway.http.{Clients, Routes}
 import clad.gateway.keys.Keys
 import clad.gateway.pipeline.Gateway
-import clad.gateway.roc.RocConfig
+import clad.gateway.roc.{LlamaGuard, RocConfig}
 import clad.gateway.store.{Migrate, PgStore}
 import clad.gateway.upstream.{HttpPassthrough, HttpUpstream}
 import com.comcast.ip4s.{Host, Port}
@@ -18,6 +18,7 @@ import org.http4s.server.Router
 import java.nio.file.{Files, Path}
 import java.time.Instant
 import java.time.format.DateTimeParseException
+import java.util.concurrent.Executors
 
 /** The `clad-gateway` command line. Every value comes from the environment (`run` takes it as a map so tests need no
   * process environment); a missing variable or argument exits 2 naming it. No message here contains a secret. */
@@ -161,14 +162,18 @@ object Main:
       _ <- declared.find(!upstreamKeys.contains(_)).fold[Either[String, Unit]](Right(()))(n =>
         Left(s"a template declares passthrough to $n, which is not in CLAD_GATEWAY_UPSTREAMS"))
       _ <- Either.cond(report(cfg, epg), (), "the startup check found errors; the gateway does not start")
+      classifier <- upstreamKeys.get(cfg.roc.classifier.upstream).toRight(
+        s"the classifier profile names upstream ${cfg.roc.classifier.upstream}, which is not in CLAD_GATEWAY_UPSTREAMS")
       comp <- Keys.load(keysDir, "components")
       sup <- Keys.load(keysDir, "supervisor")
       clients <- Clients.parse(tokens, adminToken)
       anchors <- createDir(data.resolve("anchors"))
     yield
       val store = PgStore(writerUrl, cfg.runtime.chainLockKey, ChainAnchorStore(anchors), comp)
+      val guard = LlamaGuard(HttpUpstream(classifier._1, classifier._2, cfg.runtime), cfg.roc.classifier)
       val gateway = Gateway(cfg, epg, store, comp, sup, HttpUpstream(chat._1, chat._2, cfg.runtime),
-        HttpPassthrough(upstreamKeys.filter((n, _) => declared.contains(n)), cfg.runtime), data.resolve("containment.json"), () => Instant.now())
+        HttpPassthrough(upstreamKeys.filter((n, _) => declared.contains(n)), cfg.runtime), data.resolve("containment.json"),
+        () => Instant.now(), guard, Executors.newFixedThreadPool(cfg.runtime.rocBackgroundWorkers))
       Routes(gateway, clients).routes
     built.fold(fail, routes =>
       val base = EmberServerBuilder.default[IO].withPort(port)

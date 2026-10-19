@@ -9,4 +9,5 @@ approved:
   - {id: openai/gpt-oss-120b, status: pending, approved_by: null, approved_at: null}
   - {id: openai/gpt-oss-20b, status: pending, approved_by: null, approved_at: null}
 classifier:
-  - {id: meta-llama/Llama-Guard-4-12B, status: pending, approved_by: null, approved_at: null}
+  # approved in the base fixture: the gateway refuses to start with an unapproved classifier
+  - {id: meta-llama/Llama-Guard-4-12B, status: approved, approved_by: david, approved_at: "2026-10-17"}
