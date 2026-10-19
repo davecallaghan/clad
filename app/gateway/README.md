@@ -2,11 +2,11 @@
 
 A governed LLM gateway. Applications send chat-completion requests to it instead of to the provider. For every call it
 renders the prompt from an approved template, runs EPG (the template text against the constraint hierarchy), calls the
-provider, and appends a signed audit record to a hash chain in Postgres (with a chain anchor on disk). A blocked or
-failed call still leaves a record. Non-chat providers go through a passthrough route. `export` writes the evidence
+provider, runs ROC (runtime output controls) over the reply, and appends signed audit records to a hash chain in
+Postgres (with a chain anchor on disk). A blocked or failed call still leaves a record. Non-chat providers go through a passthrough route. `export` writes the evidence
 bundle that `conformance` verifies. See `docs/specs/2026-10-16-clad-gateway-design.md`.
 
-**Not in this version:** ROC (runtime output controls) and MDR (the monitoring worker). `GET /v1/health` is static
+**Not in this version:** MDR (the monitoring worker). `GET /v1/health` is static
 (`{"status":"ok"}`): it does not probe the store, keys, config or upstreams.
 
 ## What the adopter supplies (`CLAD_GATEWAY_CONFIG_DIR`)
@@ -16,7 +16,13 @@ constraints.yaml   hierarchy, agents, checkers, approval block
 prompts/<id>.yaml  one governed template per file
 models.yaml        provider, tiers, model registry with approval status
 attestations.yaml  human attestations per template version
-runtime.yaml       every number the gateway uses (lock key, retries, timeout, back-off)
+runtime.yaml       every number the gateway uses (lock key, retries, timeout, back-off, ROC retries,
+                   retry_similarity, grounding_ignore_below, roc_background_workers)
+roc.yaml           output constraints (deterministic or classifier, by template or project), thresholds (tau per
+                   level, tau_max), router intents, retry variant line, safe responses; the approval digest covers it
+classifiers/llama_guard.yaml   classifier profile: model (must be approved in models.yaml), version, upstream,
+                   verdict_tokens, measured_fp, measured_fn, validated_at
+classifiers/validation.jsonl   labelled items for validate-classifier (labels reviewed and attested by a human)
 ```
 
 plus the keys directory (`components.ed25519` and `supervisor.ed25519` with `.pub.pem` files), a data directory
@@ -34,7 +40,8 @@ exits 2 and names it. Secrets are never printed.
 | `keys` | generates the `components` and `supervisor` Ed25519 pairs if absent; prints a backup reminder | `CLAD_GATEWAY_KEYS_DIR` |
 | `export --since T --until T --out DIR [--probe-since T --probe-until T]` | writes the evidence bundle (`DIR` must be new or empty) | `CLAD_GATEWAY_READER_URL`, `CLAD_GATEWAY_EGRESS_LOG`, `CLAD_GATEWAY_LISTENERS` (`port=host,...`), `CLAD_GATEWAY_CONFIG_DIR`, `CLAD_GATEWAY_KEYS_DIR`, `CLAD_GATEWAY_DATA_DIR`, `CLAD_GATEWAY_APP` |
 | `approval-digest` | prints `constraints_digest: <digest>` and `approval: pending (<why>)` or `approval: approved` | `CLAD_GATEWAY_CONFIG_DIR` |
-| `check` | the startup check alone; exit 1 on errors | `CLAD_GATEWAY_CONFIG_DIR` |
+| `check` | the startup check alone; exit 1 on errors (including an unapproved classifier model, or a classifier constraint on a passthrough template) | `CLAD_GATEWAY_CONFIG_DIR` |
+| `validate-classifier --project P` | scores `classifiers/validation.jsonl` with the classifier and writes `<data>/classifier-validation.json` (`profile`, `validatedAt`, `fp`, `fn`, `items`, `misclassified`); prints the `measured_fp`, `measured_fn` and `validated_at` lines to copy into the profile. Refuses to run unless `attestations.yaml` holds an attestation of `classifier.llama_guard.validation` whose `template_version` is the file's `sha256:` digest. Each scoring call is registered in the GIL (principal `classifier.validation`, bound to declared project `P`), so run it outside a measured window | `CLAD_GATEWAY_CONFIG_DIR`, `CLAD_GATEWAY_KEYS_DIR`, `CLAD_GATEWAY_DATA_DIR`, `CLAD_GATEWAY_WRITER_URL`, `CLAD_GATEWAY_UPSTREAMS`, `CLAD_GATEWAY_KEY_<NAME>` for the classifier's upstream |
 
 Image: `bash tools/build-gateway-image.sh` builds `localhost/clad-gateway:<version>` and `:latest` with podman.
 Run it as `podman run --rm -e ... localhost/clad-gateway:latest <command>`.
@@ -55,6 +62,38 @@ and `clad.principal` must start with it. Admin routes need the separate admin to
   tier posture as for chat); other 4xx statuses are the provider's answer and are returned as they are.
 - `POST /admin/contain {project, reason}` and `POST /admin/release {project}`: containment, a human action.
 - `GET /v1/health`: static in this version.
+
+## ROC
+
+Every delivered reply is evaluated (spec 8.3 of personal_finance's enforcement design):
+
+1. **Deterministic checks** in `roc.yaml` order: `numbers_grounded`, `extraction_grounded`, `schema_valid`,
+   `tool_calls_valid`, `route_valid`, `contains_pii`, `guarantee_language`. For Critical the first failure ends the
+   checks. A check with nothing to check against (no evidence, no schema) is recorded satisfied with nothing detected.
+2. **Classifier** (Llama Guard on the profile's upstream, through egress with the call's `X-Clad-Interaction-Id`).
+   The score comes only from the model's own logprob for the verdict token: P(unsafe) = e^lp for `unsafe`,
+   1 - e^lp for `safe`; a category constraint reads that category's score (P(unsafe) times the category token's
+   probability). No verdict logprob is a classifier failure, never a guessed score. An entry is satisfied iff
+   score < tau. Critical classifies before delivery; Standard and Low classify afterwards on a background pool
+   (`roc_background_workers`) and append a second ROC record (`pass`, or `flag` when a score reaches tau).
+3. **Decision:** a deterministic failure blocks; a score at or over tau flags Standard and blocks Critical.
+4. **Fallback for a block:** only `contains_pii` → redact and re-check (`fallback:redacted`); a grounding failure →
+   up to `max_retries` retries in the same interaction with the variant line, stopping when a retry is more than
+   `retry_similarity` similar to a failed output (`fallback:retry`); otherwise the governed safe response, with the
+   evidence rows as a table for `rows_json` templates and no tool calls (`fallback:safe_response`).
+
+Only what was evaluated is delivered: role, text content and tool calls (no reasoning or logprobs).
+
+| Outcome | HTTP |
+|---|---|
+| `pass`, `flag`, `fallback:redacted`, `fallback:retry`, `fallback:safe_response` | 200, `clad.outcome` names it |
+| ROC failure (classifier error or timeout, unreadable reply, record not stored), Critical | 403 `roc_unavailable`, degraded record `FailClosed` |
+| ROC failure, Standard or Low | 200 with outcome `degraded` (role, text and tool calls only), degraded record with the tier's posture; 503 if the reply cannot be read |
+
+**Passthrough:** a 2xx reply runs the template's deterministic constraints (`route_valid` for a router: the reply
+parses and `answers.intent.choice` is one of `router_intents`). An invalid reply becomes `{}` with status 200 and
+outcome `fallback:safe_response`; the client treats it as no answer and falls back to its default route. A 4xx is
+returned as it is, without a ROC record.
 
 ## Operating notes
 

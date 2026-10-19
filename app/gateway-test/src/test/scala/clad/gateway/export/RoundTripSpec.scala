@@ -4,6 +4,7 @@ import clad.audit.ChainAnchorStore
 import clad.gateway.config.Fixtures
 import clad.gateway.epg.Epg
 import clad.gateway.keys.Keys
+import clad.gateway.roc.LlamaGuard
 import clad.gateway.pipeline.*
 import clad.gateway.store.{Jdbc, PgStore, TestDatabase}
 import org.scalatest.funsuite.AnyFunSuite
@@ -16,19 +17,39 @@ class RoundTripSpec extends AnyFunSuite:
     Seq("components", "supervisor").foreach(r => Keys.generate(keys, r))
     keys
 
-  test("records written by the gateway export to a bundle that conformance verifies") {
+  /** The classifier upstream: every request gets a `safe` verdict with its logprob. */
+  private final class SafeVerdict extends Upstream:
+    val calls = scala.collection.mutable.ArrayBuffer.empty[String]
+    def complete(body: ujson.Obj, iid: String): Either[String, ujson.Value] =
+      calls.synchronized(calls += iid)
+      Right(ujson.Obj("choices" -> ujson.Arr(ujson.Obj("message" -> ujson.Obj("role" -> "assistant", "content" -> "safe"),
+        "logprobs" -> ujson.Obj("content" -> ujson.Arr(ujson.Obj("token" -> "safe", "logprob" -> -0.001)))))))
+
+  private def egressLine(iid: String, uri: String): String =
+    ujson.write(ujson.Obj("ts" -> Instant.now().getEpochSecond.toDouble, "status" -> 200, "request" -> ujson.Obj(
+      "method" -> "POST", "uri" -> uri, "host" -> "egress:8081", "headers" -> ujson.Obj("X-Clad-Interaction-Id" -> ujson.Arr(iid)))))
+
+  test("records written by the gateway, ROC included, export to a bundle that conformance verifies") {
     val db = TestDatabase.fresh()
     val keys = keysDir()
     val anchors = Files.createTempDirectory("anchors")
-    val cfg = Fixtures.approvedConfig()
+    val cfg = Fixtures.approvedConfig("assistant.general")
     val comp = Keys.load(keys, "components").toOption.get
     val sup = Keys.load(keys, "supervisor").toOption.get
     val store = PgStore(db.writerUrl, cfg.runtime.chainLockKey, ChainAnchorStore(anchors), comp)
-    val up = FakeUpstream()
+    val rows = ujson.read("""[{"scenario": "base", "tax_drag_ratio": 0.0666328857}]""")
+    val ungrounded = ok("The base scenario's tax drag is 9.99 %.")
+    // 3 answers (agent.sql is unattested, so EPG blocks it before upstream), a grounded answer, an ungrounded answer
+    // and its retry, then the Standard call
+    val up = FakeUpstream(Right(ok("ok")), Right(ok("ok")), Right(ok("ok")),
+      Right(ok("The base scenario's tax drag is 6.66 %.")), Right(ungrounded), Right(ungrounded), Right(ok("Hello there.")))
+    val classifier = SafeVerdict()
+    val pass = FakePassthrough()
+    val background = QueuedExecutor()
     val containment = Files.createTempFile("c", ".json")
     Files.writeString(containment, "{}")   // nothing contained; an empty file would be unreadable and block every call
-    val gw = Gateway(cfg, Epg.build(cfg).toOption.get, store, comp, sup, up, NoPassthrough, containment, () => Instant.now(),
-      FixedGuard(Right(guardScores(0.01))), QueuedExecutor())
+    val gw = Gateway(cfg, Epg.build(cfg).toOption.get, store, comp, sup, up, pass, containment, () => Instant.now(),
+      LlamaGuard(classifier, cfg.roc.classifier), background)
     val start = Instant.now().minusSeconds(60)
     (1 to 3).foreach(_ => gw.complete(answerRequest()))
     gw.complete(answerRequest(template = "agent.sql"))
@@ -36,16 +57,27 @@ class RoundTripSpec extends AnyFunSuite:
     assert(gw.contain("agent", "incident") == Right(()))
     gw.complete(answerRequest())
     assert(gw.release("agent") == Right(()))
+    assert(gw.complete(answerRequest(evidence = Some(rows))).isInstanceOf[GatewayResult.Delivered])
+    gw.complete(answerRequest(evidence = Some(rows))) match
+      case GatewayResult.Delivered(_, "fallback:safe_response", _) => ()
+      case other                                                   => fail(s"ungrounded answer gave $other")
+    gw.complete(GovernedRequest("assistant.general", "api", None, Vector(ujson.Obj("role" -> "user", "content" -> "hi")),
+      Map.empty, None, None, ujson.Obj()))
+    background.runAll()
+    gw.passthrough("jev", "", "router.jev", "api", None, "{}") match
+      case GatewayResult.Delivered(_, "pass", _) => ()
+      case other                                 => fail(s"router gave $other")
     val log = Files.createTempFile("access", ".log")
-    Files.writeString(log, up.calls.map((_, iid) => ujson.write(ujson.Obj("ts" -> Instant.now().getEpochSecond.toDouble,
-      "status" -> 200, "request" -> ujson.Obj("method" -> "POST", "uri" -> "/v1/openai/chat/completions", "host" -> "egress:8081",
-      "headers" -> ujson.Obj("X-Clad-Interaction-Id" -> ujson.Arr(iid)))))).mkString("\n") + "\n")
+    val lines = up.calls.map((_, iid) => egressLine(iid, "/v1/openai/chat/completions")) ++
+      classifier.calls.map(egressLine(_, "/v1/openai/chat/completions")) ++ pass.calls.map(c => egressLine(c._4, "/v1/jev/"))
+    Files.writeString(log, lines.mkString("\n") + "\n")
     val out = Files.createTempDirectory("bundle")
     BundleExport.write(out, start, Instant.now().plusSeconds(60), None, db.readerUrl, Some(log),
       Map("8081" -> "api.deepinfra.com"), anchors, keys, cfg.governance, "personal_finance").fold(fail(_), identity)
     val results = clad.conformance.BundleReader.read(out).map(b => clad.conformance.Conformance.evaluate(b, None, None)).fold(fail(_), identity)
     info(results.map(r => s"${r.id} -> ${r.verdict} ${r.reason}").mkString("\n"))
-    for id <- Seq("R-AI2", "R-AI3", "R-AI4", "R-ANCHOR", "R-AI6", "R-EA1", "R-EA2", "R-AX5", "R-CFG-PARSE", "R-EPG-REEVAL", "R-EPG-BLOCK") do
+    for id <- Seq("R-AI2", "R-AI3", "R-AI4", "R-ANCHOR", "R-AI5", "R-AI6", "R-EA1", "R-EA2", "R-EA3", "R-AX5", "R-CFG-PARSE",
+                  "R-EPG-REEVAL", "R-EPG-BLOCK", "R-ROC-PRESENT", "R-ROC-DECISION", "R-ROC-THRESH") do
       assert(results.find(_.id == id).exists(_.verdict == clad.conformance.Verdict.Satisfied), s"$id: ${results.find(_.id == id)}")
   }
 

@@ -184,10 +184,18 @@ provider-owned (External governability), which the adopter records as residual r
 6. **Upstream.** Call the provider through the egress proxy with `X-Clad-Interaction-Id`, retrying per
    `runtime.yaml`. On failure the supervisor writes a degraded record signed with the supervisor key (Critical:
    `FailClosed`/`Blocked` → 403; Standard: `FailOpenFlagged`/`ProceededFlagged` → 503 with the record noted).
-7. **ROC.** `OutputEvaluator` over the reply (deterministic checks, then the classifier within the latency budget;
-   grounding against the evidence); `FallbackHandler` for `fallback:redacted`, `fallback:retry`,
-   `fallback:safe_response`; append the ROC record (artifact digest = digest of the output text, which is not stored).
-8. **Deliver** with `outcome`, or 403 for a ROC block.
+7. **ROC** (`clad.gateway.roc`, plan `docs/plans/2026-10-17-clad-gateway-roc.md`). Deterministic checks from the
+   adopter's `roc.yaml` (Critical stops at the first failure), then the Llama Guard classifier: before delivery for
+   Critical, on a background pool afterwards for other tiers, which writes a second ROC record (`pass` or `flag`).
+   Decision: a deterministic failure blocks; a score at or over tau flags Standard and blocks Critical. A block falls
+   back to redaction (`contains_pii` only), retries in the same interaction (grounding failures), or the governed
+   safe response. The ROC record (component `roc`, surface `Output`, artifact digest = digest of the evaluated
+   output text, which is not stored) carries the blocked output's entries and, for a redaction or retry, the
+   delivered output's. A ROC failure is a supervisor-signed degraded record: Critical 403 `roc_unavailable`; other
+   tiers deliver the reply's role, text and tool calls with outcome `degraded`. A 2xx passthrough reply gets the
+   template's deterministic checks (`route_valid` for Jev); an invalid one is `{}` with outcome
+   `fallback:safe_response`.
+8. **Deliver** with `outcome`: only the evaluated role, text and tool calls.
 
 Every record is a clad `SignedAuditRecord` with `component`, `surface` and `outcome`, appended under the chain lock,
 then anchored.
@@ -264,13 +272,16 @@ done in clad-gateway instead.
 
 ## 14. Open questions
 
-1. **Classifier for ROC.** personal_finance's plan runs a Llama Guard spike on DeepInfra first (logprobs available?).
-   That spike moves here unchanged.
+1. **Classifier for ROC (decided 2026-10-17).** Llama Guard 4 on DeepInfra returns chosen-token logprobs (personal_finance
+   `docs/governance/decisions/2026-10-17-roc-classifier-spike.md`). P(unsafe) = e^lp for an `unsafe` verdict, 1 − e^lp
+   for `safe`; a category's score is P(unsafe) times its token's probability. A reply without the verdict logprob is
+   a classifier failure. FP and FN are measured by `validate-classifier` over a human-attested labelled set.
 2. **JVM footprint.** The podman VM has 6 GB; measure the gateway and MDR containers' memory before adding both.
 3. **Template rendering for code-computed slots.** Slots like personal_finance's `schema` and `vanna_context` are
    large and computed by the app. They are rendered into the stored artifact, so they must not carry user data; the
    gateway cannot verify that. Proposal: the template declares a slot `kind` (`code` or `date`), and the docs state
    the rule.
-4. **Jev passthrough ROC.** Is `route_valid` (answers present, intent in the allowed set) enough, or does Jev need a
-   classifier too?
+4. **Jev passthrough ROC (decided 2026-10-19).** `route_valid` and the global deterministic checks only. The reply is
+   a structured choice from a fixed set, not free text; a classifier constraint on a passthrough template is a
+   startup error.
 5. **Where `clad-gateway` runs for development** without the podman pod (a fat jar against a local Postgres?).
