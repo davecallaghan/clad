@@ -25,7 +25,7 @@ class ReviewAgeSpec extends AnyFunSuite:
   }
 
   test("an approved constraint set past the cadence alerts (a date without time counts); a pending one does not") {
-    val stale = now.minus(Duration.ofDays(cfg.reviewCadenceDays + 2)).toString.take(10)
+    val stale = now.minus(Duration.ofDays(cfg.reviewCadenceDays + 2)).atZone(java.time.ZoneOffset.UTC).toLocalDate.toString
     assert(run(dir(stale, "approved", recent)).fold(fail(_), identity).map(_.dedupeKey) == Vector("review:constraint set:sha256:d"))
     assert(run(dir(stale, "pending", recent)).fold(fail(_), identity).isEmpty)
   }
