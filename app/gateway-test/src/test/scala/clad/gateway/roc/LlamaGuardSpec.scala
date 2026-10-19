@@ -44,6 +44,33 @@ class LlamaGuardSpec extends AnyFunSuite:
     }
   }
 
+  test("an end-of-turn token closes the verdict line (DeepInfra's reply, 2026-10-19)") {
+    run(reply(Seq(tok("\n\n", Some(0.0)), tok("safe", Some(0.0)), tok("<|eot|>", Some(0.0))))) { (g, _) =>
+      val s = g.score(convo, "iid").toOption.get
+      assert(s.verdict == "safe" && s.unsafe == 0.0)
+    }
+    run(reply(Seq(tok("unsafe", Some(-0.2)), tok("\n", Some(0.0)), tok("S6", Some(-0.1)), tok("<|eot|>", Some(0.0))))) { (g, _) =>
+      val s = g.score(convo, "iid").toOption.get
+      assert(s.verdict == "unsafe" && s.categories.keySet == Set("S6"))
+    }
+  }
+
+  test("a category split across tokens (DeepInfra: S, 6) scores by the product of its tokens' probabilities") {
+    val (v, a, b) = (-0.1, -0.2, -0.3)
+    run(reply(Seq(tok("\n\n", Some(0.0)), tok("unsafe", Some(v)), tok("\n", Some(0.0)), tok("S", Some(a)), tok("6", Some(b)),
+        tok("<|eot|>", Some(0.0))))) { (g, _) =>
+      val s = g.score(convo, "iid").toOption.get
+      assert(s.categories.keySet == Set("S6") && math.abs(s.categories("S6") - math.exp(v) * math.exp(a + b)) < 1e-12)
+    }
+    run(reply(Seq(tok("unsafe", Some(0.0)), tok("\n", Some(0.0)), tok("S", Some(0.0)), tok("1", Some(0.0)), tok(",", Some(0.0)),
+        tok("S", Some(0.0)), tok("14", Some(0.0)), tok("<|eot|>", Some(0.0))))) { (g, _) =>
+      assert(g.score(convo, "iid").toOption.get.categories.keySet == Set("S1", "S14"))
+    }
+    run(reply(Seq(tok("unsafe", Some(0.0)), tok("\n", Some(0.0)), tok("X", Some(0.0)), tok("<|eot|>", Some(0.0))))) { (g, _) =>
+      assert(g.score(convo, "iid").left.exists(_.contains("malformed category")))
+    }
+  }
+
   test("an unsafe verdict with S6 at logprob zero scores 1.0 overall and for S6") {
     run(reply(Seq(tok("\n\n", Some(0.0)), tok("unsafe", Some(0.0)), tok("\n", Some(0.0)), tok("S6", Some(0.0))))) { (g, _) =>
       val s = g.score(convo, "iid").toOption.get

@@ -47,11 +47,14 @@ object LlamaGuard:
       else if word != toks(at).text.trim then Left(Split)
       else scoreVerdict(toks, at)
 
-  /** The text of the verdict line: from the first non-blank token to the first newline after it. */
+  private val Special = "<\\|[^|]*\\|>".r
+
+  /** The text of the verdict line: from the first non-blank token to the first newline or special token (such as
+    * `<|eot|>`, which ends a `safe` reply) after it. */
   private def verdictWord(toks: Vector[Tok], at: Int): String =
     val rest = toks.drop(at)
-    val (head, tail) = rest.tail.span(!_.text.contains('\n'))
-    val closing = tail.headOption.map(_.text.takeWhile(_ != '\n')).getOrElse("")
+    val (head, tail) = rest.tail.span(t => !t.text.contains('\n') && !Special.matches(t.text.trim))
+    val closing = tail.headOption.filterNot(t => Special.matches(t.text.trim)).map(_.text.takeWhile(_ != '\n')).getOrElse("")
     (rest.head.text +: head.map(_.text) :+ closing).mkString.trim
 
   private def scoreVerdict(toks: Vector[Tok], at: Int): Either[String, GuardScores] =
@@ -64,11 +67,29 @@ object LlamaGuard:
           Right(GuardScores(unsafe, SafeCategories.map(_ -> unsafe).toMap, "safe"))
         case Some(lp) =>
           val unsafe = math.exp(lp)
-          val coded = toks.drop(at + 1).filter(t => CategoryCode.matches(t.text.trim))
-          if coded.isEmpty then Left("classifier reply has no category token")
-          else if coded.exists(_.logprob.isEmpty) then Left("classifier reply has no category logprob")
-          else Right(GuardScores(unsafe, coded.map(t => t.text.trim -> unsafe * math.exp(t.logprob.get)).toMap, "unsafe"))
+          val codes = categoryCodes(toks.drop(at + 1))
+          if codes.isEmpty then Left("classifier reply has no category token")
+          else if codes.exists(_.exists(_.logprob.isEmpty)) then Left("classifier reply has no category logprob")
+          else
+            val named = codes.map(g => g.map(_.text.trim).mkString)
+            named.find(!CategoryCode.matches(_)) match
+              case Some(bad) => Left(s"classifier reply has a malformed category '$bad'")
+              // chain rule: a code split across tokens (S, 6) has the product of its tokens' probabilities
+              case None => Right(GuardScores(unsafe, named.zip(codes).map((k, g) =>
+                k -> unsafe * math.exp(g.flatMap(_.logprob).sum)).toMap, "unsafe"))
     }
+
+  /** The category line after an `unsafe` verdict, as groups of tokens, one group per code: up to a special token or a
+    * newline after the codes; a comma, a blank or a token starting with `S` starts a new code. */
+  private def categoryCodes(after: Vector[Tok]): Vector[Vector[Tok]] =
+    val line = after.dropWhile(_.text.trim.isEmpty)
+      .takeWhile(t => !Special.matches(t.text.trim) && !t.text.contains('\n'))
+    line.foldLeft(Vector.empty[Vector[Tok]]) { (groups, t) =>
+      val text = t.text.trim
+      if text.isEmpty || text == "," then groups :+ Vector.empty
+      else if text.startsWith("S") || groups.isEmpty then groups :+ Vector(t)
+      else groups.init :+ (groups.last :+ t)
+    }.filter(_.nonEmpty)
 
   /** When the verdict is safe no category is generated, so each Llama Guard category (S1 to S14) gets the P(unsafe) upper bound. */
   val SafeCategories: Vector[String] = (1 to 14).map(i => s"S$i").toVector
