@@ -167,7 +167,11 @@ constraints, and that project's constraints. `configDigest` is `"sha256:" + hex(
  "provider": "deepinfra", "model": "…", "model_registry_status": "approved", "project": "agent"}}
 ```
 
-`artifactDigest` is `"sha256:" + hex(sha256(UTF-8 content))`. Only EPG artifacts are included; ROC artifacts (model
+`artifactDigest` is `PromptArtifact.digest`: `"sha256:" + hex(sha256(C))`, where C is the UTF-8 netstrings
+(`<byte length>:<bytes>,`) of `clad-artifact-v1`, the content, then each metadata key and value in key order. It covers
+the metadata because EPG's verdict depends on it: with a content-only digest, the same template text evaluated with a
+pending and later an approved model shared one stored body, and re-evaluation used the wrong metadata (changed
+2026-10-19). Only EPG artifacts are included; ROC artifacts (model
 outputs) are never exported.
 
 ### 4.4 Logs
@@ -226,7 +230,7 @@ The evidence column lists what each verdict rests on. "Window" means the workloa
 | R-EA2 | Identity binding (EA2) | Every GIL entry has non-empty `project` and `principal`, and `project` is a key of `bundle.json` `projects` | no GIL |
 | R-EA3 | Bypass detection (EA3) | Workload-window ghost rate is 0: `GhostDetector.detect` over the GIL and audited ids finds no ghosts, and InfraReconciler finds no infra entry without a GIL entry. Reports ghost count, rate and unlinkable count | no GIL or no infra |
 | R-EA4 | Constraint authorship (EA4) | Every constraint in every config has non-empty `author` and `approver`, `author != approver`, the approver is an agent of kind `human`, the author passes `ConstraintAuthorizer.authorize` for its domain and level, and for domains in `criticalDomains` the approver is in `centralApprovers` | no configs |
-| R-AX5 | Version identity (Axiom 5) | Every record's `configDigest` names a file in `configs/` whose bytes hash to it, and every EPG record's `artifactDigest` names a file in `artifacts/` whose content hashes to it | no records |
+| R-AX5 | Version identity (Axiom 5) | Every record's `configDigest` names a file in `configs/` whose bytes hash to it, and every EPG record's `artifactDigest` names a file in `artifacts/` whose content and metadata hash to it | no records |
 | R-CFG-PARSE | Configs load | Every config loads with `ConfigLoader.loadFromString` and `buildEngine` succeeds | no configs |
 | R-CFG-MONO | Hierarchy monotonic, no contradictions | Every config builds a `ConstraintHierarchy` without `Contradiction`, and every enterprise constraint present in one project's config is present in all of them | no configs |
 | R-CFG-TENSION | Tensions surfaced | Always SATISFIED with the tension list as evidence when configs load (advisory) | no configs |

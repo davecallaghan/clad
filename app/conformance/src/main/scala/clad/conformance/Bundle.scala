@@ -16,6 +16,7 @@ case class MdrAlert(alertId: String, raisedAt: Instant, severity: String, taxono
 case class Heartbeat(ts: Instant, detector: String)
 /** `name` is the digest the file name claims; `computedDigest` is what its bytes hash to. */
 case class ConfigFile(name: String, computedDigest: String, text: String)
+/** `computedDigest` is `PromptArtifact.digest`: content and metadata together. */
 case class ArtifactFile(name: String, computedDigest: String, content: String, metadata: Map[String, String])
 
 /** An evidence bundle (spec section 4). `None` means the file was absent (no evidence);
@@ -79,7 +80,8 @@ object BundleReader:
       val artifacts = dirFiles("artifacts", ".json").map { p =>
         val j = ujson.read(Files.readString(p))
         val name = p.getFileName.toString.stripSuffix(".json")
-        name -> ArtifactFile(name, sha(j("content").str.getBytes("UTF-8")), j("content").str, strMap(j("metadata")))
+        val (content, metadata) = (j("content").str, strMap(j("metadata")))
+        name -> ArtifactFile(name, clad.evaluation.PromptArtifact(content, metadata).digest, content, metadata)
       }.toMap
       val keys = dirFiles("keys", ".pub.pem").map(p => p.getFileName.toString.stripSuffix(".pub.pem") -> Files.readString(p)).toMap
       val names = Vector("gil.jsonl", "infra.jsonl", "audit.jsonl", "degraded.jsonl", "anchors.jsonl", "mdr_alerts.jsonl", "mdr_heartbeats.jsonl")

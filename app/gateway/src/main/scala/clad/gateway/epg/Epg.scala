@@ -3,7 +3,7 @@ package clad.gateway.epg
 import clad.config.ConfigLoader
 import clad.core.{Level, PropertyId}
 import clad.evaluation.{ConstraintResult, EvaluableHierarchy, EvidenceSet, PromptArtifact, PromptEvaluator, ProceduralEvidence}
-import clad.gateway.config.{Canonical, GatewayConfig, Template}
+import clad.gateway.config.{GatewayConfig, Template}
 import clad.runtime.{AuditEntry, EvaluabilityClass}
 import java.time.Instant
 
@@ -20,14 +20,15 @@ final class Epg private (cfg: GatewayConfig, hierarchies: Map[String, EvaluableH
       hierarchy <- hierarchies.get(t.project).toRight(s"${t.id}: unknown project ${t.project}")
       metadata = cfg.templates.metadata(t, model) + ("project" -> t.project)
       evidence <- evidenceFor(t)
-      report <- PromptEvaluator.evaluate(PromptArtifact(rendered, metadata), hierarchy, evidence, Level.Project, at)
+      artifact = PromptArtifact(rendered, metadata)
+      report <- PromptEvaluator.evaluate(artifact, hierarchy, evidence, Level.Project, at)
         .left.map(e => s"${t.id}: evaluation failed: $e")
     yield
       val entries = (report.mechanicalResults.toVector.map(entry(_, EvaluabilityClass.Mechanical, at)) ++
         report.proceduralResults.toVector.map(entry(_, EvaluabilityClass.Procedural, at))).sortBy(_.constraint.property.value)
       val artifactJson = ujson.write(ujson.Obj("content" -> rendered,
         "metadata" -> ujson.Obj.from(metadata.toSeq.sortBy(_._1).map((k, v) => k -> ujson.Str(v)))))
-      EpgResult(entries, Canonical.sha256(rendered), artifactJson,
+      EpgResult(entries, artifact.digest, artifactJson,
         cfg.governance.configDigest(t.project, cfg.roc), cfg.governance.configJson(t.project, cfg.roc))
 
   private def entry(r: ConstraintResult, c: EvaluabilityClass, at: Instant): AuditEntry =

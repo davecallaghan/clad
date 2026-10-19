@@ -93,7 +93,7 @@ object ConfigChecks:
       case None | Some(Vector()) => RequirementResult("R-AX5", t, Area, Verdict.NotRun, reason = "no audit records")
       case Some(rs) =>
         val badConfigFiles = b.configs.values.filter(f => f.computedDigest != f.name).map(f => s"configs/${f.name}.json hashes to ${f.computedDigest}")
-        val badArtifacts = b.artifacts.values.filter(a => a.computedDigest != a.name).map(a => s"artifacts/${a.name}.json content hashes to ${a.computedDigest}")
+        val badArtifacts = b.artifacts.values.filter(a => a.computedDigest != a.name).map(a => s"artifacts/${a.name}.json content and metadata hash to ${a.computedDigest}")
         val unknownConfig = rs.map(_.record.configDigest).distinct.filterNot(b.configs.contains).map(d => s"configDigest $d not in bundle")
         val unknownArtifact = rs.filter(_.record.component.contains("epg")).map(_.record.artifactDigest).distinct
           .filterNot(b.artifacts.contains).map(d => s"EPG artifact $d not in bundle")

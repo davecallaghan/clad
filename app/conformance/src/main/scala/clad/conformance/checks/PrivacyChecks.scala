@@ -10,7 +10,9 @@ object PrivacyChecks:
     "sha256:[0-9a-f]+".r,
     "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}".r,
     "\"value\":\"[A-Za-z0-9+/=]+\"".r,
-    "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z".r)
+    "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z".r,
+    // a classifier's score and its threshold are probabilities, whose decimals run long
+    "\"(score|threshold)\":-?\\d+(\\.\\d+)?([eE][-+]?\\d+)?".r)
   private val Pii = Vector(
     "ssn" -> "\\b\\d{3}-\\d{2}-\\d{4}\\b".r,
     "ein" -> "\\b\\d{2}-\\d{7}\\b".r,

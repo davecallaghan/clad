@@ -55,9 +55,20 @@ class EpgSpec extends AnyFunSuite:
     assert(e2.exists(e => e.contains("router.jev") && e.contains("unsafe_content")), e2)
   }
 
-  test("the artifact digest is the digest of the stored content") {
+  test("the same text evaluated with a pending and then an approved model is two artifacts, not one stored body") {
+    val approved = Fixtures.approvedConfig()
+    val e2 = Epg.build(approved).fold(fail(_), identity)
+    val pending = epg.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
+    val later = e2.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
+    assert(pending.artifactDigest != later.artifactDigest)
+    assert(ujson.read(later.artifactJson)("metadata")("model_registry_status").str == "approved")
+  }
+
+  test("the artifact digest is PromptArtifact.digest of the stored content and metadata") {
     val r = epg.evaluate(answer, answer.text, answer.model, at).fold(fail(_), identity)
-    assert(r.artifactDigest == clad.gateway.config.Canonical.sha256(ujson.read(r.artifactJson)("content").str))
+    val stored = ujson.read(r.artifactJson)
+    assert(r.artifactDigest == clad.evaluation.PromptArtifact(stored("content").str,
+      stored("metadata").obj.map((k, v) => k -> v.str).toMap).digest)
   }
 
   test("an attested template carries attestor and time into the procedural detail") {

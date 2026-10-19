@@ -179,8 +179,8 @@ provider-owned (External governability), which the adopter records as residual r
    temperature, max tokens, session, evidence digest. If this fails, return 403 `gil_unavailable` and call nothing.
 5. **EPG.** Render; build artifact metadata (`template_id`, `template_version`, `project`, `provider`, `model`,
    `model_registry_status`, `response_format`); evaluate the project path with `PromptEvaluator` (procedural
-   evidence from `attestations.yaml`); store the artifact and the path's `GovernanceConfig` (digest = record
-   `configDigest`); append the EPG record. Any unsatisfied entry: outcome `block`, 403, no upstream call.
+   evidence from `attestations.yaml`); store the artifact (digest = `PromptArtifact.digest`, over content and
+   metadata) and the path's `GovernanceConfig` (digest = record `configDigest`); append the EPG record. Any unsatisfied entry: outcome `block`, 403, no upstream call.
 6. **Upstream.** Call the provider through the egress proxy with `X-Clad-Interaction-Id`, retrying per
    `runtime.yaml`. On failure the supervisor writes a degraded record signed with the supervisor key (Critical:
    `FailClosed`/`Blocked` → 403; Standard: `FailOpenFlagged`/`ProceededFlagged` → 503 with the record noted).

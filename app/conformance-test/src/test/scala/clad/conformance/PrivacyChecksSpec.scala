@@ -10,6 +10,17 @@ class PrivacyChecksSpec extends AnyFunSuite with Matchers:
   test("digests, UUIDs and signatures are not PII"):
     run(TestBundles.valid()).verdict shouldBe Verdict.Satisfied
 
+  test("a classifier score with long decimals is not an account number; the same digits elsewhere are"):
+    val score = clad.evaluation.ClassifierDetail("llama_guard", "4", 0.008577522801712312, 0.5, "1")
+    val roc = TestBundles.rocRecord("0192f0c0-0000-7000-8000-000000000001", TestBundles.at(12), "pass", Vector(TestBundles.entry(
+      "unsafe_content", ob = false, satisfied = true, TestBundles.at(12), clad.runtime.EvaluabilityClass.Classifier, score)))
+    val b = TestBundles.valid()
+    TestBundles.writeLines(b.dir, "audit.jsonl", TestBundles.chain(b.components, Vector(roc)).map(clad.audit.AuditRecordCodec.encode))
+    run(b).verdict shouldBe Verdict.Satisfied
+    val c = TestBundles.valid()
+    TestBundles.rewrite(c.dir, "gil.jsonl")(ls => ls.map(_.replace("\"tier\":\"Critical\"", "\"tier\":\"Critical\",\"note\":\"0.008577522801712312\"")))
+    run(c).verdict shouldBe Verdict.Violated
+
   test("an SSN in GIL metadata violates R-AI6"):
     val b = TestBundles.valid()
     TestBundles.rewrite(b.dir, "gil.jsonl")(ls => ls.map(_.replace("\"tier\":\"Critical\"", "\"tier\":\"Critical\",\"note\":\"123-45-6789\"")))
