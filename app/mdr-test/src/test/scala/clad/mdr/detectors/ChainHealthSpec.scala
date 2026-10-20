@@ -63,3 +63,10 @@ class ChainHealthSpec extends AnyFunSuite:
     val gil25 = (1 to 25).map(i => gil(id(i), ago(i))).toVector
     assert(rig.run(s = empty.copy(gil = gil25, degraded = Vector(degraded(id(1), ago(1))))).isEmpty)
   }
+
+  test("the same degraded records seen by the next, overlapping window have the same dedupe key") {
+    val rig = Rig(1)
+    val s = empty.copy(gil = (1 to 10).map(i => gil(id(i), ago(i))).toVector, degraded = Vector(degraded(id(1), ago(1))))
+    val next = s.copy(window = Window(s.window.start.plusSeconds(cfg.intervalSeconds), s.window.end.plusSeconds(cfg.intervalSeconds)))
+    assert(rig.run(s = s).map(_.dedupeKey) == rig.run(s = next).map(_.dedupeKey))
+  }

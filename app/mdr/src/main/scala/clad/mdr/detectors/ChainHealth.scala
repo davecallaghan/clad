@@ -42,7 +42,9 @@ final class ChainHealth(cfg: MdrConfig, source: Source, keysDir: Path, anchorDir
   private def ratio(s: Snapshot): Option[MdrAlert] =
     val gil = s.gil.count(g => s.window.contains(g.registeredAt))
     val degraded = s.degraded.filter(d => s.window.contains(d.record.timestamp))
-    val key = s"degraded_ratio:${s.window.end}"
+    // keyed by the newest degraded record, not the window: windows overlap by the in-flight grace, so the same records
+    // must not alert again next cycle; a new degraded record while the ratio holds is a new alert
+    val key = s"degraded_ratio:${degraded.map(_.record.timestamp).maxOption.getOrElse(s.window.end)}"
     Option.when(gil > 0 && degraded.size.toDouble / gil > cfg.degradedRatioAlert && !s.alertedKeys.contains(key))(
       MdrAlert(key, AlertSeverity.P3Medium, AlertCategory.Governance, id, degraded.map(_.record.interactionId.value).distinct,
         f"Degraded records are ${degraded.size} of $gil interactions in ${s.window.start} – ${s.window.end} " +

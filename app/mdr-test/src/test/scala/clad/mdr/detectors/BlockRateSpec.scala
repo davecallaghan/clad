@@ -33,3 +33,9 @@ class BlockRateSpec extends AnyFunSuite:
     val s = empty.copy(records = records("numbers_grounded", 100, 0, tooOld) ++ records("numbers_grounded", 50, 1, baselineAt) ++ roc)
     assert(run(s).map(_.dedupeKey.split(":")(1)) == Vector("numbers_grounded"))
   }
+
+  test("the same blocks seen by the next, overlapping window have the same dedupe key") {
+    val s = empty.copy(records = records("contains_pii", 50, 1, baselineAt) ++ records("contains_pii", 10, 1, ago(10)))
+    val next = s.copy(window = Window(s.window.start.plusSeconds(cfg.intervalSeconds), s.window.end.plusSeconds(cfg.intervalSeconds)))
+    assert(run(s).map(_.dedupeKey) == run(next).map(_.dedupeKey))
+  }

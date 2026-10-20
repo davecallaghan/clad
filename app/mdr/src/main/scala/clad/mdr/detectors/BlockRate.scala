@@ -23,13 +23,19 @@ final class BlockRate(cfg: MdrConfig) extends Detector:
 
   def run(s: Snapshot, now: Instant): Either[String, Vector[MdrAlert]] =
     val baselineStart = s.window.start.minus(lookback)
-    val window = rates(s.records.filter(r => s.window.contains(r.timestamp)))
+    val inWindow = s.records.filter(r => s.window.contains(r.timestamp))
+    val window = rates(inWindow)
+    // keyed by the property's newest blocking record, not the window end: windows overlap by the in-flight grace, so
+    // the same records must not alert again next cycle
+    def newestBlock(property: String): Instant =
+      inWindow.filter(r => blocking(r.outcome) && r.entries.exists(e => e.constraint.property.value == property && !e.satisfied))
+        .map(_.timestamp).maxOption.getOrElse(s.window.end)
     val baseline = rates(s.records.filter(r => !r.timestamp.isBefore(baselineStart) && r.timestamp.isBefore(s.window.start)))
     Right(window.toVector.sortBy(_._1).flatMap { case (property, (blocked, evaluated)) =>
       baseline.get(property).filter(_._2 > 0).flatMap { (bBlocked, bEvaluated) =>
         val rate = blocked.toDouble / evaluated
         val base = bBlocked.toDouble / bEvaluated
-        val key = s"block_rate:$property:${s.window.end}"
+        val key = s"block_rate:$property:${newestBlock(property)}"
         Option.when(rate > cfg.blockRateMultiple * base && !s.alertedKeys.contains(key))(
           MdrAlert(key, AlertSeverity.P3Medium, AlertCategory.Governance, id, Vector.empty,
             f"Block rate of $property is $rate%.3f ($blocked of $evaluated) in ${s.window.start} – ${s.window.end}, against " +
