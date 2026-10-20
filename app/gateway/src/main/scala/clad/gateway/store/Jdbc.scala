@@ -1,12 +1,20 @@
 package clad.gateway.store
 
-import java.sql.{Connection, DriverManager, SQLException}
+import java.sql.{Connection, SQLException}
+import java.util.Properties
 
 object Jdbc:
+  // The driver itself, not DriverManager: DriverManager only returns drivers registered by the caller's classloader,
+  // so a second classloader in the same JVM (sbt running several test projects) finds "no suitable driver".
+  private val driver = org.postgresql.Driver()
+
   private def describe(e: SQLException): String = s"${e.getSQLState}: ${e.getMessage}"
 
+  private def connect(url: String): Connection =
+    Option(driver.connect(url, Properties())).getOrElse(throw SQLException("not a PostgreSQL JDBC URL (jdbc:postgresql:...)", "08001"))
+
   def withConnection[A](url: String)(f: Connection => A): Either[String, A] =
-    try using(DriverManager.getConnection(url))(f)
+    try using(connect(url))(f)
     catch case e: SQLException => Left(describe(e))
 
   def withTransaction[A](url: String)(f: Connection => A): Either[String, A] =

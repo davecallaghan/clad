@@ -6,6 +6,10 @@ lazy val commonSettings = Seq(
   version      := "0.1.0-SNAPSHOT"
 )
 
+// One project's tests at a time: gateway-test and mdr-test share TestDatabase, whose database-name counter and lock
+// are per classloader, and the clad_gov_* roles are cluster-wide, so concurrent projects collide on the test server.
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
+
 val http4sVersion = "0.23.30"
 val catsEffectVersion = "3.5.7"
 
