@@ -225,11 +225,33 @@ the bundle format has one owner and the golden-vector tests become a round trip.
 
 ## 10. MDR worker
 
-`clad-mdr` runs `MonitoringEngine` with the existing detectors (ghost rate, constraint violations, component health,
-block-rate anomaly) over the GIL, the chain, degraded records and the infra log, on the interval in `runtime.yaml`.
-It writes `mdr.alert` (severity, taxonomy, detector, interaction ids, due time) and a heartbeat per interval. Its
-detailed design (detector thresholds, the ghost reconciliation window, containment recommendations) follows the MDR
-section of the personal_finance enforcement spec and gets its own plan.
+As implemented (plan `docs/plans/2026-10-17-clad-mdr.md`; operating detail in `app/gateway/README.md`, section MDR):
+
+- `clad-mdr` is the sbt module `mdr`. It ships in the gateway image and connects as `clad_gov_reader`. It holds no
+  signing key and no provider key, and never blocks a call.
+- Each cycle, on `mdr.interval_seconds`:
+  1. Read one snapshot over the window. The window runs from the last heartbeat minus `in_flight_grace_seconds` to
+     now; on the first run it starts at the earliest infra call or GIL entry.
+  2. Run the detectors.
+  3. Write `mdr.alert` (severity, taxonomy, detector, interaction ids, due time, dedupe key).
+  4. Write one heartbeat per detector, then retry webhook delivery.
+- P1 and P2 alerts open an incident with a read-only bundle export as its evidence locker.
+- The worker's only state is in the store: the heartbeat is the cursor, and dedupe keys prevent repeats.
+
+**Reuse decision.**
+- Reused from clad's monitoring module:
+  - the `GovernanceEvent` types: `Events.from` maps snapshot rows to `ComponentFailure`, `OutputBlocked`,
+    `EvaluationCompleted` and `ViolationDetected`;
+  - `ComponentHealthDetector`, run over the `ComponentFailure` events.
+- `MonitoringEngine` and the fixed-threshold detectors (`GhostRateDetector`, `BlockRateAnomalyDetector`) are not used.
+  - R-MDR-ALERT needs every ghost alerted individually, by interaction id or `infra@<ts>`. A ghost is an absence (no
+    GIL entry, no record), which an event stream cannot express. A rate over a threshold would leave single ghosts
+    unalerted.
+  - The block rate is measured against the property's own trailing baseline (`block_rate_baseline_hours`), not a
+    fixed rate.
+- The ghost reconciliation, chain and anchor verification, the input, config, block-rate, review-age and flag
+  detectors are therefore MDR's own, implementing one `Detector` trait over the snapshot. Every threshold comes from
+  `runtime.yaml`.
 
 ## 11. Clients
 

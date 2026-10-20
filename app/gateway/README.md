@@ -95,6 +95,56 @@ parses and `answers.intent.choice` is one of `router_intents`). An invalid reply
 outcome `fallback:safe_response`; the client treats it as no answer and falls back to its default route. A 4xx is
 returned as it is, without a ROC record.
 
+## MDR (`clad-mdr`)
+
+The monitoring worker ships in the same image (`--entrypoint clad-mdr`). It holds no signing key and no provider key,
+connects as `clad_gov_reader` (SELECT on `governance.*`, INSERT on `mdr.*`) and never blocks a call: containment stays
+a human action (`POST /admin/contain`), which an alert only recommends.
+
+| Command | Does |
+|---|---|
+| `run` | a cycle every `mdr.interval_seconds`; a failed cycle is logged (`CLAD_MDR_CYCLE_FAILED`) and the next one runs |
+| `once` | one cycle (tests, the measure script); prints `CLAD_MDR_CYCLE window=... alerts=... failed_detectors=... redelivered=...` |
+| `check` | config loads, the store answers, the egress log is readable, the data dir is writable; exit 0 or 1 |
+
+Environment: `CLAD_MDR_CONFIG_DIR` (the adopter's governance directory, read-only), `CLAD_MDR_GATEWAY_DATA_DIR` (its
+`anchors/`, read-only), `CLAD_MDR_DATA_DIR` (writable: `incidents/<id>/` lockers), `CLAD_MDR_KEYS_DIR` (public keys
+only), `CLAD_MDR_EGRESS_LOG`, `CLAD_MDR_LISTENERS` (`port=host,...`, as the gateway's), `CLAD_MDR_DB_URL` (the reader),
+`CLAD_MDR_APP`. Optional: `CLAD_MDR_WEBHOOK_URL`; without it each alert is one `CLAD_MDR_ALERT {json}` line on stdout.
+`runtime.yaml` needs the `mdr:` block (including `webhook_timeout_seconds`), `config_bounds:` and `severity_due_minutes:`.
+
+**A cycle:**
+1. The window runs from the last heartbeat minus `in_flight_grace_seconds` to now (first run: from the earliest infra
+   call or GIL entry, so calls made before MDR existed are alerted).
+2. One REPEATABLE READ snapshot, widened by `block_rate_baseline_hours`.
+3. Every detector runs.
+4. Alerts are stored, then one heartbeat per detector, then undelivered alerts are retried.
+   - A detector that fails still gets its heartbeat, plus a P2 `detector_failed` alert.
+   - A snapshot failure, or an alert that cannot be stored, writes no heartbeat. The cursor stays put, and
+     R-MDR-LIVE shows the gap.
+
+| Detector | Alerts |
+|---|---|
+| `ghosts` | P1: an infra call whose id has no GIL entry, or with no id (listed as `infra@<ts>`); a GIL entry past the grace with no record, or delivered (2xx) with no ROC record. P2 instead when a degraded record explains it |
+| `chain_health` | P1: chain digests, links, signatures or the anchor fail; P3: degraded/GIL ratio over `degraded_ratio_alert` |
+| `input` | P2 adversarial: `injection_alert_count` injection signals per principal in `injection_window_seconds` |
+| `config` | P2: unapproved model, temperature or max_tokens over `config_bounds`, a template's new model, an unknown config digest |
+| `block_rate` | P3: a property's block rate over `block_rate_multiple` times its baseline (no baseline, no alert) |
+| `review_age` | P4: the constraint-set approval or an attestation older than `review_cadence_days` |
+| `flags` | P3: each ROC `flag` record (the review queue) |
+| `component_health` | clad's `ComponentHealthDetector` over degraded records: P2 FailClosed, P3 otherwise |
+
+**Alerts** carry `due_at = raised_at + severity_due_minutes`.
+- A dedupe key (unique in `mdr.alert`) means a restarted worker neither repeats nor loses an alert. A condition that
+  holds across overlapping windows is keyed by its newest record.
+- The row is written before the webhook POST. A failed POST is logged with the alert id
+  (`CLAD_MDR_DELIVERY_FAILED`) and retried each cycle until an `mdr.alert_delivery` row exists.
+- P1 and P2 open an incident: a bundle export from the alert's earliest interaction to now, in
+  `<data>/incidents/<id>/`, made read-only.
+  - A failed export is recorded on the incident (`export_error`), raises a P2 `locker_export_failed` alert and is
+    logged (`CLAD_MDR_LOCKER_FAILED`).
+  - A repeat of an alert whose incident row was never written opens it.
+
 ## Operating notes
 
 - The `gateway-test` suite needs `CLAD_TEST_PG_ADMIN_URL` pointing at a Postgres server with **no live clad store**:
