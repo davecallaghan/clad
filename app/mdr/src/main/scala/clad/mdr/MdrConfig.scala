@@ -10,7 +10,7 @@ final case class MdrConfig(intervalSeconds: Long, inFlightGraceSeconds: Long, de
                            injectionWindowSeconds: Long, injectionAlertCount: Int, blockRateMultiple: Double,
                            blockRateBaselineHours: Long, reviewCadenceDays: Long,
                            temperatureMax: Double, maxTokensMax: Int,
-                           dueMinutes: Map[AlertSeverity, Long])
+                           dueMinutes: Map[AlertSeverity, Long], webhookTimeoutSeconds: Long)
 
 object MdrConfig:
   /** The labels runtime.yaml and the bundle use for each severity. */
@@ -42,13 +42,14 @@ object MdrConfig:
       multiple <- num(m, "mdr", "block_rate_multiple")
       baseline <- num(m, "mdr", "block_rate_baseline_hours")
       cadence <- num(m, "mdr", "review_cadence_days")
+      hookTimeout <- num(m, "mdr", "webhook_timeout_seconds")
       tMax <- num(bounds, "config_bounds", "temperature_max")
       tokMax <- num(bounds, "config_bounds", "max_tokens_max")
       dues <- Labels.toVector.foldLeft[Either[String, Map[AlertSeverity, Long]]](Right(Map.empty)) { case (acc, (sev, label)) =>
         acc.flatMap(d => num(due, "severity_due_minutes", label).map(n => d + (sev -> n.toLong)))
       }
     yield MdrConfig(interval.toLong, grace.toLong, ratio, injWindow.toLong, injCount.toInt, multiple, baseline.toLong,
-      cadence.toLong, tMax, tokMax.toInt, dues)
+      cadence.toLong, tMax, tokMax.toInt, dues, hookTimeout.toLong)
 
 /** Where MDR reads and writes. The gateway data directory (anchors) and the keys directory (public keys only) are
   * read-only; `dataDir` holds the incident lockers. `dbUrl` connects as clad_gov_reader. */

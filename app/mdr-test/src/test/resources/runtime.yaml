@@ -12,6 +12,7 @@ config_bounds:                   # MDR S_config bounds
   temperature_max: 1.0
   max_tokens_max: 4000
 mdr:
+  webhook_timeout_seconds: 10   # test fixture
   interval_seconds: 60
   in_flight_grace_seconds: 120
   degraded_ratio_alert: 0.05
