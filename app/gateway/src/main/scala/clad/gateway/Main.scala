@@ -6,7 +6,7 @@ import clad.audit.ChainAnchorStore
 import clad.gateway.config.{Governance, GatewayConfig}
 import clad.gateway.`export`.BundleExport
 import clad.gateway.epg.{Epg, StartupCheck}
-import clad.gateway.http.{Clients, Routes}
+import clad.gateway.http.{Clients, Health, Routes}
 import clad.gateway.keys.Keys
 import clad.gateway.pipeline.Gateway
 import clad.gateway.roc.{LlamaGuard, RocConfig, Validation}
@@ -206,13 +206,35 @@ object Main:
       val gateway = Gateway(cfg, epg, store, comp, sup, HttpUpstream(chat._1, chat._2, cfg.runtime),
         HttpPassthrough(upstreamKeys.filter((n, _) => declared.contains(n)), cfg.runtime), data.resolve("containment.json"),
         () => Instant.now(), guard, Executors.newFixedThreadPool(cfg.runtime.rocBackgroundWorkers))
-      Routes(gateway, clients).routes
+      Routes(gateway, clients, health(dir, cfg, store, gateway, Vector("components" -> comp, "supervisor" -> sup), anchors,
+        upstreamKeys.toVector.map((name, upstream) => name -> upstream._1).sortBy(_._1))).routes
     built.fold(fail, routes =>
       val base = EmberServerBuilder.default[IO].withPort(port)
       val server = host.fold(base)(base.withHost(_)).withHttpApp(Router("/" -> routes).orNotFound)
       println(s"clad-gateway listening on port $port")
       server.build.useForever.unsafeRunSync()
       0)
+
+  /** The checks behind GET /v1/health (README, section HTTP API). */
+  private def health(dir: Path, cfg: GatewayConfig, store: PgStore, gateway: Gateway,
+                     keys: Vector[(String, clad.audit.KeyManagementService)], anchors: Path,
+                     upstreams: Vector[(String, String)]): Health =
+    val timeout = java.time.Duration.ofMillis(cfg.runtime.healthProbeTimeoutMillis)
+    val loaded = cfg.governance.approvalDigest(cfg.roc)
+    // the constraint set on disk is the one this process loaded: an edit (an approval, say) needs a restart to apply
+    val config = () =>
+      for
+        gov <- Governance.load(dir.resolve("constraints.yaml"))
+        roc <- RocConfig.load(dir, gov)
+        _ <- Either.cond(gov.approvalDigest(roc) == loaded, (), "the constraint set on disk differs from the loaded one; restart to apply it")
+      yield s"constraints $loaded, approval ${cfg.governance.approvalPending(cfg.roc).fold("approved")(why => s"pending ($why)")}"
+    Health(Vector(
+      "store" -> (() => store.health),
+      "keys" -> Health.signs(keys),
+      "config" -> config,
+      "containment" -> (() => gateway.containedProjects.map(c => if c.isEmpty then "no project contained" else s"contained: ${c.mkString(", ")}")),
+      "anchors" -> (() => Either.cond(Files.isWritable(anchors), s"$anchors writable", s"$anchors is not writable"))
+    ) ++ upstreams.map((name, url) => s"upstream_$name" -> Health.tcp(java.net.URI.create(url), timeout)))
 
   private def createDir(p: Path): Either[String, Path] =
     try Right(Files.createDirectories(p))

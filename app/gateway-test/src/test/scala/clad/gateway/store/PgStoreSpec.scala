@@ -70,6 +70,15 @@ class PgStoreSpec extends AnyFunSuite:
     assert(anchor.anchor.count == Threads && lines(db).lastOption.exists(_.record.digest == anchor.anchor.headDigest))
   }
 
+  test("health: the writer can append to the governance tables; an unreachable store is a failure") {
+    val db = TestDatabase.fresh()
+    assert(store(db).health.isRight, store(db).health)
+    // the test server trusts localhost, so a wrong password would still connect: an unreachable port fails for sure
+    val bad = PgStore("jdbc:postgresql://127.0.0.1:1/nowhere?user=clad_gov_writer&password=x", 7243001L,
+      ChainAnchorStore(Files.createTempDirectory("anchors")), Ed25519KeyManagement.generate("c0mp0nents000001")._1)
+    assert(bad.health.isLeft)
+  }
+
   test("register, configs and artifacts are stored; configs and artifacts are idempotent") {
     val db = TestDatabase.fresh()
     val s = store(db)

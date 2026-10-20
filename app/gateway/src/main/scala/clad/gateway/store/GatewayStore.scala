@@ -13,6 +13,8 @@ trait GatewayStore:
   def putConfig(digest: String, project: String, json: String): Either[String, Unit]
   /** Idempotent. */
   def putArtifact(digest: String, json: String): Either[String, Unit]
+  /** Whether the store accepts this gateway's writes, and what was verified. */
+  def health: Either[String, String]
   /** One input detector observation; never the input text. */
   def inputSignal(interactionId: String, s: clad.gateway.pipeline.InputSignal, at: java.time.Instant): Either[String, Unit]
 

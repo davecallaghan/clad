@@ -6,9 +6,6 @@ provider, runs ROC (runtime output controls) over the reply, and appends signed 
 Postgres (with a chain anchor on disk). A blocked or failed call still leaves a record. Non-chat providers go through a passthrough route. `export` writes the evidence
 bundle that `conformance` verifies. See `docs/specs/2026-10-16-clad-gateway-design.md`.
 
-**Not in this version:** MDR (the monitoring worker). `GET /v1/health` is static
-(`{"status":"ok"}`): it does not probe the store, keys, config or upstreams.
-
 ## What the adopter supplies (`CLAD_GATEWAY_CONFIG_DIR`)
 
 ```
@@ -61,7 +58,14 @@ and `clad.principal` must start with it. Admin routes need the separate admin to
   `openai`, is a 400 and nothing is registered. An upstream 5xx or 429 is an upstream failure (degraded record,
   tier posture as for chat); other 4xx statuses are the provider's answer and are returned as they are.
 - `POST /admin/contain {project, reason}` and `POST /admin/release {project}`: containment, a human action.
-- `GET /v1/health`: static in this version.
+- `GET /v1/health` (no token): runs every check on each request; 200 `{"status":"ok"}` when all pass, else 503
+  `{"status":"unavailable"}`. `checks` names each one with `ok` and a `detail` (never a secret):
+  - `store`: the writer can INSERT into the GIL, audit and degraded tables;
+  - `keys`: both signing keys sign and verify a probe;
+  - `config`: the constraint set on disk is the loaded one (an edit, such as an approval, needs a restart);
+  - `containment`: the containment file is readable, and which projects are contained;
+  - `anchors`: the anchors directory is writable;
+  - `upstream_<name>`: a TCP connect to each upstream within `health_probe_timeout_ms`, with no provider call.
 
 ## ROC
 

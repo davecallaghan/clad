@@ -9,12 +9,13 @@ import org.typelevel.ci.CIString
 import scala.util.Try
 
 /** The gateway's HTTP surface (spec section 6). A malformed body is always a 400 governance_rejected, never a 500. */
-final class Routes(gateway: Gateway, clients: Clients):
+final class Routes(gateway: Gateway, clients: Clients, health: Health):
   private val InteractionHeader = CIString("X-Clad-Interaction-Id")
   private val NotChatOptions = Set("model", "messages", "clad")
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "v1" / "health" => json(Status.Ok, ujson.Obj("status" -> "ok"))
+    case GET -> Root / "v1" / "health" =>
+      IO.blocking(health.run).flatMap((healthy, body) => json(if healthy then Status.Ok else Status.ServiceUnavailable, body))
 
     case req @ POST -> Root / "v1" / "chat" / "completions" =>
       withPrefix(req) { prefix =>

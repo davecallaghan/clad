@@ -8,3 +8,4 @@ max_retries: 2                   # test fixture
 retry_similarity: 0.9            # test fixture
 grounding_ignore_below: 10       # test fixture
 roc_background_workers: 2        # test fixture
+health_probe_timeout_ms: 2000   # test fixture

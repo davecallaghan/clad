@@ -8,6 +8,7 @@ import scala.util.control.NonFatal
 
 /** In-memory GatewayStore for tests. */
 final class MemoryStore extends GatewayStore:
+  def health: Either[String, String] = Right("memory store")
   val gil = mutable.ArrayBuffer.empty[GilEntry]
   val lines = mutable.ArrayBuffer.empty[SignedAuditRecord]
   val degradedLines = mutable.ArrayBuffer.empty[SignedDegradedRecord]

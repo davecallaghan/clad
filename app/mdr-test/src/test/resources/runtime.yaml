@@ -8,6 +8,7 @@ max_retries: 1                   # CLAD wp2: at most one retry for Critical
 retry_similarity: 0.9            # skip a retry whose output is this similar to the failed one (token Jaccard)
 grounding_ignore_below: 10       # integers below this are counts and ordinals, not figures (spec 8.2)
 roc_background_workers: 1        # threads for Standard-tier classifier calls after delivery: assistant is the one Standard project with classifier constraints; the queue is unbounded, so a busy thread delays a record, never drops it
+health_probe_timeout_ms: 2000   # test fixture
 config_bounds:                   # MDR S_config bounds
   temperature_max: 1.0
   max_tokens_max: 4000

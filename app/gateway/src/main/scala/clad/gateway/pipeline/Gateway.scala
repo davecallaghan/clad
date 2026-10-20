@@ -347,6 +347,8 @@ final class Gateway(cfg: GatewayConfig, epg: Epg, store: GatewayStore, component
       Unavailable(Some(iid), InternalError)
 
   def contain(project: String, reason: String): Either[String, Unit] = update(project, Some(reason))
+  /** The containment file is readable; the projects currently contained. */
+  def containedProjects: Either[String, Vector[String]] = Lock.synchronized(readContainment()).map(_.keys.toVector.sorted)
   def release(project: String): Either[String, Unit] = update(project, None)
 
   private def update(project: String, reason: Option[String]): Either[String, Unit] =

@@ -29,6 +29,20 @@ final class PgStore(writerUrl: String, lockKey: Long, anchors: ChainAnchorStore,
           ()
         }
 
+  private val HealthTables = Vector("governance.gil", "governance.audit_record", "governance.degraded_record")
+
+  /** Connects as the writer and checks it may still INSERT into the tables every call writes. */
+  def health: Either[String, String] =
+    Jdbc.withConnection(writerUrl) { c =>
+      HealthTables.filterNot { t =>
+        val ps = c.prepareStatement("SELECT has_table_privilege(current_user, ?, 'INSERT')")
+        ps.setString(1, t)
+        val rs = ps.executeQuery()
+        rs.next() && rs.getBoolean(1)
+      }
+    }.flatMap(missing => Either.cond(missing.isEmpty, s"writer can append to ${HealthTables.mkString(", ")}",
+      s"writer cannot INSERT into ${missing.mkString(", ")}"))
+
   def appendLinked(build: Option[String] => AuditRecord, kms: KeyManagementService): Either[String, SignedAuditRecord] =
     Jdbc.withTransaction(writerUrl)(c => appendIn(c, build, kms)).map { (signed, count) =>
       anchor(count + 1, signed.record.digest)

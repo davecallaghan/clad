@@ -23,14 +23,15 @@ class RoutesSpec extends AnyFunSuite:
   private val now = Instant.parse("2026-10-16T12:00:00Z")
   private val Admin = "admin-secret"
 
-  private final class Rig(approved: Boolean = true, pass: FakePassthrough = FakePassthrough()):
+  private final class Rig(approved: Boolean = true, pass: FakePassthrough = FakePassthrough(),
+                          health: Health = Health(Vector("store" -> (() => Right("fine"))))):
     val cfg = if approved then Fixtures.approvedConfig() else Fixtures.config
     val up = FakeUpstream()
     val gw = Gateway(cfg, Epg.build(cfg).fold(e => throw AssertionError(e), identity), MemoryStore(), components, supervisor, up,
       pass, Files.createTempDirectory("contain").resolve("contained.json"), () => now, FixedGuard(Right(guardScores(0.01))),
       QueuedExecutor())
     val clients = Clients.parse("tok-api=api,tok-planner=planner", Admin).fold(e => throw AssertionError(e), identity)
-    val client = Client.fromHttpApp(Routes(gw, clients).routes.orNotFound)
+    val client = Client.fromHttpApp(Routes(gw, clients, health).routes.orNotFound)
 
   private def post(rig: Rig, uri: String, token: Option[String], body: String, headers: Header.ToRaw*): (Status, ujson.Value, Option[String]) =
     val req = Request[IO](Method.POST, Uri.unsafeFromString(uri)).withEntity(body).putHeaders(headers*)
@@ -136,7 +137,13 @@ class RoutesSpec extends AnyFunSuite:
   test("health needs no token") {
     val rig = Rig()
     val (status, body) = rig.client.run(Request[IO](Method.GET, uri"/v1/health")).use(r => r.as[String].map(t => (r.status, ujson.read(t)))).unsafeRunSync()
-    assert(status == Status.Ok && body("status").str == "ok")
+    assert(status == Status.Ok && body("status").str == "ok" && body("checks")("store")("ok").bool)
+  }
+
+  test("health is 503 when a check fails") {
+    val rig = Rig(health = Health(Vector("store" -> (() => Left("cannot connect")))))
+    val (status, body) = rig.client.run(Request[IO](Method.GET, uri"/v1/health")).use(r => r.as[String].map(t => (r.status, ujson.read(t)))).unsafeRunSync()
+    assert(status == Status.ServiceUnavailable && body("checks")("store")("detail").str == "cannot connect")
   }
 
   test("contain then call is 403 contained; release then call is no longer contained") {

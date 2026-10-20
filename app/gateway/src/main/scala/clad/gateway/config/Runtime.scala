@@ -5,7 +5,7 @@ import java.nio.file.Path
 /** Every number the gateway uses, from the adopter's runtime.yaml (no defaults: a missing key is an error). */
 final case class Runtime(chainLockKey: Long, upstreamRetries: Int, upstreamTimeoutSeconds: Int, upstreamRetryWaitMillis: Int,
                           latencyBudgetMillis: Int, maxRetries: Int, retrySimilarity: Double, groundingIgnoreBelow: Double,
-                          rocBackgroundWorkers: Int)
+                          rocBackgroundWorkers: Int, healthProbeTimeoutMillis: Int)
 
 object Runtime:
   def load(path: Path): Either[String, Runtime] = Loading.guard(path)(fromJson(YamlJson.read(path)))
@@ -23,6 +23,7 @@ object Runtime:
         similarity <- num("retry_similarity")
         ignoreBelow <- num("grounding_ignore_below")
         workers <- num("roc_background_workers")
+        healthTimeout <- num("health_probe_timeout_ms")
       yield Runtime(lock.toLong, retries.toInt, wait.toInt, pause.toInt, budget.toInt, maxRetries.toInt, similarity, ignoreBelow,
-        workers.toInt)
+        workers.toInt, healthTimeout.toInt)
     }
