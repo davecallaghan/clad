@@ -10,7 +10,12 @@ object WormProbe:
   /** Tries UPDATE, DELETE and TRUNCATE on one existing row of each table, each in a savepoint,
     * and rolls everything back. Never commits. */
   def run(c: WormConfig): RequirementResult =
-    val password = Files.readString(Path.of(c.passwordFile)).trim
+    try probe(c, Files.readString(Path.of(c.passwordFile)).trim)
+    catch case e: java.io.IOException =>
+      RequirementResult("R-AI1", Title, "audit", Verdict.NotRun,
+        reason = s"cannot read the password file ${c.passwordFile}: ${e.getClass.getSimpleName}")
+
+  private def probe(c: WormConfig, password: String): RequirementResult =
     var conn: Connection = null
     try
       conn = DriverManager.getConnection(c.jdbcUrl, c.user, password)
