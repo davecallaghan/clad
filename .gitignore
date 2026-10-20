@@ -63,3 +63,4 @@ __pycache__/
 
 # gateway image build input (tools/build-gateway-image.sh)
 app/gateway/clad-gateway.jar
+app/gateway/clad-mdr.jar

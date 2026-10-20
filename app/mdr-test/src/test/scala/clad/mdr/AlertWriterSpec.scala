@@ -111,18 +111,34 @@ class AlertWriterSpec extends AnyFunSuite:
       "with no webhook the alert is logged and recorded as delivered to log")
   }
 
-  test("a failed locker export records export_error, writes a P2 locker_export_failed alert and returns Left") {
+  test("a failed locker export records export_error and writes a P2 locker_export_failed alert; the alert is stored") {
     val db = TestDatabase.fresh()
     val incidents = Incidents(db.readerUrl, (_, _, _) => Left("disk full"), Files.createTempDirectory("lockers"))
     val writer = AlertWriter(db.readerUrl, cfg, None, incidents)
     val r = writer.write(alert("ghost:y", AlertSeverity.P1Critical), now, now)
-    assert(r.left.exists(_.contains("disk full")), r)
+    assert(r.isRight, r)
     val rows = Jdbc.withConnection(db.readerUrl) { c =>
       val rs = c.createStatement().executeQuery("SELECT a.severity, a.detector, i.export_error FROM mdr.alert a " +
         "LEFT JOIN mdr.incident i ON i.alert_id = a.alert_id ORDER BY a.raised_at, a.detector")
       Iterator.continually(rs).takeWhile(_.next()).map(r => (r.getString(1), r.getString(2), Option(r.getString(3)))).toVector
     }.fold(fail(_), identity)
     assert(rows.toSet == Set(("P1", "block_rate", Some("disk full")), ("P2", "locker_export_failed", None)), rows)
+  }
+
+  test("a P1 alert whose incident row was not written gets its incident on the repeat, and only one") {
+    val db = TestDatabase.fresh()
+    val lockers = Files.createTempDirectory("lockers")
+    val ok = (_: Instant, _: Instant, out: Path) => Right(Files.createDirectories(out)).map(_ => ())
+    val broken = AlertWriter(db.readerUrl, cfg, None, Incidents("jdbc:postgresql://127.0.0.1:1/nowhere?user=x&password=y", ok, lockers))
+    assert(broken.write(alert("ghost:z", AlertSeverity.P1Critical), now, now).isLeft)
+    val writer = AlertWriter(db.readerUrl, cfg, None, Incidents(db.readerUrl, ok, lockers))
+    val id = writer.write(alert("ghost:z", AlertSeverity.P1Critical), now, now).fold(fail(_), identity)
+    writer.write(alert("ghost:z", AlertSeverity.P1Critical), now, now).fold(fail(_), identity)
+    val incidents = Jdbc.withConnection(db.readerUrl) { c =>
+      val rs = c.createStatement().executeQuery("SELECT alert_id FROM mdr.incident")
+      Iterator.continually(rs).takeWhile(_.next()).map(_.getString(1)).toVector
+    }.fold(fail(_), identity)
+    assert(incidents == Vector(id))
   }
 
   test("the same dedupe key twice is one row, and the second write returns the first alert's id") {

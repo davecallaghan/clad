@@ -87,24 +87,36 @@ final class AlertWriter(dbUrl: String, cfg: MdrConfig, webhook: Option[Webhook],
       Option(rs.getObject("t", classOf[OffsetDateTime])).map(_.toInstant)
     }.map(gil => (gil.toVector ++ infra :+ fallback).min)
 
-  /** Returns the alert id. `windowStart` bounds the incident export when the alert names no interaction. */
+  /** Returns the alert id once the alert is stored. `windowStart` bounds the incident export when the alert names no
+    * interaction. A failed locker export does not make this a Left: the alert is stored, the incident row records the
+    * export error, a P2 `locker_export_failed` alert is written, and the failure is logged. A Left means the alert or
+    * its incident row could not be stored. */
   def write(a: MdrAlert, windowStart: Instant, now: Instant): Either[String, String] =
     insert(a, now).flatMap { (id, isNew, body) =>
-      if !isNew then Right(id)
+      if isNew then deliver(id, body, now)
+      if !IncidentSeverities.contains(a.severity) then Right(id)
       else
-        deliver(id, body, now)
-        if !IncidentSeverities.contains(a.severity) then Right(id)
-        else
+        // a repeat opens the incident only if the cycle that stored the alert could not write the incident row
+        hasIncident(id).flatMap(has => if has then Right(id) else
           for
             from <- earliest(a, windowStart)
             opened <- incidents.open(id, from, now)
-            _ <- opened._2.fold[Either[String, Unit]](Right(()))(err =>
+            _ <- opened._2.fold[Either[String, Unit]](Right(())) { err =>
+              System.err.println(s"CLAD_MDR_LOCKER_FAILED incident=${opened._1} alert=$id $err")
               // no incident for this alert, so a failing export cannot open incidents without end
               insert(MdrAlert(s"locker_export_failed:${opened._1}", AlertSeverity.P2High, AlertCategory.Governance,
                 "locker_export_failed", a.interactionIds, s"The evidence locker for incident ${opened._1} (alert $id) could " +
                   s"not be exported: $err", a.project), now).map((fid, fresh, fbody) => if fresh then deliver(fid, fbody, now) else ())
-                .flatMap(_ => Left(s"incident ${opened._1}: locker export failed: $err")))
-          yield id
+            }
+          yield id)
+    }
+
+  private def hasIncident(alertId: String): Either[String, Boolean] =
+    Jdbc.withConnection(dbUrl) { c =>
+      val ps = c.prepareStatement("SELECT EXISTS (SELECT 1 FROM mdr.incident WHERE alert_id = ?::uuid)")
+      ps.setString(1, alertId)
+      val rs = ps.executeQuery()
+      rs.next() && rs.getBoolean(1)
     }
 
   /** Retries delivery of alerts that have no delivery row; returns how many were delivered now. */

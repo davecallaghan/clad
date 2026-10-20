@@ -54,11 +54,11 @@ object MdrConfig:
 /** Where MDR reads and writes. The gateway data directory (anchors) and the keys directory (public keys only) are
   * read-only; `dataDir` holds the incident lockers. `dbUrl` connects as clad_gov_reader. */
 final case class MdrEnv(configDir: Path, gatewayDataDir: Path, dataDir: Path, keysDir: Path, egressLog: Path,
-                        listeners: Map[String, String], dbUrl: String, webhookUrl: Option[String])
+                        listeners: Map[String, String], dbUrl: String, app: String, webhookUrl: Option[String])
 
 object MdrEnv:
   private val Required = Vector("CLAD_MDR_CONFIG_DIR", "CLAD_MDR_GATEWAY_DATA_DIR", "CLAD_MDR_DATA_DIR",
-    "CLAD_MDR_KEYS_DIR", "CLAD_MDR_EGRESS_LOG", "CLAD_MDR_LISTENERS", "CLAD_MDR_DB_URL")
+    "CLAD_MDR_KEYS_DIR", "CLAD_MDR_EGRESS_LOG", "CLAD_MDR_LISTENERS", "CLAD_MDR_DB_URL", "CLAD_MDR_APP")
 
   /** `name=value,...`, as the gateway's CLAD_GATEWAY_LISTENERS. */
   def pairs(spec: String, what: String): Either[String, Map[String, String]] =
@@ -76,4 +76,4 @@ object MdrEnv:
         def p(k: String) = Path.of(get(k).getOrElse(""))
         pairs(get("CLAD_MDR_LISTENERS").getOrElse(""), "CLAD_MDR_LISTENERS").map(listeners =>
           MdrEnv(p("CLAD_MDR_CONFIG_DIR"), p("CLAD_MDR_GATEWAY_DATA_DIR"), p("CLAD_MDR_DATA_DIR"), p("CLAD_MDR_KEYS_DIR"),
-            p("CLAD_MDR_EGRESS_LOG"), listeners, get("CLAD_MDR_DB_URL").getOrElse(""), get("CLAD_MDR_WEBHOOK_URL")))
+            p("CLAD_MDR_EGRESS_LOG"), listeners, get("CLAD_MDR_DB_URL").getOrElse(""), get("CLAD_MDR_APP").getOrElse(""), get("CLAD_MDR_WEBHOOK_URL")))

@@ -32,7 +32,7 @@ class MdrConfigSpec extends AnyFunSuite:
   test("the environment: every required variable is named when missing; the webhook is optional") {
     val env = Map("CLAD_MDR_CONFIG_DIR" -> "/c", "CLAD_MDR_GATEWAY_DATA_DIR" -> "/g", "CLAD_MDR_DATA_DIR" -> "/d",
       "CLAD_MDR_KEYS_DIR" -> "/k", "CLAD_MDR_EGRESS_LOG" -> "/e/access.log", "CLAD_MDR_LISTENERS" -> "8081=api.deepinfra.com",
-      "CLAD_MDR_DB_URL" -> "jdbc:postgresql://x/pf")
+      "CLAD_MDR_DB_URL" -> "jdbc:postgresql://x/pf", "CLAD_MDR_APP" -> "personal_finance")
     val e = MdrEnv.from(env).fold(fail(_), identity)
     assert(e.listeners == Map("8081" -> "api.deepinfra.com") && e.webhookUrl.isEmpty)
     assert(MdrEnv.from(env - "CLAD_MDR_DB_URL") == Left("CLAD_MDR_DB_URL is not set"))
