@@ -18,18 +18,40 @@ class ConfigChecksSpec extends AnyFunSuite with Matchers:
     Files.writeString(b.dir.resolve(s"configs/$d.json"), json)
     d
 
+  /** Overwrite the config the records cite, keeping its file name: the edited text is what governed the window. */
+  private def editCited(b: TestBundles.Built)(f: String => String): Unit =
+    val path = b.dir.resolve(s"configs/${TestBundles.configDigest}.json")
+    Files.writeString(path, f(Files.readString(path)))
+
+  private val sameAuthorApprover = (s: String) => s.replaceFirst("\"approver\": \"david\"", "\"approver\": \"cline\"")
+
   test("valid bundle satisfies config requirements"):
     val r = run(TestBundles.valid())
     Seq("R-CFG-PARSE", "R-CFG-MONO", "R-CFG-TENSION", "R-EA4", "R-AX5").foreach(id => withClue(id + " " + r(id).reason)(r(id).verdict shouldBe Verdict.Satisfied))
 
   test("author equal to approver violates R-EA4"):
     val b = TestBundles.valid()
-    editConfig(b)(_.replaceFirst("\"approver\": \"david\"", "\"approver\": \"cline\""))
+    editCited(b)(sameAuthorApprover)
+    run(b)("R-EA4").verdict shouldBe Verdict.Violated
+
+  test("R-EA4 checks only the configs that governed records in the window; an older version is history"):
+    val b = TestBundles.valid()
+    val old = sameAuthorApprover(Files.readString(b.dir.resolve(s"configs/${TestBundles.configDigest}.json")))
+    Files.writeString(b.dir.resolve(s"configs/${TestBundles.sha(old)}.json"), old)
+    val r = run(b)("R-EA4")
+    r.verdict shouldBe Verdict.Satisfied
+    r.evidence.mkString should include("1 of 2 config versions")
+
+  test("with no records in the window, R-EA4 checks every config version"):
+    val b = TestBundles.valid()
+    TestBundles.writeLines(b.dir, "audit.jsonl", Vector.empty)
+    val old = sameAuthorApprover(Files.readString(b.dir.resolve(s"configs/${TestBundles.configDigest}.json")))
+    Files.writeString(b.dir.resolve(s"configs/${TestBundles.sha(old)}.json"), old)
     run(b)("R-EA4").verdict shouldBe Verdict.Violated
 
   test("an approver who is not human violates R-EA4"):
     val b = TestBundles.valid()
-    editConfig(b)(_.replace("\"author\": \"cline\", \"approver\": \"david\"", "\"author\": \"david\", \"approver\": \"cline\""))
+    editCited(b)(_.replace("\"author\": \"cline\", \"approver\": \"david\"", "\"author\": \"david\", \"approver\": \"cline\""))
     run(b)("R-EA4").verdict shouldBe Verdict.Violated
 
   test("a contradiction violates R-CFG-MONO"):

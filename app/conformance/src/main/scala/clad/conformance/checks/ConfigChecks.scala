@@ -60,9 +60,19 @@ object ConfigChecks:
     RequirementResult("R-CFG-TENSION", "Tensions surfaced", Area, Verdict.Satisfied,
       if found.isEmpty then Vector("no tensions") else found, "advisory")
 
+  /** The config versions that governed records timestamped in the bundle window (probe window included). The store is
+    * append-only, so older versions stay in every bundle; they are history, not what governed this window. A window
+    * with no records has nothing narrower to say, so every version is checked. */
+  private def governing(b: Bundle): Map[String, ConfigFile] =
+    val cited = b.audit.getOrElse(Vector.empty).filter(r => b.meta.window.contains(r.record.timestamp))
+      .map(_.record.configDigest).toSet
+    if cited.isEmpty then b.configs else b.configs.filter((name, _) => cited.contains(name))
+
   private def ea4(b: Bundle): RequirementResult =
     val t = "Constraint authorship"
-    val problems = b.configs.values.flatMap(f => ConfigLoader.loadFromString(f.text).toOption).flatMap { c =>
+    val checked = governing(b)
+    val scope = s"${checked.size} of ${b.configs.size} config versions (those governing records in the window)"
+    val problems = checked.values.flatMap(f => ConfigLoader.loadFromString(f.text).toOption).flatMap { c =>
       val agents = c.agents.map(a => a.id -> a).toMap
       val built = ConfigLoader.buildAgents(c).map(a => a.id -> a).toMap
       (c.constraints.enterprise ++ c.constraints.department ++ c.constraints.project).flatMap { cc =>
@@ -84,8 +94,8 @@ object ConfigChecks:
         ).flatten
       }
     }.toVector.distinct
-    if problems.isEmpty then RequirementResult("R-EA4", t, Area, Verdict.Satisfied, Vector("dual control and RBAC hold for every constraint"))
-    else RequirementResult("R-EA4", t, Area, Verdict.Violated, problems, s"${problems.size} authorship problems")
+    if problems.isEmpty then RequirementResult("R-EA4", t, Area, Verdict.Satisfied, Vector(s"dual control and RBAC hold for every constraint; $scope"))
+    else RequirementResult("R-EA4", t, Area, Verdict.Violated, problems :+ scope, s"${problems.size} authorship problems")
 
   private def ax5(b: Bundle): RequirementResult =
     val t = "Version identity"
