@@ -51,9 +51,12 @@ object BundleExport:
       val artifacts = Files.createDirectories(out.resolve("artifacts"))
       query(c, "SELECT digest, body FROM governance.artifact")(rs => rs.getString(1) -> rs.getString(2))
         .foreach((digest, body) => Files.writeString(artifacts.resolve(s"$digest.json"), body, UTF_8))
+      // every alert, like the GIL, the chain and the infra log: conformance reconciles ghosts of all time against the
+      // alerts, so a window here would make alerted ghosts read as missed. Heartbeats stay windowed: R-MDR-LIVE reads
+      // only the window.
       jsonl(out.resolve("mdr_alerts.jsonl"), query(c,
         "SELECT alert_id, raised_at, severity, taxonomy, detector, interaction_ids, summary FROM mdr.alert " +
-          "WHERE raised_at BETWEEN ? AND ? ORDER BY raised_at", Seq(utc(since), utc(until))) { rs =>
+          "ORDER BY raised_at") { rs =>
         val ids = rs.getArray("interaction_ids").getArray.asInstanceOf[Array[AnyRef]].toVector.map(i => ujson.Str(i.toString))
         ujson.write(ujson.Obj("alertId" -> rs.getString("alert_id"), "raisedAt" -> at(rs, "raised_at").toString,
           "severity" -> rs.getString("severity"), "taxonomy" -> rs.getString("taxonomy"), "detector" -> rs.getString("detector"),

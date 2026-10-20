@@ -102,6 +102,22 @@ class RoundTripSpec extends AnyFunSuite:
     assert(!Files.exists(out.resolve("audit.jsonl")))
   }
 
+  test("alerts are exported for all time, like the GIL, the chain and the infra log; heartbeats for the window") {
+    val db = TestDatabase.fresh()
+    Jdbc.withConnection(db.adminUrl) { c =>
+      c.createStatement().execute("INSERT INTO mdr.alert (alert_id, raised_at, severity, taxonomy, detector, interaction_ids, " +
+        "summary, due_at, dedupe_key) VALUES (gen_random_uuid(), now() - interval '3 days', 'P1', 'governance', 'ghosts', " +
+        "'{old}', 's', now(), 'ghost:old')")
+      c.createStatement().execute("INSERT INTO mdr.heartbeat VALUES (now() - interval '3 days', 'ghosts')")
+    }.fold(fail(_), identity)
+    val out = Files.createTempDirectory("bundle")
+    BundleExport.write(out, Instant.now().minusSeconds(60), Instant.now(), None, db.readerUrl, None, Map.empty,
+      Files.createTempDirectory("anchors"), keysDir(), Fixtures.approvedConfig().governance, "personal_finance").fold(fail(_), identity)
+    assert(Files.readString(out.resolve("mdr_alerts.jsonl")).contains("\"old\""),
+      "a ghost from before the window is checked against every alert, so every alert must be in the bundle")
+    assert(Files.readString(out.resolve("mdr_heartbeats.jsonl")).isEmpty)
+  }
+
   test("export refuses a directory that already holds files") {
     val db = TestDatabase.fresh()
     val out = Files.createTempDirectory("bundle")
