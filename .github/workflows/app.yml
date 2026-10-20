@@ -24,14 +24,26 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # gateway-test and mdr-test create throwaway databases (clad_gw_test_*) as a superuser
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "11"
+          java-version: "17"   # the version the clad-gateway image runs (eclipse-temurin 17 JRE)
           cache: sbt
+
+      # ubuntu-latest no longer ships sbt
+      - uses: sbt/setup-sbt@v1
 
       # The differential tests cancel without this binary, and a cancelled test is
       # now a failed build. lean-action restores the mathlib cache; a cold build of
@@ -47,6 +59,9 @@ jobs:
         working-directory: app
         env:
           LEAN_DIFFTEST_EXE: ${{ github.workspace }}/lean/.lake/build/bin/clad-difftest
+          CLAD_TEST_PG_ADMIN_URL: jdbc:postgresql://localhost:5432/postgres?user=postgres
+        # shell: bash runs with -eo pipefail, so a failing sbt fails the step instead of hiding behind tee
+        shell: bash
         run: sbt -batch test 2>&1 | tee ../sbt-test.log
 
       - name: Assert no cancelled tests
